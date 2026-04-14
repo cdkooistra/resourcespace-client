@@ -1,0 +1,3 @@
+{
+    "rust-analyzer.server.path": "${workspaceFolder}/.devenv/profile/bin/rust-analyzer"
+}
