@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::client::RsClient;
-use crate::RsError;
+use crate::error::RsError;
 
 /// Sub-API for search endpoints.
 pub struct SearchApi<'a> {

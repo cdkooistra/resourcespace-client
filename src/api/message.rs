@@ -1,6 +1,7 @@
 use serde::Serialize;
 
-use crate::{RsError, client::RsClient};
+use crate::client::RsClient;
+use crate::error::RsError;
 
 /// Sub-API for message endpoints
 pub struct MessageApi<'a> {

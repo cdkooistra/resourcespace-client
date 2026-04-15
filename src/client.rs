@@ -5,14 +5,23 @@ use url::Url;
 use sha2::{Sha256, Digest};
 
 use crate::APP_USER_AGENT;
-use crate::RsError;
-use crate::auth::{Auth, NoAuth, WithUserKey, WithSessionKey, login};
+use crate::error::RsError;
+use crate::auth::{Auth, login};
 
-pub struct NoUrl;
-pub struct WithUrl(Url);
-
-#[derive(Serialize)]
-pub(crate) struct NoParams {}
+// Typestates
+mod private {
+    pub struct NoUrl;
+    pub struct WithUrl(pub(crate) url::Url);
+    pub struct NoAuth;
+    pub struct WithUserKey { 
+        pub(crate) user: String, 
+        pub(crate) key: String 
+    }
+    pub struct WithSessionKey { 
+        pub(crate) user: String, 
+        pub(crate) password: String 
+    }
+}
 
 #[derive(Serialize)]
 pub(crate) struct ApiRequest<'a, P: Serialize> {
@@ -37,10 +46,10 @@ pub struct RsClient {
 }
 
 impl RsClient {
-    pub fn builder() -> ClientBuilder<NoUrl, NoAuth> {
+    pub fn builder() -> ClientBuilder<private::NoUrl, private::NoAuth> {
         ClientBuilder {
-            base_url: NoUrl,
-            auth: NoAuth,
+            base_url: private::NoUrl,
+            auth: private::NoAuth,
         }
     }
 
@@ -154,36 +163,36 @@ impl RsClient {
     }
 }
 
-pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
+pub struct ClientBuilder<U = private::NoUrl, A = private::NoAuth> {
     base_url: U,
     auth: A,
 }
 
-impl<A> ClientBuilder<NoUrl, A> {
+impl<A> ClientBuilder<private::NoUrl, A> {
     pub fn base_url(
         self, 
         url: impl Into<String>
-    ) -> Result<ClientBuilder<WithUrl, A>, RsError> {
+    ) -> Result<ClientBuilder<private::WithUrl, A>, RsError> {
         let url = url.into();
         let parsed_url = Url::parse(&url)
             .map_err(|e| RsError::Other(e.to_string()))?;
 
         Ok(ClientBuilder {
-            base_url: WithUrl(parsed_url),
+            base_url: private::WithUrl(parsed_url),
             auth: self.auth,
         })
     }
 }
 
-impl<U> ClientBuilder<U, NoAuth> {
+impl<U> ClientBuilder<U, private::NoAuth> {
     pub fn user_key(
         self,
         user: impl Into<String>,
         key: impl Into<String>
-    ) -> ClientBuilder<U, WithUserKey> {
+    ) -> ClientBuilder<U, private::WithUserKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: WithUserKey { user: user.into(), key: key.into() },
+            auth: private::WithUserKey { user: user.into(), key: key.into() },
         }
     }
 
@@ -191,15 +200,15 @@ impl<U> ClientBuilder<U, NoAuth> {
         self,
         user: impl Into<String>,
         password: impl Into<String>
-    ) -> ClientBuilder<U, WithSessionKey> {
+    ) -> ClientBuilder<U, private::WithSessionKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: WithSessionKey { user: user.into(), password: password.into() },
+            auth: private::WithSessionKey { user: user.into(), password: password.into() },
         }
     }
 }
 
-impl ClientBuilder<WithUrl, WithSessionKey> {
+impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
     pub async fn build(self) -> Result<RsClient, RsError> {
         let http = make_client()?;
         let session_key = login(&http, &self.base_url.0, &self.auth.user, &self.auth.password).await?;
@@ -213,7 +222,7 @@ impl ClientBuilder<WithUrl, WithSessionKey> {
 
 }
 
-impl ClientBuilder<WithUrl, WithUserKey> {
+impl ClientBuilder<private::WithUrl, private::WithUserKey> {
     pub async fn build(self) -> Result<RsClient, RsError> {
         let http = make_client()?;
         let auth = Auth::UserKey { 

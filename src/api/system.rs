@@ -2,8 +2,7 @@ use serde::Serialize;
 use validator::Validate;
 
 use crate::client::RsClient;
-use crate::client::NoParams;
-use crate::RsError;
+use crate::error::RsError;
 
 /// Sub-API for system endpoints.
 pub struct SystemApi<'a> {
@@ -30,7 +29,7 @@ impl<'a> SystemApi<'a> {
     /// ```
     pub async fn get_system_status(&self) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("get_system_status", reqwest::Method::GET, NoParams {})
+            .send_request("get_system_status", reqwest::Method::GET, ())
             .await
     }
 

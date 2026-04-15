@@ -2,7 +2,7 @@ use reqwest::Client;
 use serde::Serialize;
 use url::Url;
 
-use crate::RsError;
+use crate::error::RsError;
 use crate::client::{ApiRequest, build_query};
 
 pub(crate) enum Auth {
@@ -16,16 +16,6 @@ struct LoginParams <'a> {
     password: &'a str,
 }
 
-// Typestates for builder
-pub struct NoAuth;
-pub struct WithUserKey { 
-    pub(crate) user: String,
-    pub(crate) key: String
-}
-pub struct WithSessionKey {
-    pub(crate) user: String,
-    pub(crate) password: String 
-}
 
 // TODO: if this is truely internal, just swap to &str
 pub(crate) async fn login(

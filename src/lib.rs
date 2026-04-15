@@ -1,11 +1,10 @@
-// this file should in reality only reexport the public surface
-
+#![doc = include_str!("../README.md")]
 pub mod api;
+pub mod client;
 mod auth;
-mod client;
-pub use client::{RsClient, ClientBuilder};
-
 mod error;
+
+pub use client::RsClient;
 pub use error::RsError;
 
 static APP_USER_AGENT: &str = concat!(

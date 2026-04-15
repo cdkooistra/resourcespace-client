@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::client::RsClient;
-use crate::RsError;
+use crate::error::RsError;
 
 pub struct UserApi<'a> {
     client: &'a RsClient,
