@@ -1,5 +1,6 @@
 // this file should in reality only reexport the public surface
 
+pub mod api;
 mod auth;
 mod client;
 pub use client::{RsClient, ClientBuilder};

@@ -1,11 +1,19 @@
 use reqwest::Client;
-use reqwest::Url;
+use serde::Serialize;
+use url::Url;
 
 use crate::RsError;
+use crate::client::{ApiRequest, build_query};
 
 pub(crate) enum Auth {
     UserKey { user: String, key: String },
     SessionKey { user: String, key: String },
+}
+
+#[derive(Serialize)]
+struct LoginParams <'a> {
+    username: &'a str,
+    password: &'a str,
 }
 
 // Typestates for builder
@@ -19,6 +27,7 @@ pub struct WithSessionKey {
     pub(crate) password: String 
 }
 
+// TODO: if this is truely internal, just swap to &str
 pub(crate) async fn login(
     http: &Client,
     base_url: &Url,
@@ -27,7 +36,16 @@ pub(crate) async fn login(
 ) -> Result<String, RsError> {
     let user = user.into();
     let password = password.into();
-    let url = format!("{}api/?function=login&username={}&password={}", base_url, user, password);
+    let req = ApiRequest { 
+        user: &user,
+        function: "login",
+        params: LoginParams { 
+            username: &user,
+            password: &password
+        }
+    };
+    let query = build_query(&req)?;
+    let url = format!("{}api/?{}", base_url, query);
 
     let response = http
         .get(&url)

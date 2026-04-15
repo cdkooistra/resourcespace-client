@@ -1,7 +1,7 @@
 use std::time::Duration;
-
 use reqwest::Client;
-use reqwest::Url;
+use serde::{Serialize};
+use url::Url;
 use sha2::{Sha256, Digest};
 
 use crate::APP_USER_AGENT;
@@ -11,16 +11,26 @@ use crate::auth::{Auth, NoAuth, WithUserKey, WithSessionKey, login};
 pub struct NoUrl;
 pub struct WithUrl(Url);
 
+#[derive(Serialize)]
+pub(crate) struct ApiRequest<'a, P: Serialize> {
+    pub(crate) user: &'a str,
+    #[serde(rename = "function")]
+    pub(crate) function: &'a str,
+    #[serde(flatten)]
+    pub(crate) params: P,
+}
+
+pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
+    serde_qs::Config::new()
+        .use_form_encoding(true)
+        .serialize_string(params)
+        .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
+}
 
 pub struct RsClient {
     base_url: Url,
     auth: Auth,
     client: Client,
-}
-
-pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
-    base_url: U,
-    auth: A,
 }
 
 impl RsClient {
@@ -31,7 +41,14 @@ impl RsClient {
         }
     }
 
-    pub async fn send_request(&self, function: &str, params: &[(&str, &str)]) -> Result<serde_json::Value, RsError> {
+    pub(crate) async fn send_request<P>(
+        &self,
+        function: &str,
+        method: reqwest::Method,
+        params: P
+    ) -> Result<serde_json::Value, RsError> 
+    where P: Serialize
+    {
         let (
             user,
             key,
@@ -42,40 +59,88 @@ impl RsClient {
         };
 
         // Build query string
-        let mut query = format!("user={}&function={}", user, function);
-        for (k, v) in params {
-            query.push_str(&format!("&{}={}", k, v));
-        }
-
+        let req = ApiRequest { user, function, params };
+        let query = build_query(&req)?;
         let signature = sign(key, &query);
-        let full_url = format!("{}api/?{}&sign={}&authmode={}", self.base_url, query, signature, authmode);
 
-        let response = self.client
-            .get(&full_url)
-            .send()
-            .await
-            .map_err(RsError::Http)?;
-
-        let text = response
-            .text()
-            .await
-            .map_err(RsError::Http)?;
-
-        let json: serde_json::Value = serde_json::from_str(&text)
-            .map_err(|_| RsError::Other(format!("Unexpected response: {}", text)))?;
-
-        if let Some(status) = json.get("status").and_then(|s| s.as_u64()) {
-            if status != 200 {
-                let message = json.get("body")
-                    .and_then(|b| b.as_str())
-                    .unwrap_or("Unknown error")
-                    .trim()
-                    .to_string();
-                return Err(RsError::Api { status: status as u16, message });
+        let response = match method {
+            reqwest::Method::GET => {
+                let full_url = format!("{}api/?{}&sign={}&authmode={}", self.base_url, query, signature, authmode);
+                self.client
+                    .get(&full_url)
+                    .send()
+                    .await
             }
+            reqwest::Method::POST => {
+                // TODO: multipart support
+                let full_url = format!("{}api/", self.base_url);
+                self.client
+                    .post(&full_url)
+                    .form(&[
+                        ("user", user.clone()),
+                        ("query", query),
+                        ("sign", signature),
+                        ("authmode", authmode.to_string())
+                    ])
+                    .send()
+                    .await
+            }
+            _ => return Err(RsError::Other("Unsupported HTTP method".into())),
+        }.map_err(RsError::Http)?;
+
+        // TODO: response handling is very inconsistent due to the nature of RS responses:
+        // some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
+        // for now just try to parse and hope for the best. Montala stated they are working on an OpenAPI spec
+        // for the api which should allow for much better handling in the future
+
+        // So, for now, responses can be:
+        // - JSON arrays
+        // - JSON objects
+        // - Plain true/false strings
+        // - Raw integers (resource IDs)
+        // - "FAILED: ..." strings for certain errors, even with 200 status code
+        // - "Invalid signature" strings, even with 200 status code
+
+        // 1. check HTTP status before touching the body
+        if !response.status().is_success() {
+            return Err(RsError::Api {
+                status: response.status().as_u16(),
+                message: response.text().await.unwrap_or_default(),
+            });
         }
+
+        let text = response.text().await.map_err(RsError::Http)?;
+        let trimmed = text.trim();
+
+        // 2. RS returns plain "false" for failed operations
+        if trimmed.eq_ignore_ascii_case("false") {
+            return Err(RsError::OperationFailed);
+        }
+
+        // 3. RS returns "FAILED: ..." strings from upload functions
+        if let Some(msg) = trimmed.strip_prefix("FAILED:") {
+            return Err(RsError::Api {
+                status: 400,
+                message: msg.trim().to_string(),
+            });
+        }
+
+        // 4. Try to parse as JSON, fall back to wrapping as a JSON string
+        // This handles plain integers (create_resource), "true", and error strings
+        let json: serde_json::Value = serde_json::from_str(trimmed)
+            .unwrap_or_else(|_| serde_json::Value::String(trimmed.to_string()));
+
         Ok(json)
     }
+
+    pub fn search(&self) -> crate::api::search::SearchApi<'_> {
+        crate::api::search::SearchApi::new(self)
+    }
+}
+
+pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
+    base_url: U,
+    auth: A,
 }
 
 impl<A> ClientBuilder<NoUrl, A> {
