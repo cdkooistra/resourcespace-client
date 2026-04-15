@@ -1,5 +1,7 @@
 use resourcespace_client::RsClient;
 use resourcespace_client::api::search::{DoSearchRequest, SearchSort};
+use resourcespace_client::api::system::GetDailyStatSummaryRequest;
+use resourcespace_client::api::message::GetUserMessageRequest;
 
 #[tokio::main]
 async fn main() {
@@ -13,18 +15,37 @@ async fn main() {
     let client = RsClient::builder()
         .base_url(&base_url)
         .expect("Error when setting base_url")
-        // .user_key(&user, &key)
-        .session_key(&user, &password)
+        .user_key(&user, &key)
+        // .session_key(&user, &password)
         .build()
         .await
         .expect("Error when building client");
 
-    let result = client.search()
+    let search_result = client.search()
         .do_search(DoSearchRequest::new("909").sort(SearchSort::Asc))
         .await;
 
-    match result {
+    match search_result {
         Ok(response) => println!("{:#?}", response),
         Err(e) => println!("Error: {}", e),
     }
+
+    let system_result = client.system()
+        .get_daily_stat_summary(GetDailyStatSummaryRequest::new().days(31))
+        .await;
+
+    match system_result {
+        Ok(response) => println!("{:#?}", response),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    let message_result = client.message()
+        .get_user_message(GetUserMessageRequest::new(12))
+        .await;
+
+    match message_result {
+        Ok(response) => println!("{:#?}", response),
+        Err(e) => println!("Error: {}", e),
+    }
+
 }
