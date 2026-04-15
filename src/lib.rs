@@ -1,14 +1,22 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+// this file should in reality only reexport the public surface
 
+pub mod client;
+pub mod error;
+pub use error::RsError;
+
+static APP_USER_AGENT: &str = concat!(
+    env!("CARGO_PKG_NAME"),
+    "/",
+    env!("CARGO_PKG_VERSION"),
+);
+
+// TODO: tests
 #[cfg(test)]
 mod tests {
-    use super::*;
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
+    // #[test]
+    // fn it_works() {
+    //     let result = add(2, 2);
+    //     assert_eq!(result, 4);
+    // }
 }
