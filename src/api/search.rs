@@ -15,14 +15,14 @@ impl<'a> SearchApi<'a> {
 
     /// Performs a search and returns matching resources.
     ///
-    /// # Arguments
-    /// * `request` - Search parameters built via [`DoSearchRequest`]
+    /// ## Arguments
+    /// * `request` - Parameters built via [`DoSearchRequest`]
     ///
-    /// # TODO: Errors 
+    /// ## TODO: Errors 
     /// Returns [`RsError::OperationFailed`] if the search returns no results
     /// or the user lacks search permissions.
     ///
-    /// # Examples
+    /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::{RsClient, api::search::{DoSearchRequest, SearchSort}};
     /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
@@ -52,14 +52,14 @@ impl<'a> SearchApi<'a> {
 
     /// Performs a search and returns matching resources including URLs for requested preview sizes.
     ///
-    /// # Arguments
-    /// * `request` - Search parameters built via [`SearchGetPreviewsRequest`]
+    /// ## Arguments
+    /// * `request` - Parameters built via [`SearchGetPreviewsRequest`]
     ///
-    /// # TODO: Errors
+    /// ## TODO: Errors
     /// Returns [`RsError::OperationFailed`] if the search returns no results
     /// or the user lacks search permissions.
     ///
-    /// # Examples
+    /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::{RsClient, api::search::{SearchGetPreviewsRequest, SearchSort}};
     /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
@@ -96,7 +96,7 @@ pub enum SearchSort {
     Desc
 }
 
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 pub struct DoSearchRequest {
     search: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -117,12 +117,7 @@ impl DoSearchRequest {
     pub fn new(search: impl Into<String>) -> Self {
         Self { 
             search: search.into(),
-            restypes: None,
-            order_by: None,
-            archive: None,
-            fetchrows: None,
-            sort: None,
-            offset: None,
+            ..Default::default()
         }
     }
 
@@ -157,7 +152,7 @@ impl DoSearchRequest {
     }
 }
     
-#[derive(Serialize)]
+#[derive(Default, Serialize)]
 pub struct SearchGetPreviewsRequest {
     search: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -182,14 +177,7 @@ impl SearchGetPreviewsRequest {
     pub fn new(search: impl Into<String>) -> Self {
         Self { 
             search: search.into(),
-            restypes: None,
-            order_by: None,
-            archive: None,
-            fetchrows: None,
-            sort: None,
-            recent_search_daylimit: None,
-            getsizes: None,
-            previewext: None,
+            ..Default::default()
         }
     }
 

@@ -15,4 +15,7 @@ pub enum RsError {
 
     #[error("Other error: {0}")]
     Other(String),
+
+    #[error("Validation error: {0}")]
+    Validation(String),
 }

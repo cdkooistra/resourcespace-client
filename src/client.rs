@@ -12,6 +12,9 @@ pub struct NoUrl;
 pub struct WithUrl(Url);
 
 #[derive(Serialize)]
+pub(crate) struct NoParams {}
+
+#[derive(Serialize)]
 pub(crate) struct ApiRequest<'a, P: Serialize> {
     pub(crate) user: &'a str,
     #[serde(rename = "function")]
@@ -133,9 +136,17 @@ impl RsClient {
         Ok(json)
     }
 
+    // Sub-APIs
     pub fn search(&self) -> crate::api::search::SearchApi<'_> {
         crate::api::search::SearchApi::new(self)
     }
+    pub fn system(&self) -> crate::api::system::SystemApi<'_> {
+        crate::api::system::SystemApi::new(self)
+    }
+    pub fn message(&self) -> crate::api::message::MessageApi<'_> {
+        crate::api::message::MessageApi::new(self)
+    }
+
 }
 
 pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
