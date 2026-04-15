@@ -6,58 +6,28 @@ use sha2::{Sha256, Digest};
 
 use crate::APP_USER_AGENT;
 use crate::RsError;
+use crate::auth::{Auth, NoAuth, WithUserKey, WithSessionKey, login};
 
-pub enum Auth {
-    UserKey { user: String, key: String },
-    SessionKey { user: String, key: String },
-}
+pub struct NoUrl;
+pub struct WithUrl(Url);
+
 
 pub struct RsClient {
-    pub(crate) base_url: Url,
-    pub(crate) auth: Auth,
-    pub(crate) client: Client,
+    base_url: Url,
+    auth: Auth,
+    client: Client,
 }
 
-pub struct ClientBuilder {
-    base_url: Option<Url>,
-    auth: Option<Auth>,
-    credentials: Option<(String, String)>,
-    client: Option<Client>,
-}
-
-fn sign(key: &str, query: &str) -> String {
-    let mut hasher = Sha256::new();
-    hasher.update(key.as_bytes());
-    hasher.update(query.as_bytes());
-    hex::encode(hasher.finalize())
-}
-
-async fn login(http: &Client, base_url: &Url, user: &str, password: &str) -> Result<String, RsError> {
-    let url = format!("{}api/?function=login&username={}&password={}", base_url, user, password);
-
-    let response = http
-        .get(&url)
-        .send()
-        .await
-        .map_err(RsError::Http)?
-        .text()
-        .await
-        .map_err(RsError::Http)?;
-
-    if response.trim().to_lowercase() == "false" {
-        return Err(RsError::Api { status: 401, message: "Invalid credentials".into() });
-    }
-
-    Ok(response.trim().trim_matches('"').to_string())
+pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
+    base_url: U,
+    auth: A,
 }
 
 impl RsClient {
-    pub fn builder() -> ClientBuilder {
+    pub fn builder() -> ClientBuilder<NoUrl, NoAuth> {
         ClientBuilder {
-            base_url: None,
-            auth: None,
-            credentials: None,
-            client: None,
+            base_url: NoUrl,
+            auth: NoAuth,
         }
     }
 
@@ -66,9 +36,9 @@ impl RsClient {
             user,
             key,
             authmode
-        ): (&String, &String, Option<&str>) = match &self.auth {
-            Auth::UserKey { user, key } => (user, key, Some("userkey")),
-            Auth::SessionKey { user, key } => (user, key, Some("sessionkey")),
+        ): (&String, &String, &str) = match &self.auth {
+            Auth::UserKey { user, key } => (user, key, "userkey"),
+            Auth::SessionKey { user, key } => (user, key, "sessionkey"),
         };
 
         // Build query string
@@ -78,11 +48,7 @@ impl RsClient {
         }
 
         let signature = sign(key, &query);
-        let mut full_url = format!("{}api/?{}&sign={}", self.base_url, query, signature);
-
-        if let Some(mode) = authmode {
-            full_url.push_str(&format!("&authmode={}", mode));
-        }
+        let full_url = format!("{}api/?{}&sign={}&authmode={}", self.base_url, query, signature, authmode);
 
         let response = self.client
             .get(&full_url)
@@ -112,44 +78,84 @@ impl RsClient {
     }
 }
 
-impl ClientBuilder {
-    pub fn base_url(mut self, url: &str) -> Result<Self, RsError> {
-        self.base_url = Some(
-            Url::parse(url)
-                .map_err(|e| RsError::Other(e.to_string()))?
-        );
-        Ok(self)
-    }
+impl<A> ClientBuilder<NoUrl, A> {
+    pub fn base_url(
+        self, 
+        url: impl Into<String>
+    ) -> Result<ClientBuilder<WithUrl, A>, RsError> {
+        let url = url.into();
+        let parsed_url = Url::parse(&url)
+            .map_err(|e| RsError::Other(e.to_string()))?;
 
-    pub fn user_key(mut self, user: &str, key: &str) -> Self {
-        self.auth = Some(Auth::UserKey {
-            user: user.to_string(),
-            key: key.to_string(),
-        });
-        self
-    }
-
-    pub fn session_key(mut self, user: &str, password: &str) -> Self {
-        self.credentials = Some((user.to_string(), password.to_string()));
-        self
-    }
-
-    pub async fn build(self) -> Result<RsClient, RsError> {
-        let base_url = self.base_url.ok_or(RsError::Other("missing base_url".into()))?;
-
-        let http = Client::builder()
-            .timeout(Duration::from_secs(30))
-            .connect_timeout(Duration::from_secs(10))
-            .user_agent(APP_USER_AGENT)
-            .build()?;
-
-        let auth = if let Some((user, password)) = self.credentials {
-            let key = login(&http, &base_url, &user, &password).await?;
-            Auth::SessionKey { user, key }
-        } else {
-            self.auth.ok_or(RsError::Other("missing auth".into()))?
-        };
-
-        Ok(RsClient { base_url, auth, client: http })
+        Ok(ClientBuilder {
+            base_url: WithUrl(parsed_url),
+            auth: self.auth,
+        })
     }
 }
+
+impl<U> ClientBuilder<U, NoAuth> {
+    pub fn user_key(
+        self,
+        user: impl Into<String>,
+        key: impl Into<String>
+    ) -> ClientBuilder<U, WithUserKey> {
+        ClientBuilder {
+            base_url: self.base_url,
+            auth: WithUserKey { user: user.into(), key: key.into() },
+        }
+    }
+
+    pub fn session_key(
+        self,
+        user: impl Into<String>,
+        password: impl Into<String>
+    ) -> ClientBuilder<U, WithSessionKey> {
+        ClientBuilder {
+            base_url: self.base_url,
+            auth: WithSessionKey { user: user.into(), password: password.into() },
+        }
+    }
+}
+
+impl ClientBuilder<WithUrl, WithSessionKey> {
+    pub async fn build(self) -> Result<RsClient, RsError> {
+        let http = make_client()?;
+        let session_key = login(&http, &self.base_url.0, &self.auth.user, &self.auth.password).await?;
+        let auth = Auth::SessionKey { 
+            user: self.auth.user,
+            key: session_key
+        };
+
+        Ok(RsClient { base_url: self.base_url.0, auth, client: http })
+    }
+
+}
+
+impl ClientBuilder<WithUrl, WithUserKey> {
+    pub async fn build(self) -> Result<RsClient, RsError> {
+        let http = make_client()?;
+        let auth = Auth::UserKey { 
+            user: self.auth.user,
+            key: self.auth.key 
+        };
+
+        Ok(RsClient { base_url: self.base_url.0, auth, client: http })
+    }
+}
+
+fn sign(key: &str, query: &str) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(key.as_bytes());
+    hasher.update(query.as_bytes());
+    hex::encode(hasher.finalize())
+}
+
+fn make_client() -> Result<Client, RsError> {
+    Ok(Client::builder()
+        .timeout(Duration::from_secs(30))
+        .connect_timeout(Duration::from_secs(10))
+        .user_agent(APP_USER_AGENT)
+        .build()?)
+}
+

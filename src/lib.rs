@@ -1,7 +1,10 @@
 // this file should in reality only reexport the public surface
 
-pub mod client;
-pub mod error;
+mod auth;
+mod client;
+pub use client::{RsClient, ClientBuilder};
+
+mod error;
 pub use error::RsError;
 
 static APP_USER_AGENT: &str = concat!(
