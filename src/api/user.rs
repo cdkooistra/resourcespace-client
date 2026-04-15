@@ -1,14 +1,14 @@
 use serde::Serialize;
 
-use crate::client::RsClient;
+use crate::client::Client;
 use crate::error::RsError;
 
 pub struct UserApi<'a> {
-    client: &'a RsClient,
+    client: &'a Client,
 }
 
 impl<'a> UserApi<'a> {
-    pub(crate) fn new(client: &'a RsClient) -> Self {
+    pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }
     }
 

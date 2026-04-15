@@ -1,4 +1,4 @@
-use resourcespace_client::RsClient;
+use resourcespace_client::Client;
 use resourcespace_client::api::search::{DoSearchRequest, SearchSort};
 use resourcespace_client::api::system::GetDailyStatSummaryRequest;
 use resourcespace_client::api::message::GetUserMessageRequest;
@@ -12,7 +12,7 @@ async fn main() {
     let password = std::env::var("RS_PASS").expect("RS_PASS not set");
     let key = std::env::var("RS_KEY").expect("RS_KEY not set");
 
-    let client = RsClient::builder()
+    let client = Client::builder()
         .base_url(&base_url)
         .expect("Error when setting base_url")
         .user_key(&user, &key)

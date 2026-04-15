@@ -1,15 +1,15 @@
 use serde::Serialize;
 
-use crate::client::RsClient;
+use crate::client::Client;
 use crate::error::RsError;
 
 /// Sub-API for search endpoints.
 pub struct SearchApi<'a> {
-    client: &'a RsClient,
+    client: &'a Client,
 }
 
 impl<'a> SearchApi<'a> {
-    pub(crate) fn new(client: &'a RsClient) -> Self {
+    pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }
     }
 

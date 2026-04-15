@@ -1,5 +1,4 @@
 use std::time::Duration;
-use reqwest::Client;
 use serde::{Serialize};
 use url::Url;
 use sha2::{Sha256, Digest};
@@ -39,13 +38,13 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
         .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
 }
 
-pub struct RsClient {
+pub struct Client {
     base_url: Url,
     auth: Auth,
-    client: Client,
+    client: reqwest::Client,
 }
 
-impl RsClient {
+impl Client {
     pub fn builder() -> ClientBuilder<private::NoUrl, private::NoAuth> {
         ClientBuilder {
             base_url: private::NoUrl,
@@ -209,7 +208,7 @@ impl<U> ClientBuilder<U, private::NoAuth> {
 }
 
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
-    pub async fn build(self) -> Result<RsClient, RsError> {
+    pub async fn build(self) -> Result<Client, RsError> {
         let http = make_client()?;
         let session_key = login(&http, &self.base_url.0, &self.auth.user, &self.auth.password).await?;
         let auth = Auth::SessionKey { 
@@ -217,20 +216,20 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
             key: session_key
         };
 
-        Ok(RsClient { base_url: self.base_url.0, auth, client: http })
+        Ok(Client { base_url: self.base_url.0, auth, client: http })
     }
 
 }
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
-    pub async fn build(self) -> Result<RsClient, RsError> {
+    pub async fn build(self) -> Result<Client, RsError> {
         let http = make_client()?;
         let auth = Auth::UserKey { 
             user: self.auth.user,
             key: self.auth.key 
         };
 
-        Ok(RsClient { base_url: self.base_url.0, auth, client: http })
+        Ok(Client { base_url: self.base_url.0, auth, client: http })
     }
 }
 
@@ -241,8 +240,8 @@ fn sign(key: &str, query: &str) -> String {
     hex::encode(hasher.finalize())
 }
 
-fn make_client() -> Result<Client, RsError> {
-    Ok(Client::builder()
+fn make_client() -> Result<reqwest::Client, RsError> {
+    Ok(reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
         .connect_timeout(Duration::from_secs(10))
         .user_agent(APP_USER_AGENT)

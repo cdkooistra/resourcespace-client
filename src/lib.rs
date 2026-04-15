@@ -4,7 +4,7 @@ pub mod client;
 mod auth;
 mod error;
 
-pub use client::RsClient;
+pub use client::Client;
 pub use error::RsError;
 
 static APP_USER_AGENT: &str = concat!(

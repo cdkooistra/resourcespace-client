@@ -1,16 +1,16 @@
 use serde::Serialize;
 use validator::Validate;
 
-use crate::client::RsClient;
+use crate::client::Client;
 use crate::error::RsError;
 
 /// Sub-API for system endpoints.
 pub struct SystemApi<'a> {
-    client: &'a RsClient,
+    client: &'a Client,
 }
 
 impl<'a> SystemApi<'a> {
-    pub(crate) fn new(client: &'a RsClient) -> Self {
+    pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }
     }
 

@@ -1,15 +1,15 @@
 use serde::Serialize;
 
-use crate::client::RsClient;
+use crate::client::Client;
 use crate::error::RsError;
 
 /// Sub-API for message endpoints
 pub struct MessageApi<'a> {
-    client: &'a RsClient,
+    client: &'a Client,
 }
 
 impl<'a> MessageApi<'a> {
-    pub(crate) fn new(client: &'a RsClient) -> Self {
+    pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }
     }
 
