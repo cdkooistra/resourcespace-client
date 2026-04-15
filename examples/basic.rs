@@ -1,4 +1,5 @@
-use resourcespace_client::client::RsClient;
+use resourcespace_client::RsClient;
+use resourcespace_client::api::search::{DoSearchRequest, SearchSort};
 
 #[tokio::main]
 async fn main() {
@@ -11,14 +12,16 @@ async fn main() {
 
     let client = RsClient::builder()
         .base_url(&base_url)
-        .unwrap()
+        .expect("Error when setting base_url")
         // .user_key(&user, &key)
         .session_key(&user, &password)
         .build()
         .await
-        .unwrap();
+        .expect("Error when building client");
 
-    let result = client.send_request("do_search", &[("param1", "909")]).await;
+    let result = client.search()
+        .do_search(DoSearchRequest::new("909").sort(SearchSort::Asc))
+        .await;
 
     match result {
         Ok(response) => println!("{:#?}", response),
