@@ -146,7 +146,12 @@ impl RsClient {
     pub fn message(&self) -> crate::api::message::MessageApi<'_> {
         crate::api::message::MessageApi::new(self)
     }
-
+    pub fn metadata(&self) -> crate::api::metadata::MetadataApi<'_> {
+        crate::api::metadata::MetadataApi::new(self)
+    }
+    pub fn user(&self) -> crate::api::user::UserApi<'_> {
+        crate::api::user::UserApi::new(self)
+    }
 }
 
 pub struct ClientBuilder<U = NoUrl, A = NoAuth> {
