@@ -160,6 +160,12 @@ impl Client {
     pub fn user(&self) -> crate::api::user::UserApi<'_> {
         crate::api::user::UserApi::new(self)
     }
+    pub fn collection(&self) -> crate::api::collection::CollectionApi<'_> {
+        crate::api::collection::CollectionApi::new(self)
+    }
+    pub fn resource(&self) -> crate::api::resource::ResourceApi<'_> {
+        crate::api::resource::ResourceApi::new(self)
+    }
 }
 
 pub struct ClientBuilder<U = private::NoUrl, A = private::NoAuth> {

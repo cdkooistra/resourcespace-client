@@ -3,6 +3,8 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
+use super::SortOrder;
+
 /// Sub-API for search endpoints.
 pub struct SearchApi<'a> {
     client: &'a Client,
@@ -24,10 +26,11 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{RsClient, api::search::{DoSearchRequest, SearchSort}};
+    /// # use resourcespace_client::{RsClient, api::search::{DoSearchRequest}};
+    /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
-    ///     .do_search(DoSearchRequest::new("cat").sort(SearchSort::Desc))
+    ///     .do_search(DoSearchRequest::new("cat").sort(SortOrder::Desc))
     ///     .await?;
     /// 
     /// let specific_results = client.search()
@@ -89,13 +92,6 @@ impl<'a> SearchApi<'a> {
     }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "lowercase")]
-pub enum SearchSort {
-    Asc,
-    Desc
-}
-
 #[derive(Default, Serialize)]
 pub struct DoSearchRequest {
     search: String,
@@ -108,7 +104,7 @@ pub struct DoSearchRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     fetchrows: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SearchSort>,
+    sort: Option<SortOrder>,
     #[serde(skip_serializing_if = "Option::is_none")]
     offset: Option<u32>,
 }
@@ -141,7 +137,7 @@ impl DoSearchRequest {
         self
     }
 
-    pub fn sort(mut self, sort: SearchSort) -> Self {
+    pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
@@ -164,7 +160,7 @@ pub struct SearchGetPreviewsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     fetchrows: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SearchSort>,
+    sort: Option<SortOrder>,
     #[serde(skip_serializing_if = "Option::is_none")]
     recent_search_daylimit: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -201,7 +197,7 @@ impl SearchGetPreviewsRequest {
         self
     }
 
-    pub fn sort(mut self, sort: SearchSort) -> Self {
+    pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }

@@ -5,6 +5,9 @@ use url::Url;
 use crate::error::RsError;
 use crate::client::{ApiRequest, build_query};
 
+/// For a ResourceSpace external client we can only communicate with a
+/// userkey or a sessionkey. `native` authmode is only available for 
+/// client side API calls -> browser initiated activity.
 pub(crate) enum Auth {
     UserKey { user: String, key: String },
     SessionKey { user: String, key: String },
