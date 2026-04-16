@@ -5,6 +5,7 @@ use crate::error::RsError;
 
 use super::SortOrder;
 
+#[derive(Debug)]
 pub struct ResourceApi<'a> {
     client: &'a Client,
 }
@@ -531,7 +532,7 @@ impl<'a> ResourceApi<'a> {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 /// Note that the file parameter here may be a physical path (to the server) or a remote URL.
 pub struct AddAlternativeFileRequest {
     resource: u32,
@@ -586,7 +587,7 @@ impl AddAlternativeFileRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CopyResourceRequest {
     from: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -604,7 +605,7 @@ impl CopyResourceRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CreateResourceRequest {
     resource_type: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -650,7 +651,7 @@ impl CreateResourceRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteAlternativeFile {
     resource: u32,
     #[serde(rename = "ref")]
@@ -663,7 +664,7 @@ impl DeleteAlternativeFile {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourceRequest {
     resource: u32,
 }
@@ -674,7 +675,7 @@ impl DeleteResourceRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetAlternativeFilesRequest {
     resource: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -706,7 +707,7 @@ impl GetAlternativeFilesRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetEditAccessRequest {
     resource: u32,
 }
@@ -717,7 +718,7 @@ impl GetEditAccessRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetRelatedResourcesRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -729,7 +730,7 @@ impl GetRelatedResourcesRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAccessRequest {
     resource: u32,
 }
@@ -740,7 +741,7 @@ impl GetResourceAccessRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAllImageSizesRequest {
     resource: u32,
 }
@@ -751,7 +752,7 @@ impl GetResourceAllImageSizesRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceCommentsRequest {
     resource_ref: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -769,7 +770,7 @@ impl GetResourceCommentsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceDataRequest {
     resource: u32,
 }
@@ -780,7 +781,7 @@ impl GetResourceDataRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceFieldDataRequest {
     resource: u32,
 }
@@ -791,7 +792,7 @@ impl GetResourceFieldDataRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceLogRequest {
     resource: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -809,7 +810,7 @@ impl GetResourceLogRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourcePathRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -870,7 +871,7 @@ impl GetResourcePathRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PutResourceDataRequest {
     resource: u32,
     data: String,
@@ -882,7 +883,7 @@ impl PutResourceDataRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RelateAllResourcesRequest {
     related: String,
 }
@@ -893,7 +894,7 @@ impl RelateAllResourcesRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResourceFileReadonlyRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -905,7 +906,7 @@ impl ResourceFileReadonlyRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ResourceLogLastRowsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     minref: Option<u32>,
@@ -950,7 +951,7 @@ impl ResourceLogLastRowsRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UpdateRelatedResourceRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -970,7 +971,7 @@ impl UpdateRelatedResourceRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateResourceTypeRequest {
     resource: u32,
     resourcetype: u32,
@@ -982,7 +983,7 @@ impl UpdateResourceTypeRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCollectionsRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -994,7 +995,7 @@ impl GetResourceCollectionsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ValidateUploadUrlRequest {
     url: String,
 }

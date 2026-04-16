@@ -21,3 +21,4 @@ thiserror = "2.0.18"
 dotenvy = "0.15"
 url = "2.5.8"
 validator = { version = "0.20.0", features = ["derive"] }
+secrecy = "0.10.3"

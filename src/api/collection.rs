@@ -6,6 +6,7 @@ use crate::error::RsError;
 use super::SortOrder;
 
 /// Sub-API for collection endpoints.
+#[derive(Debug)]
 pub struct CollectionApi<'a> {
     client: &'a Client,
 }
@@ -22,9 +23,9 @@ impl<'a> CollectionApi<'a> {
     /// 
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::RsClient;
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
-    /// let status = client.collections().get_user_collections().await?;
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let status = client.collection().get_user_collections().await?;
     /// # Ok(())
     /// # }
     /// ```
@@ -283,7 +284,7 @@ impl<'a> CollectionApi<'a> {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceToCollectionRequest {
     resource: u32,
     collection: u32,
@@ -295,7 +296,7 @@ impl AddResourceToCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RemoveResourceFromCollectionRequest {
     resource: u32,
     collection: u32,
@@ -307,7 +308,7 @@ impl RemoveResourceFromCollectionRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CreateCollectionRequest {
     name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -328,7 +329,7 @@ impl CreateCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCollectionRequest {
     collection: u32,
 }
@@ -339,7 +340,7 @@ impl DeleteCollectionRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchPublicCollectionsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     search: Option<String>,
@@ -378,7 +379,7 @@ impl SearchPublicCollectionsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -390,7 +391,7 @@ impl GetCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveCollectionRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -403,7 +404,7 @@ impl SaveCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ShowHideCollectionRequest {
     collection: u32,
     show: u8,
@@ -416,7 +417,7 @@ impl ShowHideCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SendCollectionToAdminRequest {
     collection: u32,
 }
@@ -427,7 +428,7 @@ impl SendCollectionToAdminRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFeaturedCollectionsRequest {
     parent: u32,
 }
@@ -438,7 +439,7 @@ impl GetFeaturedCollectionsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourcesInCollectionRequest {
     collection: u32,
 }
@@ -449,7 +450,7 @@ impl DeleteResourcesInCollectionRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {
     refs: String,
 }

@@ -2,6 +2,7 @@ use thiserror::Error;
 
 // TODO: what errors can RS return?
 
+#[non_exhaustive]
 #[derive(Debug, Error)]
 pub enum RsError {
     #[error("API error {status}: {message}")]

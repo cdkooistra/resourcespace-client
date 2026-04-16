@@ -2,6 +2,7 @@ use std::time::Duration;
 use serde::{Serialize};
 use url::Url;
 use sha2::{Sha256, Digest};
+use secrecy::{ExposeSecret, SecretString};
 
 use crate::APP_USER_AGENT;
 use crate::error::RsError;
@@ -9,16 +10,18 @@ use crate::auth::{Auth, login};
 
 // Typestates
 mod private {
+    use secrecy::SecretString;
+
     pub struct NoUrl;
     pub struct WithUrl(pub(crate) url::Url);
     pub struct NoAuth;
     pub struct WithUserKey { 
         pub(crate) user: String, 
-        pub(crate) key: String 
+        pub(crate) key: SecretString 
     }
     pub struct WithSessionKey { 
         pub(crate) user: String, 
-        pub(crate) password: String 
+        pub(crate) password: SecretString 
     }
 }
 
@@ -38,6 +41,7 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
         .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
 }
 
+#[derive(Debug)]
 pub struct Client {
     base_url: Url,
     auth: Auth,
@@ -64,9 +68,9 @@ impl Client {
             user,
             key,
             authmode
-        ): (&String, &String, &str) = match &self.auth {
-            Auth::UserKey { user, key } => (user, key, "userkey"),
-            Auth::SessionKey { user, key } => (user, key, "sessionkey"),
+        ) = match &self.auth {
+            Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
+            Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
         };
 
         // Build query string
@@ -197,7 +201,10 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     ) -> ClientBuilder<U, private::WithUserKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithUserKey { user: user.into(), key: key.into() },
+            auth: private::WithUserKey { 
+                user: user.into(),
+                key: SecretString::from(key.into()) 
+            },
         }
     }
 
@@ -208,7 +215,10 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     ) -> ClientBuilder<U, private::WithSessionKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithSessionKey { user: user.into(), password: password.into() },
+            auth: private::WithSessionKey { 
+                user: user.into(),
+                password: SecretString::from(password.into()),
+            },
         }
     }
 }
@@ -216,10 +226,16 @@ impl<U> ClientBuilder<U, private::NoAuth> {
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
     pub async fn build(self) -> Result<Client, RsError> {
         let http = make_client()?;
-        let session_key = login(&http, &self.base_url.0, &self.auth.user, &self.auth.password).await?;
+        let session_key = login(
+            &http,
+            &self.base_url.0,
+            &self.auth.user,
+            self.auth.password.expose_secret()
+        )
+        .await?;
         let auth = Auth::SessionKey { 
             user: self.auth.user,
-            key: session_key
+            key: SecretString::from(session_key)
         };
 
         Ok(Client { base_url: self.base_url.0, auth, client: http })
@@ -232,7 +248,7 @@ impl ClientBuilder<private::WithUrl, private::WithUserKey> {
         let http = make_client()?;
         let auth = Auth::UserKey { 
             user: self.auth.user,
-            key: self.auth.key 
+            key: self.auth.key, 
         };
 
         Ok(Client { base_url: self.base_url.0, auth, client: http })

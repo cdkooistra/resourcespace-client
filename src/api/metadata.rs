@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
+#[derive(Debug)]
 pub struct MetadataApi<'a> {
     client: &'a Client,
 }
@@ -210,7 +211,7 @@ impl<'a> MetadataApi<'a> {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetFieldOptionsRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -232,7 +233,7 @@ impl GetFieldOptionsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
     value: String,
     resource_type_field: u32
@@ -249,7 +250,7 @@ impl GetNodeIdRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetNodesRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -313,7 +314,7 @@ impl GetNodesRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
     resource: u32,      // Resource ID to add nodes to
     nodestring: String  // List of node IDs to add (comma separated)
@@ -328,7 +329,7 @@ impl AddResourceNodesRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     resourceid: String,
     nodes: String
@@ -343,7 +344,7 @@ impl AddResourceNodesMultiRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SetNodeRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
@@ -386,7 +387,7 @@ impl SetNodeRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceTypeFieldsRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     by_resource_types: Option<String>,
@@ -417,7 +418,7 @@ impl GetResourceTypeFieldsRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceTypeFieldRequest {
     name: String,
     resource_types: String,
@@ -438,7 +439,7 @@ impl CreateResourceTypeFieldRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ToggleActiveStatesForNodesRequest {
     refs: String, // TODO: API docs say this is a json encoded array
 }
@@ -453,7 +454,7 @@ impl ToggleActiveStatesForNodesRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UpdateFieldRequest {
     resource: u32,
     field: u32,

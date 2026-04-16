@@ -1,6 +1,7 @@
 use reqwest::Client;
 use serde::Serialize;
 use url::Url;
+use secrecy::SecretString;
 
 use crate::error::RsError;
 use crate::client::{ApiRequest, build_query};
@@ -8,9 +9,10 @@ use crate::client::{ApiRequest, build_query};
 /// For a ResourceSpace external client we can only communicate with a
 /// userkey or a sessionkey. `native` authmode is only available for 
 /// client side API calls -> browser initiated activity.
+#[derive(Debug)]
 pub(crate) enum Auth {
-    UserKey { user: String, key: String },
-    SessionKey { user: String, key: String },
+    UserKey { user: String, key: SecretString },
+    SessionKey { user: String, key: SecretString },
 }
 
 #[derive(Serialize)]

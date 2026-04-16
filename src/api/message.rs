@@ -4,6 +4,7 @@ use crate::client::Client;
 use crate::error::RsError;
 
 /// Sub-API for message endpoints.
+#[derive(Debug)]
 pub struct MessageApi<'a> {
     client: &'a Client,
 }
@@ -24,8 +25,8 @@ impl<'a> MessageApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{RsClient, api::message::GetUserMessageRequest};
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use resourcespace_client::{Client, api::message::GetUserMessageRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.message()
     ///     .get_user_message(
     ///         GetUserMessageRequest::new(2)
@@ -44,7 +45,7 @@ impl<'a> MessageApi<'a> {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUserMessageRequest {
     #[serde(rename = "ref")]
     r#ref: u32 // message ID

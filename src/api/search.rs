@@ -6,6 +6,7 @@ use crate::error::RsError;
 use super::SortOrder;
 
 /// Sub-API for search endpoints.
+#[derive(Debug)]
 pub struct SearchApi<'a> {
     client: &'a Client,
 }
@@ -26,9 +27,9 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{RsClient, api::search::{DoSearchRequest}};
+    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest}};
     /// # use resourcespace_client::api::SortOrder;
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
     ///     .do_search(DoSearchRequest::new("cat").sort(SortOrder::Desc))
     ///     .await?;
@@ -64,8 +65,9 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{RsClient, api::search::{SearchGetPreviewsRequest, SearchSort}};
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use resourcespace_client::{Client, api::search::SearchGetPreviewsRequest};
+    /// # use resourcespace_client::api::SortOrder;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
     ///     .search_get_previews(SearchGetPreviewsRequest::new("cat").getsizes("thm,scr"))
     ///     .await?;
@@ -75,7 +77,7 @@ impl<'a> SearchApi<'a> {
     ///         SearchGetPreviewsRequest::new("cat")
     ///             .getsizes("thm,scr,pre")
     ///             .previewext("jpg")
-    ///             .sort(SearchSort::Desc)
+    ///             .sort(SortOrder::Desc)
     ///             .fetchrows("0,50")
     ///     )
     ///     .await?;
@@ -92,7 +94,7 @@ impl<'a> SearchApi<'a> {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct DoSearchRequest {
     search: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -148,7 +150,7 @@ impl DoSearchRequest {
     }
 }
     
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
     search: String,
     #[serde(skip_serializing_if = "Option::is_none")]

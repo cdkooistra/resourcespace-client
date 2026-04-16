@@ -3,6 +3,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
+#[derive(Debug)]
 pub struct UserApi<'a> {
     client: &'a Client,
 }
@@ -154,7 +155,7 @@ impl<'a> UserApi<'a> {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CheckpermRequest {
     perm: String,
 }
@@ -167,7 +168,7 @@ impl CheckpermRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
     find: Option<String>,
@@ -191,7 +192,7 @@ impl GetUsersRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersByPermissionRequest {
     permissions: Vec<String>, // an array of permission strings
 }
@@ -204,7 +205,7 @@ impl GetUsersByPermissionRequest {
     }
 }
 
-#[derive(Default, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct MarkEmailAsInvalidRequest {
     email: String,
 }
@@ -217,7 +218,7 @@ impl MarkEmailAsInvalidRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct NewUserRequest {
     username: String,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -235,7 +236,7 @@ impl NewUserRequest {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveUserRequest {
     #[serde(rename = "ref")]
     r#ref: u32,

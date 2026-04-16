@@ -5,6 +5,7 @@ use crate::client::Client;
 use crate::error::RsError;
 
 /// Sub-API for system endpoints.
+#[derive(Debug)]
 pub struct SystemApi<'a> {
     client: &'a Client,
 }
@@ -24,8 +25,8 @@ impl<'a> SystemApi<'a> {
     /// 
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::RsClient;
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let status = client.system().get_system_status().await?;
     /// # Ok(())
     /// # }
@@ -51,8 +52,8 @@ impl<'a> SystemApi<'a> {
     /// 
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{RsClient, api::system::GetDailyStatSummaryRequest};
-    /// # async fn example(client: RsClient) -> Result<(), Box<dyn std::error::Error>> {
+    /// # use resourcespace_client::{Client, api::system::GetDailyStatSummaryRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Default — last 30 days
     /// let stats = client.system()
     ///     .get_daily_stat_summary(GetDailyStatSummaryRequest::new())
@@ -85,7 +86,7 @@ impl<'a> SystemApi<'a> {
     }
 }
 
-#[derive(Default, Serialize, Validate)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct GetDailyStatSummaryRequest {
     #[validate(range(min = 1, max = 365))]
     #[serde(skip_serializing_if = "Option::is_none")]

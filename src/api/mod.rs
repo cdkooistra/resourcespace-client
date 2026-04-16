@@ -8,7 +8,7 @@ pub mod user;
 
 use serde::Serialize;
 
-#[derive(Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SortOrder {
     Asc,
