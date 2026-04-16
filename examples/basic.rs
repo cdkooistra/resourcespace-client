@@ -1,5 +1,6 @@
 use resourcespace_client::Client;
-use resourcespace_client::api::search::{DoSearchRequest, SearchSort};
+use resourcespace_client::api::SortOrder;
+use resourcespace_client::api::search::DoSearchRequest;
 use resourcespace_client::api::system::GetDailyStatSummaryRequest;
 use resourcespace_client::api::message::GetUserMessageRequest;
 
@@ -22,7 +23,7 @@ async fn main() {
         .expect("Error when building client");
 
     let search_result = client.search()
-        .do_search(DoSearchRequest::new("909").sort(SearchSort::Asc))
+        .do_search(DoSearchRequest::new("909").sort(SortOrder::Asc))
         .await;
 
     match search_result {
@@ -39,13 +40,13 @@ async fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    let message_result = client.message()
-        .get_user_message(GetUserMessageRequest::new(12))
-        .await;
+    // let message_result = client.message()
+    //     .get_user_message(GetUserMessageRequest::new(12))
+    //     .await;
 
-    match message_result {
-        Ok(response) => println!("{:#?}", response),
-        Err(e) => println!("Error: {}", e),
-    }
+    // match message_result {
+    //     Ok(response) => println!("{:#?}", response),
+    //     Err(e) => println!("Error: {}", e),
+    // }
 
 }

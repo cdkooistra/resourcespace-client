@@ -5,6 +5,7 @@ use crate::error::RsError;
 
 use super::SortOrder;
 
+/// Sub-API for collection endpoints.
 pub struct CollectionApi<'a> {
     client: &'a Client,
 }
@@ -53,10 +54,10 @@ impl<'a> CollectionApi<'a> {
             .await
     }
 
-    /// Add a resource to a collection.
+    /// Remove a resource from a collection.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DeleteResourceFromCollectionRequest`]
+    /// * `request` - Parameters built via [`RemoveResourceFromCollectionRequest`]
     ///
     /// ## Returns
     /// True or false depending on operation success.
@@ -66,7 +67,7 @@ impl<'a> CollectionApi<'a> {
     /// ## TODO: Examples
     pub async fn remove_resource_from_collection(
         &self,
-        request: DeleteResourceFromCollectionRequest,
+        request: RemoveResourceFromCollectionRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("remove_resource_from_collection", reqwest::Method::POST, request)
@@ -92,6 +93,7 @@ impl<'a> CollectionApi<'a> {
             .send_request("create_collection", reqwest::Method::POST, request)
             .await
     }
+    
     /// Deletes a collection. The user must have write access to this collection.
     ///
     /// ## Arguments
@@ -294,12 +296,12 @@ impl AddResourceToCollectionRequest {
 }
 
 #[derive(Serialize)]
-pub struct DeleteResourceFromCollectionRequest {
+pub struct RemoveResourceFromCollectionRequest {
     resource: u32,
     collection: u32,
 }
 
-impl DeleteResourceFromCollectionRequest {
+impl RemoveResourceFromCollectionRequest {
     pub fn new(resource: u32, collection: u32) -> Self {
         Self { resource, collection }
     }

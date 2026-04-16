@@ -7,6 +7,7 @@ pub struct MetadataApi<'a> {
     client: &'a Client,
 }
 
+/// Sub-API for metadata endpoints.
 impl<'a> MetadataApi<'a> {
     pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }

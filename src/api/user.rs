@@ -7,6 +7,7 @@ pub struct UserApi<'a> {
     client: &'a Client,
 }
 
+/// Sub-API for user endpoints.
 impl<'a> UserApi<'a> {
     pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }

@@ -19,6 +19,9 @@ impl<'a> SystemApi<'a> {
     /// ## Arguments
     /// `None`
     /// 
+    /// ## Returns
+    /// Returns back system status information (configuration dependant - e.g mysql_log_transactions).
+    /// 
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::RsClient;
@@ -39,6 +42,10 @@ impl<'a> SystemApi<'a> {
     /// 
     /// ## Arguments
     /// * `request` - Parameters built via [`GetDailyStatSummaryRequest`]
+    /// 
+    /// ## Returns
+    /// 
+    /// Returns an array of daily statistics.
     /// 
     /// ## TODO: Errors
     /// 
@@ -69,11 +76,11 @@ impl<'a> SystemApi<'a> {
             .await
     }
 
-    pub async fn get_reports() -> Result<serde_json::Value, RsError> {
+    pub async fn get_reports(&self) -> Result<serde_json::Value, RsError> {
         todo!("available from RS v11.0")
     }
 
-    pub async fn do_report() -> Result<serde_json::Value, RsError> {
+    pub async fn do_report(&self) -> Result<serde_json::Value, RsError> {
         todo!("available from RS v11.0")
     }
 }

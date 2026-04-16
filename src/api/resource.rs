@@ -9,6 +9,7 @@ pub struct ResourceApi<'a> {
     client: &'a Client,
 }
 
+/// Sub-API for resource endpoints.
 impl<'a> ResourceApi<'a> {
     pub(crate) fn new(client: &'a Client) -> Self {
         Self { client }
@@ -995,11 +996,11 @@ impl GetResourceCollectionsRequest {
 
 #[derive(Serialize)]
 pub struct ValidateUploadUrlRequest {
-    url: u32,
+    url: String,
 }
 
 impl ValidateUploadUrlRequest {
-    pub fn new(url: u32) -> Self {
-        Self { url }
+    pub fn new(url: impl Into<String>) -> Self {
+        Self { url: url.into() }
     }
 }
