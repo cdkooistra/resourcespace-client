@@ -1,4 +1,4 @@
-use resourcespace_client::Client;
+use resourcespace_client::client::Client;
 use resourcespace_client::api::SortOrder;
 use resourcespace_client::api::search::DoSearchRequest;
 use resourcespace_client::api::system::GetDailyStatSummaryRequest;

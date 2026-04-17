@@ -394,7 +394,29 @@ impl<'a> ResourceApi<'a> {
             .await
     }
 
-    // TODO: replace_resource_file — requires multipart support
+    /// Replaces the primary resource file for a given resource.
+    ///
+    /// The file location must be accessible without authentication from the RS server —
+    /// either a local path or a publicly accessible URL.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`ReplaceResourceFileRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// A JSON encoded array with `Status` (SUCCESS/FAILED) and `Message`.
+    ///
+    /// ## TODO: Errors
+    ///
+    /// ## TODO: Examples
+    pub async fn replace_resource_file(
+        &self,
+        request: ReplaceResourceFileRequest,
+    ) -> Result<serde_json::Value, RsError> {
+        self.client
+            .send_request("replace_resource_file", reqwest::Method::POST, request)
+            .await
+    }
 
     /// Check if a resource file is read-only due to filestore template threshold configuration.
     ///
@@ -439,10 +461,81 @@ impl<'a> ResourceApi<'a> {
             .send_request("resource_log_last_rows", reqwest::Method::GET, request)
             .await
     }
+  
+    /// Uploads a file from a local server path to an existing resource.
+    ///
+    /// The path must be local to the RS server. See `$valid_upload_paths` in RS config
+    /// if using a custom upload path.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`UploadFileRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// True or false depending on operation success.
+    ///
+    /// ## TODO: Errors
+    ///
+    /// ## TODO: Examples
+    pub async fn upload_file(
+        &self,
+        request: UploadFileRequest,
+    ) -> Result<serde_json::Value, RsError> {
+        self.client
+            .send_request("upload_file", reqwest::Method::POST, request)
+            .await
+    }
 
-    // TODO: upload_file            — requires multipart support
-    // TODO: upload_file_by_url     — requires multipart support
-    // TODO: upload_multipart       — requires multipart support
+    /// Uploads a remote file to an existing resource by URL.
+    ///
+    /// RS fetches the file server-side. The URL hostname must be allowed via
+    /// `$api_upload_urls` in RS config.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`UploadFileByUrlRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// True or false depending on operation success.
+    ///
+    /// ## TODO: Errors
+    ///
+    /// ## TODO: Examples
+    pub async fn upload_file_by_url(
+        &self,
+        request: UploadFileByUrlRequest,
+    ) -> Result<serde_json::Value, RsError> {
+        self.client
+            .send_request("upload_file_by_url", reqwest::Method::POST, request)
+            .await
+    }
+
+    /// Uploads files using HTTP multipart to an existing resource, replacing any file that is already attached.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`UploadMultipartRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// 204 if succesful other status codes (413, 400, 500) if not
+    ///
+    /// ## TODO: Errors
+    ///
+    /// ## TODO: Examples
+    pub async fn upload_multipart(
+        &self,
+        request: UploadMultipartRequest,
+        file: impl AsRef<std::path::Path>,
+    ) -> Result<serde_json::Value, RsError>
+    {
+        self.client
+            .send_multipart_request(
+                "upload_multipart",
+                request, 
+                file.as_ref()
+            )
+            .await
+    }
 
     /// Add or remove resource relationships.
     ///
@@ -506,7 +599,7 @@ impl<'a> ResourceApi<'a> {
             .send_request("get_resource_collections", reqwest::Method::GET, request)
             .await
     }
-    // TODO: 
+
     /// Validate a URL supplied in the create_resource or upload_file_by_url API calls.
     /// 
     /// Requires the URL hostname to be added in the config option $api_upload_urls, for example:
@@ -894,6 +987,43 @@ impl RelateAllResourcesRequest {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+pub struct ReplaceResourceFileRequest {
+    resource: u32,
+    file_location: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    no_exif: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    autorotate: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    keep_original: Option<u8>,
+}
+
+impl ReplaceResourceFileRequest {
+    pub fn new(resource: u32, file_location: impl Into<String>) -> Self {
+        Self {
+            resource,
+            file_location: file_location.into(),
+            ..Default::default()
+        }
+    }
+
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif as u8);
+        self
+    }
+
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate as u8);
+        self
+    }
+
+    pub fn keep_original(mut self, keep_original: bool) -> Self {
+        self.keep_original = Some(keep_original as u8);
+        self
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResourceFileReadonlyRequest {
     #[serde(rename = "ref")]
@@ -952,10 +1082,122 @@ impl ResourceLogLastRowsRequest {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
+pub struct UploadFileRequest {
+    #[serde(rename = "ref")]
+    r#ref: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    no_exif: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    revert: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    autorotate: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    file_path: Option<String>,
+}
+
+impl UploadFileRequest {
+    pub fn new(r#ref: u32) -> Self {
+        Self { r#ref, ..Default::default() }
+    }
+
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif as u8);
+        self
+    }
+
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert as u8);
+        self
+    }
+
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate as u8);
+        self
+    }
+
+    pub fn file_path(mut self, file_path: impl Into<String>) -> Self {
+        self.file_path = Some(file_path.into());
+        self
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+pub struct UploadFileByUrlRequest {
+    #[serde(rename = "ref")]
+    r#ref: u32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    no_exif: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    revert: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    autorotate: Option<u8>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    url: Option<String>,
+}
+
+impl UploadFileByUrlRequest {
+    pub fn new(r#ref: u32) -> Self {
+        Self { r#ref, ..Default::default() }
+    }
+
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif as u8);
+        self
+    }
+
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert as u8);
+        self
+    }
+
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate as u8);
+        self
+    }
+
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = Some(url.into());
+        self
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+pub struct UploadMultipartRequest {
+    #[serde(rename = "ref")]
+    r#ref: u32,
+    no_exif: u8,
+    revert: u8,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    previewonly: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    alternative: Option<u32>,
+}
+
+impl UploadMultipartRequest {
+    pub fn new(r#ref: u32, no_exif: bool, revert: bool) -> Self {
+        Self { 
+            r#ref, 
+            no_exif: no_exif as u8,
+            revert: revert as u8,
+            ..Default::default()
+        }
+    }
+    pub fn previewonly(mut self, previewonly: bool) -> Self {
+        self.previewonly = Some(previewonly);
+        self
+    }
+
+    pub fn alternative(mut self, alternative: u32) -> Self {
+        self.alternative = Some(alternative);
+        self
+    }
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UpdateRelatedResourceRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
-    related: String, // TODO: CSV of T
+    related: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     add: Option<u8>,
 }

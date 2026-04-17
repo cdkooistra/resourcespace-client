@@ -1,5 +1,6 @@
 use std::time::Duration;
 use serde::{Serialize};
+use serde_json::json;
 use url::Url;
 use sha2::{Sha256, Digest};
 use secrecy::{ExposeSecret, SecretString};
@@ -41,6 +42,16 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
         .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
 }
 
+/// some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
+/// for now just try to parse and hope for the best. Montala stated they are working on an OpenAPI spec
+/// for the api which should allow for much better handling in the future.
+/// So, for now, responses can be:
+/// - JSON arrays
+/// - JSON objects
+/// - Plain true/false strings
+/// - Raw integers (resource IDs)
+/// - "FAILED: ..." strings for certain errors, even with 200 status code
+/// - "Invalid signature" strings, even with 200 status code
 #[derive(Debug)]
 pub struct Client {
     base_url: Url,
@@ -103,19 +114,6 @@ impl Client {
             _ => return Err(RsError::Other("Unsupported HTTP method".into())),
         }.map_err(RsError::Http)?;
 
-        // TODO: response handling is very inconsistent due to the nature of RS responses:
-        // some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
-        // for now just try to parse and hope for the best. Montala stated they are working on an OpenAPI spec
-        // for the api which should allow for much better handling in the future
-
-        // So, for now, responses can be:
-        // - JSON arrays
-        // - JSON objects
-        // - Plain true/false strings
-        // - Raw integers (resource IDs)
-        // - "FAILED: ..." strings for certain errors, even with 200 status code
-        // - "Invalid signature" strings, even with 200 status code
-
         // 1. check HTTP status before touching the body
         if !response.status().is_success() {
             return Err(RsError::Api {
@@ -146,6 +144,53 @@ impl Client {
             .unwrap_or_else(|_| serde_json::Value::String(trimmed.to_string()));
 
         Ok(json)
+    }
+
+    pub(crate) async fn send_multipart_request<P>(
+        &self,
+        function: &str,
+        params: P,
+        file: &std::path::Path,
+    ) -> Result<serde_json::Value, RsError>
+    where P: Serialize
+    {
+        let (user, key, authmode) = match &self.auth {
+            Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
+            Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
+        };
+
+        // Build query string — same as regular POST, file is NOT included
+        let req = ApiRequest { user, function, params };
+        let query = build_query(&req)?;
+        let signature = sign(key, &query);
+
+        let full_url = format!("{}api/", self.base_url);
+
+        let response = self.client
+            .post(&full_url)
+            .multipart(reqwest::multipart::Form::new()
+                .text("user", user.clone())
+                .text("query", query)
+                .text("sign", signature)
+                .text("authmode", authmode.to_string())
+                .file("file", file)
+                .await
+                .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?
+            )
+            .send()
+            .await
+            .map_err(RsError::Http)?;
+
+        if !response.status().is_success() {
+            return Err(RsError::Api {
+                status: response.status().as_u16(),
+                message: response.text().await.unwrap_or_default(),
+            })
+        }
+
+        let text = response.text().await.map_err(RsError::Http)?;
+
+        Ok(json!(text))
     }
 
     // Sub-APIs
