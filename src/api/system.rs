@@ -89,9 +89,10 @@ impl<'a> SystemApi<'a> {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct GetDailyStatSummaryRequest {
+    /// Number of past days to include in the summary (1–365). Defaults to 30 when omitted.
     #[validate(range(min = 1, max = 365))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    days: Option<u16>,
+    pub days: Option<u16>,
 }
 
 impl GetDailyStatSummaryRequest {

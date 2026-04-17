@@ -47,8 +47,9 @@ impl<'a> MessageApi<'a> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUserMessageRequest {
+    /// The ID of the message to retrieve.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl GetUserMessageRequest {

@@ -625,22 +625,29 @@ impl<'a> ResourceApi<'a> {
 }
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-/// Note that the file parameter here may be a physical path (to the server) or a remote URL.
 pub struct AddAlternativeFileRequest {
-    resource: u32,
-    name: String,
+    /// The ID of the resource to attach the alternative file to.
+    pub resource: u32,
+    /// Display name for the alternative file.
+    pub name: String,
+    /// Optional description of the alternative file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    description: Option<String>,
+    pub description: Option<String>,
+    /// Original file name of the alternative file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    file_name: Option<String>,
+    pub file_name: Option<String>,
+    /// File extension of the alternative file (e.g. `"pdf"`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    file_extension: Option<String>,
+    pub file_extension: Option<String>,
+    /// Size of the file in bytes.
     #[serde(skip_serializing_if = "Option::is_none")]
-    file_size: Option<u64>,
+    pub file_size: Option<u64>,
+    /// Alternative file type identifier used to categorise the file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    alt_type: Option<String>,
+    pub alt_type: Option<String>,
+    /// Local server path or publicly accessible URL of the file to attach.
     #[serde(skip_serializing_if = "Option::is_none")]
-    file: Option<String>,
+    pub file: Option<String>,
 }
 
 impl AddAlternativeFileRequest {
@@ -685,9 +692,11 @@ impl AddAlternativeFileRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CopyResourceRequest {
-    from: u32,
+    /// The ID of the resource to copy.
+    pub from: u32,
+    /// Resource type ID to assign to the copy; defaults to the source resource type if omitted.
     #[serde(skip_serializing_if = "Option::is_none")]
-    resource_type: Option<u32>,
+    pub resource_type: Option<u32>,
 }
 
 impl CopyResourceRequest {
@@ -706,17 +715,23 @@ impl CopyResourceRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CreateResourceRequest {
-    resource_type: u32,
+    /// The resource type ID for the new resource.
+    pub resource_type: u32,
+    /// Initial archive state: 0 = live, 1 = archived, 2 = deleted.
     #[serde(skip_serializing_if = "Option::is_none")]
-    archive: Option<i16>,
+    pub archive: Option<i16>,
+    /// URL of a remote file to attach to the resource at creation time.
     #[serde(skip_serializing_if = "Option::is_none")]
-    url: Option<String>,
+    pub url: Option<String>,
+    /// If 1, skips reading EXIF data from the attached file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    no_exif: Option<u8>,
+    pub no_exif: Option<u8>,
+    /// If 1, automatically rotates the image based on EXIF orientation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    autorotate: Option<u8>,
+    pub autorotate: Option<u8>,
+    /// JSON-encoded metadata fields to set on the resource at creation time.
     #[serde(skip_serializing_if = "Option::is_none")]
-    metadata: Option<String>,
+    pub metadata: Option<String>,
 }
 
 impl CreateResourceRequest {
@@ -755,9 +770,11 @@ impl CreateResourceRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteAlternativeFile {
-    resource: u32,
+    /// The ID of the resource the alternative file belongs to.
+    pub resource: u32,
+    /// The ID of the alternative file to delete.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl DeleteAlternativeFile {
@@ -768,7 +785,8 @@ impl DeleteAlternativeFile {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourceRequest {
-    resource: u32,
+    /// The ID of the resource to delete.
+    pub resource: u32,
 }
 
 impl DeleteResourceRequest {
@@ -779,13 +797,17 @@ impl DeleteResourceRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetAlternativeFilesRequest {
-    resource: u32,
+    /// The ID of the resource whose alternative files should be returned.
+    pub resource: u32,
+    /// Field name to order the alternative files by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    orderby: Option<String>,
+    pub orderby: Option<String>,
+    /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SortOrder>,
+    pub sort: Option<SortOrder>,
+    /// Filter results to only alternative files of this type.
     #[serde(skip_serializing_if = "Option::is_none")]
-    r#type: Option<String>,
+    pub r#type: Option<String>,
 }
 
 impl GetAlternativeFilesRequest {
@@ -814,7 +836,8 @@ impl GetAlternativeFilesRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetEditAccessRequest {
-    resource: u32,
+    /// The ID of the resource to check edit access for.
+    pub resource: u32,
 }
 
 impl GetEditAccessRequest {
@@ -825,8 +848,9 @@ impl GetEditAccessRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetRelatedResourcesRequest {
+    /// The ID of the resource whose related resources should be returned.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl GetRelatedResourcesRequest {
@@ -837,7 +861,8 @@ impl GetRelatedResourcesRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAccessRequest {
-    resource: u32,
+    /// The ID of the resource to retrieve the access level for.
+    pub resource: u32,
 }
 
 impl GetResourceAccessRequest {
@@ -848,7 +873,8 @@ impl GetResourceAccessRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAllImageSizesRequest {
-    resource: u32,
+    /// The ID of the resource to retrieve available preview sizes for.
+    pub resource: u32,
 }
 
 impl GetResourceAllImageSizesRequest {
@@ -859,9 +885,11 @@ impl GetResourceAllImageSizesRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceCommentsRequest {
-    resource_ref: u32,
+    /// The ID of the resource to retrieve comments for.
+    pub resource_ref: u32,
+    /// If set, returns comments as a flat list rather than a threaded tree.
     #[serde(skip_serializing_if = "Option::is_none")]
-    flat_view: Option<bool>,
+    pub flat_view: Option<bool>,
 }
 
 impl GetResourceCommentsRequest {
@@ -880,7 +908,8 @@ impl GetResourceCommentsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceDataRequest {
-    resource: u32,
+    /// The ID of the resource to retrieve top-level property data for.
+    pub resource: u32,
 }
 
 impl GetResourceDataRequest {
@@ -891,7 +920,8 @@ impl GetResourceDataRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceFieldDataRequest {
-    resource: u32,
+    /// The ID of the resource to retrieve full metadata field data for.
+    pub resource: u32,
 }
 
 impl GetResourceFieldDataRequest {
@@ -902,9 +932,11 @@ impl GetResourceFieldDataRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceLogRequest {
-    resource: u32,
+    /// The ID of the resource whose log entries should be returned.
+    pub resource: u32,
+    /// Maximum number of log rows to return.
     #[serde(skip_serializing_if = "Option::is_none")]
-    fetchrows: Option<u32>,
+    pub fetchrows: Option<u32>,
 }
 
 impl GetResourceLogRequest {
@@ -923,22 +955,30 @@ impl GetResourceLogRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourcePathRequest {
+    /// The ID of the resource to generate a download URL for.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
+    /// Preview size to retrieve (e.g. `"thm"`, `"scr"`, `"pre"`). Omit for the original file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    size: Option<String>,
+    pub size: Option<String>,
+    /// If 1, generates the preview if it does not yet exist.
     #[serde(skip_serializing_if = "Option::is_none")]
-    generate: Option<u8>,
+    pub generate: Option<u8>,
+    /// Override the file extension of the returned URL.
     #[serde(skip_serializing_if = "Option::is_none")]
-    extension: Option<String>,
+    pub extension: Option<String>,
+    /// Page number for multi-page resources (e.g. PDF).
     #[serde(skip_serializing_if = "Option::is_none")]
-    page: Option<u32>,
+    pub page: Option<u32>,
+    /// If 1, returns a URL to the watermarked version of the file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    watermarked: Option<u8>,
+    pub watermarked: Option<u8>,
+    /// ID of the alternative file to return a URL for, or -1 for the original.
     #[serde(skip_serializing_if = "Option::is_none")]
-    alternative: Option<i32>,
+    pub alternative: Option<i32>,
+    /// If set, writes embedded metadata into the file before returning the URL.
     #[serde(skip_serializing_if = "Option::is_none")]
-    write_metadata: Option<bool>,
+    pub write_metadata: Option<bool>,
 }
 
 impl GetResourcePathRequest {
@@ -987,8 +1027,10 @@ impl GetResourcePathRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PutResourceDataRequest {
-    resource: u32,
-    data: String,
+    /// The ID of the resource to update.
+    pub resource: u32,
+    /// JSON-encoded object mapping column names to new values.
+    pub data: String,
 }
 
 impl PutResourceDataRequest {
@@ -1002,7 +1044,8 @@ impl PutResourceDataRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RelateAllResourcesRequest {
-    related: String,
+    /// Comma-separated list of resource IDs to relate with each other.
+    pub related: String,
 }
 
 impl RelateAllResourcesRequest {
@@ -1015,14 +1058,19 @@ impl RelateAllResourcesRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ReplaceResourceFileRequest {
-    resource: u32,
-    file_location: String,
+    /// The ID of the resource whose file should be replaced.
+    pub resource: u32,
+    /// Local server path or publicly accessible URL of the replacement file.
+    pub file_location: String,
+    /// If 1, skips reading EXIF data from the replacement file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    no_exif: Option<u8>,
+    pub no_exif: Option<u8>,
+    /// If 1, automatically rotates the image based on EXIF orientation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    autorotate: Option<u8>,
+    pub autorotate: Option<u8>,
+    /// If 1, retains the previous file as an alternative file rather than deleting it.
     #[serde(skip_serializing_if = "Option::is_none")]
-    keep_original: Option<u8>,
+    pub keep_original: Option<u8>,
 }
 
 impl ReplaceResourceFileRequest {
@@ -1052,8 +1100,9 @@ impl ReplaceResourceFileRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResourceFileReadonlyRequest {
+    /// The ID of the resource to check for read-only file status.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl ResourceFileReadonlyRequest {
@@ -1064,16 +1113,21 @@ impl ResourceFileReadonlyRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ResourceLogLastRowsRequest {
+    /// Only return log entries with a ref greater than this value.
     #[serde(skip_serializing_if = "Option::is_none")]
-    minref: Option<u32>,
+    pub minref: Option<u32>,
+    /// Only return log entries from the last N days.
     #[serde(skip_serializing_if = "Option::is_none")]
-    days: Option<u32>,
+    pub days: Option<u32>,
+    /// Maximum number of log entries to return.
     #[serde(skip_serializing_if = "Option::is_none")]
-    maxrecords: Option<u32>,
+    pub maxrecords: Option<u32>,
+    /// Filter entries to those affecting this metadata field ID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    field: Option<String>,
+    pub field: Option<String>,
+    /// Filter entries by log code (e.g. `"FD"` for field data changes).
     #[serde(skip_serializing_if = "Option::is_none")]
-    log_code: Option<String>,
+    pub log_code: Option<String>,
 }
 
 impl ResourceLogLastRowsRequest {
@@ -1109,16 +1163,21 @@ impl ResourceLogLastRowsRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UploadFileRequest {
+    /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
+    /// If 1, skips reading EXIF data from the uploaded file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    no_exif: Option<u8>,
+    pub no_exif: Option<u8>,
+    /// If 1, reverts to the original file instead of uploading a new one.
     #[serde(skip_serializing_if = "Option::is_none")]
-    revert: Option<u8>,
+    pub revert: Option<u8>,
+    /// If 1, automatically rotates the image based on EXIF orientation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    autorotate: Option<u8>,
+    pub autorotate: Option<u8>,
+    /// Local server path of the file to upload (must be within `$valid_upload_paths`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    file_path: Option<String>,
+    pub file_path: Option<String>,
 }
 
 impl UploadFileRequest {
@@ -1152,16 +1211,21 @@ impl UploadFileRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UploadFileByUrlRequest {
+    /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
+    /// If 1, skips reading EXIF data from the downloaded file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    no_exif: Option<u8>,
+    pub no_exif: Option<u8>,
+    /// If 1, reverts to the original file instead of uploading a new one.
     #[serde(skip_serializing_if = "Option::is_none")]
-    revert: Option<u8>,
+    pub revert: Option<u8>,
+    /// If 1, automatically rotates the image based on EXIF orientation.
     #[serde(skip_serializing_if = "Option::is_none")]
-    autorotate: Option<u8>,
+    pub autorotate: Option<u8>,
+    /// Publicly accessible URL for the RS server to fetch and attach (hostname must be in `$api_upload_urls`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    url: Option<String>,
+    pub url: Option<String>,
 }
 
 impl UploadFileByUrlRequest {
@@ -1195,14 +1259,19 @@ impl UploadFileByUrlRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UploadMultipartRequest {
+    /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    r#ref: u32,
-    no_exif: u8,
-    revert: u8,
+    pub r#ref: u32,
+    /// If 1, skips reading EXIF data from the uploaded file.
+    pub no_exif: u8,
+    /// If 1, reverts to the original file instead of uploading a new one.
+    pub revert: u8,
+    /// If set, only generates a preview without replacing the stored file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    previewonly: Option<bool>,
+    pub previewonly: Option<bool>,
+    /// ID of an alternative file slot to upload into instead of the primary file.
     #[serde(skip_serializing_if = "Option::is_none")]
-    alternative: Option<u32>,
+    pub alternative: Option<u32>,
 }
 
 impl UploadMultipartRequest {
@@ -1227,11 +1296,14 @@ impl UploadMultipartRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UpdateRelatedResourceRequest {
+    /// The ID of the resource to update relationships for.
     #[serde(rename = "ref")]
-    r#ref: u32,
-    related: String,
+    pub r#ref: u32,
+    /// Comma-separated list of resource IDs to add or remove as related resources.
+    pub related: String,
+    /// If 1, adds the related resources; if 0, removes them.
     #[serde(skip_serializing_if = "Option::is_none")]
-    add: Option<u8>,
+    pub add: Option<u8>,
 }
 
 impl UpdateRelatedResourceRequest {
@@ -1252,8 +1324,10 @@ impl UpdateRelatedResourceRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateResourceTypeRequest {
-    resource: u32,
-    resourcetype: u32,
+    /// The ID of the resource to update.
+    pub resource: u32,
+    /// The new resource type ID to assign to the resource.
+    pub resourcetype: u32,
 }
 
 impl UpdateResourceTypeRequest {
@@ -1267,8 +1341,9 @@ impl UpdateResourceTypeRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCollectionsRequest {
+    /// The ID of the resource to retrieve associated collections for.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl GetResourceCollectionsRequest {
@@ -1279,7 +1354,8 @@ impl GetResourceCollectionsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ValidateUploadUrlRequest {
-    url: String,
+    /// The URL to validate against the server's allowed `$api_upload_urls` list.
+    pub url: String,
 }
 
 impl ValidateUploadUrlRequest {

@@ -211,10 +211,12 @@ impl<'a> MetadataApi<'a> {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetFieldOptionsRequest {
+    /// The ID of the metadata field to retrieve options for.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
+    /// If set, returns additional node information alongside each option.
     #[serde(skip_serializing_if = "Option::is_none")]
-    nodeinfo: Option<bool>,
+    pub nodeinfo: Option<bool>,
 }
 
 impl GetFieldOptionsRequest {
@@ -233,8 +235,10 @@ impl GetFieldOptionsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
-    value: String,
-    resource_type_field: u32,
+    /// The name of the node to look up.
+    pub value: String,
+    /// The ID of the resource type field the node belongs to.
+    pub resource_type_field: u32,
 }
 
 impl GetNodeIdRequest {
@@ -248,22 +252,30 @@ impl GetNodeIdRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetNodesRequest {
+    /// The ID of the metadata field to retrieve nodes from.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
+    /// Restrict results to children of this parent node ID.
     #[serde(skip_serializing_if = "Option::is_none")]
-    parent: Option<u32>,
+    pub parent: Option<u32>,
+    /// If set, retrieves all descendant nodes recursively.
     #[serde(skip_serializing_if = "Option::is_none")]
-    recursive: Option<bool>,
+    pub recursive: Option<bool>,
+    /// Number of nodes to skip, used for pagination.
     #[serde(skip_serializing_if = "Option::is_none")]
-    offset: Option<u32>,
+    pub offset: Option<u32>,
+    /// Maximum number of nodes to return.
     #[serde(skip_serializing_if = "Option::is_none")]
-    rows: Option<u32>,
+    pub rows: Option<u32>,
+    /// Filter nodes by name (partial match).
     #[serde(skip_serializing_if = "Option::is_none")]
-    name: Option<String>,
+    pub name: Option<String>,
+    /// If set, includes the number of resources using each node.
     #[serde(skip_serializing_if = "Option::is_none")]
-    use_count: Option<bool>,
+    pub use_count: Option<bool>,
+    /// If true, orders results by the translated node name.
     #[serde(skip_serializing_if = "Option::is_none")]
-    order_by_translated_name: Option<bool>,
+    pub order_by_translated_name: Option<bool>,
 }
 
 impl GetNodesRequest {
@@ -312,8 +324,10 @@ impl GetNodesRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
-    resource: u32,      // Resource ID to add nodes to
-    nodestring: String, // List of node IDs to add (comma separated)
+    /// The ID of the resource to add nodes to.
+    pub resource: u32,
+    /// Comma-separated list of node IDs to add to the resource.
+    pub nodestring: String,
 }
 
 impl AddResourceNodesRequest {
@@ -327,14 +341,16 @@ impl AddResourceNodesRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
-    resourceid: String,
-    nodes: String,
+    /// Comma-separated list of resource IDs to add nodes to.
+    pub resourceid: String,
+    /// Comma-separated list of node IDs to add to each resource.
+    pub nodes: String,
 }
 
 impl AddResourceNodesMultiRequest {
     pub fn new(
-        resourceid: impl Into<String>, // List of resource IDs to add nodes to (comma separated)
-        nodes: impl Into<String>,      // List of node IDs to add (comma separated)
+        resourceid: impl Into<String>,
+        nodes: impl Into<String>,
     ) -> Self {
         Self {
             resourceid: resourceid.into(),
@@ -345,16 +361,22 @@ impl AddResourceNodesMultiRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SetNodeRequest {
+    /// The ID of an existing node to update, or 0 to create a new one.
     #[serde(rename = "ref")]
-    r#ref: u32,
-    resource_type_field: u32,
-    name: String,
+    pub r#ref: u32,
+    /// The ID of the resource type field this node belongs to.
+    pub resource_type_field: u32,
+    /// The name of the node.
+    pub name: String,
+    /// The ID of the parent node, if this is a child node.
     #[serde(skip_serializing_if = "Option::is_none")]
-    parent: Option<String>,
+    pub parent: Option<String>,
+    /// Position used to order this node relative to siblings.
     #[serde(skip_serializing_if = "Option::is_none")]
-    order_by: Option<u32>,
+    pub order_by: Option<u32>,
+    /// If set, returns the existing node instead of creating a duplicate.
     #[serde(skip_serializing_if = "Option::is_none")]
-    returnexisting: Option<bool>,
+    pub returnexisting: Option<bool>,
 }
 
 impl SetNodeRequest {
@@ -384,12 +406,15 @@ impl SetNodeRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceTypeFieldsRequest {
+    /// Comma-separated list of resource type IDs to filter fields by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    by_resource_types: Option<String>,
+    pub by_resource_types: Option<String>,
+    /// Search string to filter fields by name.
     #[serde(skip_serializing_if = "Option::is_none")]
-    find: Option<String>,
+    pub find: Option<String>,
+    /// Comma-separated list of field type IDs to filter by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    by_types: Option<String>,
+    pub by_types: Option<String>,
 }
 
 impl GetResourceTypeFieldsRequest {
@@ -415,9 +440,12 @@ impl GetResourceTypeFieldsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceTypeFieldRequest {
-    name: String,
-    resource_types: String,
-    r#type: String,
+    /// The name of the new metadata field.
+    pub name: String,
+    /// Comma-separated list of resource type IDs this field should apply to.
+    pub resource_types: String,
+    /// The field type (e.g. `"1"` for text, `"2"` for date, `"3"` for dropdown).
+    pub r#type: String,
 }
 
 impl CreateResourceTypeFieldRequest {
@@ -436,7 +464,8 @@ impl CreateResourceTypeFieldRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ToggleActiveStatesForNodesRequest {
-    refs: String, // TODO: API docs say this is a json encoded array
+    /// JSON-encoded array of node IDs whose active states should be toggled.
+    pub refs: String,
 }
 
 impl ToggleActiveStatesForNodesRequest {
@@ -447,11 +476,15 @@ impl ToggleActiveStatesForNodesRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct UpdateFieldRequest {
-    resource: u32,
-    field: u32,
-    value: String,
+    /// The ID of the resource to update.
+    pub resource: u32,
+    /// The ID of the metadata field to set a value on.
+    pub field: u32,
+    /// The new value to assign to the field.
+    pub value: String,
+    /// If set, treats the value as node IDs rather than a plain string.
     #[serde(skip_serializing_if = "Option::is_none")]
-    nodevalues: Option<bool>,
+    pub nodevalues: Option<bool>,
 }
 
 impl UpdateFieldRequest {

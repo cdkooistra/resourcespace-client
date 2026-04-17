@@ -93,19 +93,26 @@ impl<'a> SearchApi<'a> {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct DoSearchRequest {
-    search: String,
+    /// The search string to match resources against.
+    pub search: String,
+    /// Comma-separated list of resource type IDs to restrict results to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    restypes: Option<String>,
+    pub restypes: Option<String>,
+    /// Field name to order results by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    order_by: Option<String>,
+    pub order_by: Option<String>,
+    /// Archive status filter: 0 = live, 1 = archived, 2 = deleted.
     #[serde(skip_serializing_if = "Option::is_none")]
-    archive: Option<i8>,
+    pub archive: Option<i8>,
+    /// Number of rows to return, or `"offset,rows"` for paginated fetching.
     #[serde(skip_serializing_if = "Option::is_none")]
-    fetchrows: Option<String>,
+    pub fetchrows: Option<String>,
+    /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SortOrder>,
+    pub sort: Option<SortOrder>,
+    /// Number of results to skip, used for pagination.
     #[serde(skip_serializing_if = "Option::is_none")]
-    offset: Option<u32>,
+    pub offset: Option<u32>,
 }
 
 impl DoSearchRequest {
@@ -149,23 +156,32 @@ impl DoSearchRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
-    search: String,
+    /// The search string to match resources against.
+    pub search: String,
+    /// Comma-separated list of resource type IDs to restrict results to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    restypes: Option<String>,
+    pub restypes: Option<String>,
+    /// Field name to order results by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    order_by: Option<String>,
+    pub order_by: Option<String>,
+    /// Archive status filter: 0 = live, 1 = archived, 2 = deleted.
     #[serde(skip_serializing_if = "Option::is_none")]
-    archive: Option<i8>,
+    pub archive: Option<i8>,
+    /// Number of rows to return, or `"offset,rows"` for paginated fetching.
     #[serde(skip_serializing_if = "Option::is_none")]
-    fetchrows: Option<String>,
+    pub fetchrows: Option<String>,
+    /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SortOrder>,
+    pub sort: Option<SortOrder>,
+    /// Only return resources modified within this many days.
     #[serde(skip_serializing_if = "Option::is_none")]
-    recent_search_daylimit: Option<String>,
+    pub recent_search_daylimit: Option<String>,
+    /// Comma-separated list of preview sizes to include URLs for (e.g. `"thm,scr,pre"`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    getsizes: Option<String>,
+    pub getsizes: Option<String>,
+    /// Override the preview file extension returned (e.g. `"jpg"`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    previewext: Option<String>,
+    pub previewext: Option<String>,
 }
 
 impl SearchGetPreviewsRequest {

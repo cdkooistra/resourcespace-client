@@ -297,8 +297,10 @@ impl<'a> CollectionApi<'a> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceToCollectionRequest {
-    resource: u32,
-    collection: u32,
+    /// The ID of the resource to add.
+    pub resource: u32,
+    /// The ID of the collection to add the resource to.
+    pub collection: u32,
 }
 
 impl AddResourceToCollectionRequest {
@@ -312,8 +314,10 @@ impl AddResourceToCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RemoveResourceFromCollectionRequest {
-    resource: u32,
-    collection: u32,
+    /// The ID of the resource to remove.
+    pub resource: u32,
+    /// The ID of the collection to remove the resource from.
+    pub collection: u32,
 }
 
 impl RemoveResourceFromCollectionRequest {
@@ -327,9 +331,11 @@ impl RemoveResourceFromCollectionRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct CreateCollectionRequest {
-    name: String,
+    /// The name of the new collection.
+    pub name: String,
+    /// If set, marks this collection as an upload collection.
     #[serde(skip_serializing_if = "Option::is_none")]
-    forupload: Option<u8>,
+    pub forupload: Option<u8>,
 }
 
 impl CreateCollectionRequest {
@@ -348,7 +354,8 @@ impl CreateCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCollectionRequest {
-    collection: u32,
+    /// The ID of the collection to delete.
+    pub collection: u32,
 }
 
 impl DeleteCollectionRequest {
@@ -359,14 +366,18 @@ impl DeleteCollectionRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchPublicCollectionsRequest {
+    /// Optional search string to filter collections by name.
     #[serde(skip_serializing_if = "Option::is_none")]
-    search: Option<String>,
+    pub search: Option<String>,
+    /// Field name to order results by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    order_by: Option<String>,
+    pub order_by: Option<String>,
+    /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
-    sort: Option<SortOrder>,
+    pub sort: Option<SortOrder>,
+    /// If set, excludes theme/featured collections from results.
     #[serde(skip_serializing_if = "Option::is_none")]
-    exclude_themes: Option<u8>,
+    pub exclude_themes: Option<u8>,
 }
 
 impl SearchPublicCollectionsRequest {
@@ -397,8 +408,9 @@ impl SearchPublicCollectionsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionRequest {
+    /// The ID of the collection to retrieve.
     #[serde(rename = "ref")]
-    r#ref: u32,
+    pub r#ref: u32,
 }
 
 impl GetCollectionRequest {
@@ -409,9 +421,11 @@ impl GetCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveCollectionRequest {
+    /// The ID of the collection to save.
     #[serde(rename = "ref")]
-    r#ref: u32,
-    coldata: serde_json::Value,
+    pub r#ref: u32,
+    /// JSON object containing the collection fields to update (e.g. name, description, public).
+    pub coldata: serde_json::Value,
 }
 
 impl SaveCollectionRequest {
@@ -422,9 +436,12 @@ impl SaveCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ShowHideCollectionRequest {
-    collection: u32,
-    show: u8,
-    user: u32,
+    /// The ID of the collection to show or hide.
+    pub collection: u32,
+    /// If set, shows the collection in the drop-down list.
+    pub show: u8,
+    /// The ID of the user whose drop-down list is being updated.
+    pub user: u32,
 }
 
 impl ShowHideCollectionRequest {
@@ -439,7 +456,8 @@ impl ShowHideCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SendCollectionToAdminRequest {
-    collection: u32,
+    /// The ID of the collection to send to the administrator for review.
+    pub collection: u32,
 }
 
 impl SendCollectionToAdminRequest {
@@ -450,7 +468,8 @@ impl SendCollectionToAdminRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFeaturedCollectionsRequest {
-    parent: u32,
+    /// The ID of the parent featured collection (category) to retrieve children for. Use 0 for top-level.
+    pub parent: u32,
 }
 
 impl GetFeaturedCollectionsRequest {
@@ -461,7 +480,8 @@ impl GetFeaturedCollectionsRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourcesInCollectionRequest {
-    collection: u32,
+    /// The ID of the collection whose resources should all be deleted.
+    pub collection: u32,
 }
 
 impl DeleteResourcesInCollectionRequest {
@@ -472,7 +492,8 @@ impl DeleteResourcesInCollectionRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {
-    refs: String,
+    /// Comma-separated list of collection IDs to retrieve resource counts for.
+    pub refs: String,
 }
 
 impl GetCollectionsResourceCountRequest {

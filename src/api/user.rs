@@ -145,7 +145,8 @@ impl<'a> UserApi<'a> {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CheckpermRequest {
-    perm: String,
+    /// The permission string to check (e.g. `"a"` for admin, `"e"` for edit).
+    pub perm: String,
 }
 
 impl CheckpermRequest {
@@ -156,10 +157,12 @@ impl CheckpermRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersRequest {
+    /// Search string to filter users by name or username.
     #[serde(skip_serializing_if = "Option::is_none")]
-    find: Option<String>,
+    pub find: Option<String>,
+    /// If set, only returns users whose username exactly matches `find`.
     #[serde(skip_serializing_if = "Option::is_none")]
-    exact_username_match: Option<bool>,
+    pub exact_username_match: Option<bool>,
 }
 
 impl GetUsersRequest {
@@ -180,7 +183,8 @@ impl GetUsersRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersByPermissionRequest {
-    permissions: Vec<String>,
+    /// List of permission strings; only users holding all of these are returned.
+    pub permissions: Vec<String>,
 }
 
 impl GetUsersByPermissionRequest {
@@ -191,7 +195,8 @@ impl GetUsersByPermissionRequest {
 
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct MarkEmailAsInvalidRequest {
-    email: String,
+    /// The email address to mark as invalid.
+    pub email: String,
 }
 
 impl MarkEmailAsInvalidRequest {
@@ -204,9 +209,11 @@ impl MarkEmailAsInvalidRequest {
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize)]
 pub struct NewUserRequest {
-    username: String,
+    /// The username for the new user account.
+    pub username: String,
+    /// The ID of the user group to assign this user to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    usergroup: Option<u32>,
+    pub usergroup: Option<u32>,
 }
 
 impl NewUserRequest {
@@ -225,9 +232,11 @@ impl NewUserRequest {
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveUserRequest {
+    /// The ID of the user to update.
     #[serde(rename = "ref")]
-    r#ref: u32,
-    data: serde_json::Value,
+    pub r#ref: u32,
+    /// JSON object containing the user fields to save (e.g. fullname, email, usergroup).
+    pub data: serde_json::Value,
 }
 
 impl SaveUserRequest {
