@@ -17,10 +17,10 @@ impl<'a> CollectionApi<'a> {
     }
 
     /// Returns a list of the user's collections.
-    /// 
+    ///
     /// ## Arguments
     /// `None`
-    /// 
+    ///
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
@@ -71,7 +71,11 @@ impl<'a> CollectionApi<'a> {
         request: RemoveResourceFromCollectionRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("remove_resource_from_collection", reqwest::Method::POST, request)
+            .send_request(
+                "remove_resource_from_collection",
+                reqwest::Method::POST,
+                request,
+            )
             .await
     }
 
@@ -94,7 +98,7 @@ impl<'a> CollectionApi<'a> {
             .send_request("create_collection", reqwest::Method::POST, request)
             .await
     }
-    
+
     /// Deletes a collection. The user must have write access to this collection.
     ///
     /// ## Arguments
@@ -136,7 +140,7 @@ impl<'a> CollectionApi<'a> {
     }
 
     /// Get collection details.
-    /// 
+    ///
     /// This requires administrator access ("a" permission).
     ///
     /// ## Arguments
@@ -158,7 +162,7 @@ impl<'a> CollectionApi<'a> {
     }
 
     /// Save collection data.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`SaveCollectionRequest`]
     ///
@@ -176,9 +180,9 @@ impl<'a> CollectionApi<'a> {
             .send_request("save_collection", reqwest::Method::POST, request)
             .await
     }
-    
+
     /// Shows or hides a collection from the user's drop-down list.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`ShowHideCollectionRequest`]
     ///
@@ -197,9 +201,8 @@ impl<'a> CollectionApi<'a> {
             .await
     }
 
-    
     /// Sends a copy of the collection for admin review.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`SendCollectionToAdminRequest`]
     ///
@@ -219,7 +222,7 @@ impl<'a> CollectionApi<'a> {
     }
 
     /// Get ResourceSpace featured collections (category).
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`GetFeaturedCollectionsRequest`]
     ///
@@ -239,9 +242,9 @@ impl<'a> CollectionApi<'a> {
     }
 
     /// Deletes all resources in a collection.
-    /// 
+    ///
     /// The user must have edit access to the resources, permission to delete resources and the collection must be writable.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`DeleteResourcesInCollectionRequest`]
     ///
@@ -256,7 +259,11 @@ impl<'a> CollectionApi<'a> {
         request: DeleteResourcesInCollectionRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("delete_resources_in_collection", reqwest::Method::POST, request)
+            .send_request(
+                "delete_resources_in_collection",
+                reqwest::Method::POST,
+                request,
+            )
             .await
     }
 
@@ -279,7 +286,11 @@ impl<'a> CollectionApi<'a> {
         request: GetCollectionsResourceCountRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("get_collections_resource_count", reqwest::Method::GET, request)
+            .send_request(
+                "get_collections_resource_count",
+                reqwest::Method::GET,
+                request,
+            )
             .await
     }
 }
@@ -292,7 +303,10 @@ pub struct AddResourceToCollectionRequest {
 
 impl AddResourceToCollectionRequest {
     pub fn new(resource: u32, collection: u32) -> Self {
-        Self { resource, collection }
+        Self {
+            resource,
+            collection,
+        }
     }
 }
 
@@ -304,7 +318,10 @@ pub struct RemoveResourceFromCollectionRequest {
 
 impl RemoveResourceFromCollectionRequest {
     pub fn new(resource: u32, collection: u32) -> Self {
-        Self { resource, collection }
+        Self {
+            resource,
+            collection,
+        }
     }
 }
 
@@ -312,7 +329,7 @@ impl RemoveResourceFromCollectionRequest {
 pub struct CreateCollectionRequest {
     name: String,
     #[serde(skip_serializing_if = "Option::is_none")]
-    forupload: Option<u8>
+    forupload: Option<u8>,
 }
 
 impl CreateCollectionRequest {
@@ -350,7 +367,6 @@ pub struct SearchPublicCollectionsRequest {
     sort: Option<SortOrder>,
     #[serde(skip_serializing_if = "Option::is_none")]
     exclude_themes: Option<u8>,
-
 }
 
 impl SearchPublicCollectionsRequest {
@@ -413,7 +429,11 @@ pub struct ShowHideCollectionRequest {
 
 impl ShowHideCollectionRequest {
     pub fn new(collection: u32, show: bool, user: u32) -> Self {
-        Self { collection, show: show as u8, user }
+        Self {
+            collection,
+            show: show as u8,
+            user,
+        }
     }
 }
 

@@ -45,7 +45,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn get_node_id(
         &self,
-        request: GetNodeIdRequest
+        request: GetNodeIdRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("get_node_id", reqwest::Method::GET, request)
@@ -62,10 +62,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn get_nodes(
-        &self,
-        request: GetNodesRequest
-    ) -> Result<serde_json::Value, RsError> {
+    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("get_nodes", reqwest::Method::GET, request)
             .await
@@ -83,7 +80,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn add_resource_nodes(
         &self,
-        request: AddResourceNodesRequest
+        request: AddResourceNodesRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("add_resource_nodes", reqwest::Method::POST, request)
@@ -102,7 +99,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn add_resource_nodes_multi(
         &self,
-        request: AddResourceNodesMultiRequest
+        request: AddResourceNodesMultiRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("add_resource_nodes_multi", reqwest::Method::POST, request)
@@ -119,10 +116,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn set_node(
-        &self,
-        request: SetNodeRequest
-    ) -> Result<serde_json::Value, RsError> {
+    pub async fn set_node(&self, request: SetNodeRequest) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("set_node", reqwest::Method::POST, request)
             .await
@@ -142,7 +136,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn get_resource_type_fields(
         &self,
-        request: GetResourceTypeFieldsRequest
+        request: GetResourceTypeFieldsRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("get_resource_type_fields", reqwest::Method::GET, request)
@@ -163,7 +157,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn create_resource_type_field(
         &self,
-        request: CreateResourceTypeFieldRequest
+        request: CreateResourceTypeFieldRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("create_resource_type_field", reqwest::Method::POST, request)
@@ -184,10 +178,14 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn toggle_active_state_for_nodes(
         &self,
-        request: ToggleActiveStatesForNodesRequest
+        request: ToggleActiveStatesForNodesRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("toggle_active_state_for_nodes", reqwest::Method::POST, request)
+            .send_request(
+                "toggle_active_state_for_nodes",
+                reqwest::Method::POST,
+                request,
+            )
             .await
     }
 
@@ -203,7 +201,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn update_field(
         &self,
-        request: UpdateFieldRequest
+        request: UpdateFieldRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("update_field", reqwest::Method::POST, request)
@@ -216,7 +214,7 @@ pub struct GetFieldOptionsRequest {
     #[serde(rename = "ref")]
     r#ref: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
-    nodeinfo: Option<bool>
+    nodeinfo: Option<bool>,
 }
 
 impl GetFieldOptionsRequest {
@@ -236,16 +234,14 @@ impl GetFieldOptionsRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
     value: String,
-    resource_type_field: u32
+    resource_type_field: u32,
 }
 
 impl GetNodeIdRequest {
-    pub fn new(
-        value: impl Into<String>,
-        resource_type_field: u32
-    ) -> Self {
+    pub fn new(value: impl Into<String>, resource_type_field: u32) -> Self {
         Self {
-            value: value.into(), resource_type_field
+            value: value.into(),
+            resource_type_field,
         }
     }
 }
@@ -317,30 +313,33 @@ impl GetNodesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
     resource: u32,      // Resource ID to add nodes to
-    nodestring: String  // List of node IDs to add (comma separated)
+    nodestring: String, // List of node IDs to add (comma separated)
 }
 
 impl AddResourceNodesRequest {
-    pub fn new(
-        resource: u32,
-        nodestring: impl Into<String>,
-    ) -> Self {
-        Self { resource, nodestring: nodestring.into() }
+    pub fn new(resource: u32, nodestring: impl Into<String>) -> Self {
+        Self {
+            resource,
+            nodestring: nodestring.into(),
+        }
     }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     resourceid: String,
-    nodes: String
+    nodes: String,
 }
 
 impl AddResourceNodesMultiRequest {
     pub fn new(
-        resourceid: impl Into<String>,  // List of resource IDs to add nodes to (comma separated)
-        nodes: impl Into<String>,       // List of node IDs to add (comma separated)
+        resourceid: impl Into<String>, // List of resource IDs to add nodes to (comma separated)
+        nodes: impl Into<String>,      // List of node IDs to add (comma separated)
     ) -> Self {
-        Self { resourceid: resourceid.into(), nodes: nodes.into() }
+        Self {
+            resourceid: resourceid.into(),
+            nodes: nodes.into(),
+        }
     }
 }
 
@@ -359,16 +358,12 @@ pub struct SetNodeRequest {
 }
 
 impl SetNodeRequest {
-    pub fn new(
-        r#ref: u32,
-        resource_type_field: u32,
-        name: impl Into<String>,
-    ) -> Self {
+    pub fn new(r#ref: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
         Self {
             r#ref,
             resource_type_field,
             name: name.into(),
-            ..Default::default()            
+            ..Default::default()
         }
     }
     pub fn parent(mut self, parent: impl Into<String>) -> Self {
@@ -431,10 +426,10 @@ impl CreateResourceTypeFieldRequest {
         resource_types: impl Into<String>,
         r#type: impl Into<String>,
     ) -> Self {
-        Self { 
+        Self {
             name: name.into(),
             resource_types: resource_types.into(),
-            r#type: r#type.into()
+            r#type: r#type.into(),
         }
     }
 }
@@ -445,12 +440,8 @@ pub struct ToggleActiveStatesForNodesRequest {
 }
 
 impl ToggleActiveStatesForNodesRequest {
-    pub fn new(
-        refs: impl Into<String>,
-    ) -> Self {
-        Self { 
-            refs: refs.into(),
-        }
+    pub fn new(refs: impl Into<String>) -> Self {
+        Self { refs: refs.into() }
     }
 }
 
@@ -464,14 +455,10 @@ pub struct UpdateFieldRequest {
 }
 
 impl UpdateFieldRequest {
-    pub fn new(
-        resource: u32,
-        field: u32,
-        value: impl Into<String>,
-    ) -> Self {
-        Self { 
-            resource: resource.into(),
-            field: field.into(),
+    pub fn new(resource: u32, field: u32, value: impl Into<String>) -> Self {
+        Self {
+            resource,
+            field,
             value: value.into(),
             ..Default::default()
         }

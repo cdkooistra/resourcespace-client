@@ -1,8 +1,8 @@
-use resourcespace_client::client::Client;
 use resourcespace_client::api::SortOrder;
+use resourcespace_client::api::message::GetUserMessageRequest;
 use resourcespace_client::api::search::DoSearchRequest;
 use resourcespace_client::api::system::GetDailyStatSummaryRequest;
-use resourcespace_client::api::message::GetUserMessageRequest;
+use resourcespace_client::client::Client;
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +22,8 @@ async fn main() {
         .await
         .expect("Error when building client");
 
-    let search_result = client.search()
+    let search_result = client
+        .search()
         .do_search(DoSearchRequest::new("909").sort(SortOrder::Asc))
         .await;
 
@@ -31,7 +32,8 @@ async fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    let system_result = client.system()
+    let system_result = client
+        .system()
         .get_daily_stat_summary(GetDailyStatSummaryRequest::new().days(31))
         .await;
 
@@ -48,5 +50,4 @@ async fn main() {
     //     Ok(response) => println!("{:#?}", response),
     //     Err(e) => println!("Error: {}", e),
     // }
-
 }

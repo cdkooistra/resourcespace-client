@@ -16,13 +16,13 @@ impl<'a> SystemApi<'a> {
     }
 
     /// Get system status - healthcheck information.
-    /// 
+    ///
     /// ## Arguments
     /// `None`
-    /// 
+    ///
     /// ## Returns
     /// Returns back system status information (configuration dependant - e.g mysql_log_transactions).
-    /// 
+    ///
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
@@ -38,18 +38,18 @@ impl<'a> SystemApi<'a> {
     }
 
     /// Return a summary of daily statistics by activity type.
-    /// 
+    ///
     /// Note max 365 days as only the current and previous year's data is accessed.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`GetDailyStatSummaryRequest`]
-    /// 
+    ///
     /// ## Returns
-    /// 
+    ///
     /// Returns an array of daily statistics.
-    /// 
+    ///
     /// ## TODO: Errors
-    /// 
+    ///
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::{Client, api::system::GetDailyStatSummaryRequest};
@@ -70,7 +70,8 @@ impl<'a> SystemApi<'a> {
         &self,
         request: GetDailyStatSummaryRequest,
     ) -> Result<serde_json::Value, RsError> {
-        request.validate()
+        request
+            .validate()
             .map_err(|e| RsError::Validation(e.to_string()))?;
         self.client
             .send_request("get_daily_stat_summary", reqwest::Method::GET, request)
@@ -90,7 +91,7 @@ impl<'a> SystemApi<'a> {
 pub struct GetDailyStatSummaryRequest {
     #[validate(range(min = 1, max = 365))]
     #[serde(skip_serializing_if = "Option::is_none")]
-    days: Option<u16>
+    days: Option<u16>,
 }
 
 impl GetDailyStatSummaryRequest {

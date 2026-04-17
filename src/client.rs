@@ -1,13 +1,13 @@
-use std::time::Duration;
-use serde::{Serialize};
-use serde_json::json;
-use url::Url;
-use sha2::{Sha256, Digest};
 use secrecy::{ExposeSecret, SecretString};
+use serde::Serialize;
+use serde_json::json;
+use sha2::{Digest, Sha256};
+use std::time::Duration;
+use url::Url;
 
 use crate::APP_USER_AGENT;
-use crate::error::RsError;
 use crate::auth::{Auth, login};
+use crate::error::RsError;
 
 // Typestates
 mod private {
@@ -16,13 +16,13 @@ mod private {
     pub struct NoUrl;
     pub struct WithUrl(pub(crate) url::Url);
     pub struct NoAuth;
-    pub struct WithUserKey { 
-        pub(crate) user: String, 
-        pub(crate) key: SecretString 
+    pub struct WithUserKey {
+        pub(crate) user: String,
+        pub(crate) key: SecretString,
     }
-    pub struct WithSessionKey { 
-        pub(crate) user: String, 
-        pub(crate) password: SecretString 
+    pub struct WithSessionKey {
+        pub(crate) user: String,
+        pub(crate) password: SecretString,
     }
 }
 
@@ -71,34 +71,34 @@ impl Client {
         &self,
         function: &str,
         method: reqwest::Method,
-        params: P
-    ) -> Result<serde_json::Value, RsError> 
-    where P: Serialize
+        params: P,
+    ) -> Result<serde_json::Value, RsError>
+    where
+        P: Serialize,
     {
-        let (
-            user,
-            key,
-            authmode
-        ) = match &self.auth {
+        let (user, key, authmode) = match &self.auth {
             Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
             Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
         };
 
         // Build query string
-        let req = ApiRequest { user, function, params };
+        let req = ApiRequest {
+            user,
+            function,
+            params,
+        };
         let query = build_query(&req)?;
         let signature = sign(key, &query);
 
         let response = match method {
             reqwest::Method::GET => {
-                let full_url = format!("{}api/?{}&sign={}&authmode={}", self.base_url, query, signature, authmode);
-                self.client
-                    .get(&full_url)
-                    .send()
-                    .await
+                let full_url = format!(
+                    "{}api/?{}&sign={}&authmode={}",
+                    self.base_url, query, signature, authmode
+                );
+                self.client.get(&full_url).send().await
             }
             reqwest::Method::POST => {
-                // TODO: multipart support
                 let full_url = format!("{}api/", self.base_url);
                 self.client
                     .post(&full_url)
@@ -106,13 +106,14 @@ impl Client {
                         ("user", user.clone()),
                         ("query", query),
                         ("sign", signature),
-                        ("authmode", authmode.to_string())
+                        ("authmode", authmode.to_string()),
                     ])
                     .send()
                     .await
             }
             _ => return Err(RsError::Other("Unsupported HTTP method".into())),
-        }.map_err(RsError::Http)?;
+        }
+        .map_err(RsError::Http)?;
 
         // 1. check HTTP status before touching the body
         if !response.status().is_success() {
@@ -152,7 +153,8 @@ impl Client {
         params: P,
         file: &std::path::Path,
     ) -> Result<serde_json::Value, RsError>
-    where P: Serialize
+    where
+        P: Serialize,
     {
         let (user, key, authmode) = match &self.auth {
             Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
@@ -160,22 +162,28 @@ impl Client {
         };
 
         // Build query string — same as regular POST, file is NOT included
-        let req = ApiRequest { user, function, params };
+        let req = ApiRequest {
+            user,
+            function,
+            params,
+        };
         let query = build_query(&req)?;
         let signature = sign(key, &query);
 
         let full_url = format!("{}api/", self.base_url);
 
-        let response = self.client
+        let response = self
+            .client
             .post(&full_url)
-            .multipart(reqwest::multipart::Form::new()
-                .text("user", user.clone())
-                .text("query", query)
-                .text("sign", signature)
-                .text("authmode", authmode.to_string())
-                .file("file", file)
-                .await
-                .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?
+            .multipart(
+                reqwest::multipart::Form::new()
+                    .text("user", user.clone())
+                    .text("query", query)
+                    .text("sign", signature)
+                    .text("authmode", authmode.to_string())
+                    .file("file", file)
+                    .await
+                    .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?,
             )
             .send()
             .await
@@ -185,7 +193,7 @@ impl Client {
             return Err(RsError::Api {
                 status: response.status().as_u16(),
                 message: response.text().await.unwrap_or_default(),
-            })
+            });
         }
 
         let text = response.text().await.map_err(RsError::Http)?;
@@ -224,12 +232,11 @@ pub struct ClientBuilder<U = private::NoUrl, A = private::NoAuth> {
 
 impl<A> ClientBuilder<private::NoUrl, A> {
     pub fn base_url(
-        self, 
-        url: impl Into<String>
+        self,
+        url: impl Into<String>,
     ) -> Result<ClientBuilder<private::WithUrl, A>, RsError> {
         let url = url.into();
-        let parsed_url = Url::parse(&url)
-            .map_err(|e| RsError::Other(e.to_string()))?;
+        let parsed_url = Url::parse(&url).map_err(|e| RsError::Other(e.to_string()))?;
 
         Ok(ClientBuilder {
             base_url: private::WithUrl(parsed_url),
@@ -242,13 +249,13 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     pub fn user_key(
         self,
         user: impl Into<String>,
-        key: impl Into<String>
+        key: impl Into<String>,
     ) -> ClientBuilder<U, private::WithUserKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithUserKey { 
+            auth: private::WithUserKey {
                 user: user.into(),
-                key: SecretString::from(key.into()) 
+                key: SecretString::from(key.into()),
             },
         }
     }
@@ -256,11 +263,11 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     pub fn session_key(
         self,
         user: impl Into<String>,
-        password: impl Into<String>
+        password: impl Into<String>,
     ) -> ClientBuilder<U, private::WithSessionKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithSessionKey { 
+            auth: private::WithSessionKey {
                 user: user.into(),
                 password: SecretString::from(password.into()),
             },
@@ -275,28 +282,35 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
             &http,
             &self.base_url.0,
             &self.auth.user,
-            self.auth.password.expose_secret()
+            self.auth.password.expose_secret(),
         )
         .await?;
-        let auth = Auth::SessionKey { 
+        let auth = Auth::SessionKey {
             user: self.auth.user,
-            key: SecretString::from(session_key)
+            key: SecretString::from(session_key),
         };
 
-        Ok(Client { base_url: self.base_url.0, auth, client: http })
+        Ok(Client {
+            base_url: self.base_url.0,
+            auth,
+            client: http,
+        })
     }
-
 }
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
     pub async fn build(self) -> Result<Client, RsError> {
         let http = make_client()?;
-        let auth = Auth::UserKey { 
+        let auth = Auth::UserKey {
             user: self.auth.user,
-            key: self.auth.key, 
+            key: self.auth.key,
         };
 
-        Ok(Client { base_url: self.base_url.0, auth, client: http })
+        Ok(Client {
+            base_url: self.base_url.0,
+            auth,
+            client: http,
+        })
     }
 }
 
@@ -314,4 +328,3 @@ fn make_client() -> Result<reqwest::Client, RsError> {
         .user_agent(APP_USER_AGENT)
         .build()?)
 }
-

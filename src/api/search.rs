@@ -21,7 +21,7 @@ impl<'a> SearchApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`DoSearchRequest`]
     ///
-    /// ## TODO: Errors 
+    /// ## TODO: Errors
     /// Returns [`RsError::OperationFailed`] if the search returns no results
     /// or the user lacks search permissions.
     ///
@@ -33,7 +33,7 @@ impl<'a> SearchApi<'a> {
     /// let results = client.search()
     ///     .do_search(DoSearchRequest::new("cat").sort(SortOrder::Desc))
     ///     .await?;
-    /// 
+    ///
     /// let specific_results = client.search()
     ///     .do_search(
     ///         DoSearchRequest::new("cat")
@@ -45,10 +45,7 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(
-        &self,
-        request: DoSearchRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, RsError> {
         self.client
             .send_request("do_search", reqwest::Method::GET, request)
             .await
@@ -113,7 +110,7 @@ pub struct DoSearchRequest {
 
 impl DoSearchRequest {
     pub fn new(search: impl Into<String>) -> Self {
-        Self { 
+        Self {
             search: search.into(),
             ..Default::default()
         }
@@ -149,7 +146,7 @@ impl DoSearchRequest {
         self
     }
 }
-    
+
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
     search: String,
@@ -173,7 +170,7 @@ pub struct SearchGetPreviewsRequest {
 
 impl SearchGetPreviewsRequest {
     pub fn new(search: impl Into<String>) -> Self {
-        Self { 
+        Self {
             search: search.into(),
             ..Default::default()
         }

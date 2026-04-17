@@ -15,7 +15,7 @@ impl<'a> MessageApi<'a> {
     }
 
     /// Retrieve the given message ID.
-    /// 
+    ///
     /// Permissions are always honoured so messages to other users will not be accessible.
     ///
     /// ## Arguments
@@ -48,7 +48,7 @@ impl<'a> MessageApi<'a> {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUserMessageRequest {
     #[serde(rename = "ref")]
-    r#ref: u32 // message ID
+    r#ref: u32,
 }
 
 impl GetUserMessageRequest {

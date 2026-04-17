@@ -17,7 +17,7 @@ impl<'a> ResourceApi<'a> {
     }
 
     /// Add a new alternative file to a resource.
-    /// 
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`AddAlternativeFileRequest`]
     ///
@@ -132,9 +132,9 @@ impl<'a> ResourceApi<'a> {
     /// * `request` - Parameters built via [`GetAlternativeFilesRequest`]
     ///
     /// ## Returns
-    /// 
+    ///
     /// A list of alternative files.
-    /// 
+    ///
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
@@ -223,7 +223,11 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceAllImageSizesRequest,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_request("get_resource_all_image_sizes", reqwest::Method::GET, request)
+            .send_request(
+                "get_resource_all_image_sizes",
+                reqwest::Method::GET,
+                request,
+            )
             .await
     }
 
@@ -426,9 +430,9 @@ impl<'a> ResourceApi<'a> {
     /// * `request` - Parameters built via [`ResourceFileReadonlyRequest`]
     ///
     /// ## Returns
-    /// 
+    ///
     /// A 200 HTTP status will be returned with a payload detailing if successful or a 400 status otherwise.
-    /// 
+    ///
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
@@ -447,9 +451,9 @@ impl<'a> ResourceApi<'a> {
     /// * `request` - Parameters built via [`ResourceLogLastRowsRequest`]
     ///
     /// ## Returns
-    /// 
+    ///
     /// Log entries in JSON format, including date, ref, resource, type (type of log entry), resource_type_field, user ID, notes, diff and usageoption value
-    /// 
+    ///
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
@@ -461,7 +465,7 @@ impl<'a> ResourceApi<'a> {
             .send_request("resource_log_last_rows", reqwest::Method::GET, request)
             .await
     }
-  
+
     /// Uploads a file from a local server path to an existing resource.
     ///
     /// The path must be local to the RS server. See `$valid_upload_paths` in RS config
@@ -526,14 +530,9 @@ impl<'a> ResourceApi<'a> {
         &self,
         request: UploadMultipartRequest,
         file: impl AsRef<std::path::Path>,
-    ) -> Result<serde_json::Value, RsError>
-    {
+    ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_multipart_request(
-                "upload_multipart",
-                request, 
-                file.as_ref()
-            )
+            .send_multipart_request("upload_multipart", request, file.as_ref())
             .await
     }
 
@@ -586,7 +585,7 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Array of collections with the collection ID, name and description. False on failure. 
+    /// Array of collections with the collection ID, name and description. False on failure.
     ///
     /// ## TODO: Errors
     ///
@@ -601,7 +600,7 @@ impl<'a> ResourceApi<'a> {
     }
 
     /// Validate a URL supplied in the create_resource or upload_file_by_url API calls.
-    /// 
+    ///
     /// Requires the URL hostname to be added in the config option $api_upload_urls, for example:
     /// `$api_upload_urls = array('resourcespace.com', 'localhost');`
     ///
@@ -646,7 +645,11 @@ pub struct AddAlternativeFileRequest {
 
 impl AddAlternativeFileRequest {
     pub fn new(resource: u32, name: impl Into<String>) -> Self {
-        Self { resource, name: name.into(), ..Default::default() }
+        Self {
+            resource,
+            name: name.into(),
+            ..Default::default()
+        }
     }
 
     pub fn description(mut self, description: impl Into<String>) -> Self {
@@ -689,7 +692,10 @@ pub struct CopyResourceRequest {
 
 impl CopyResourceRequest {
     pub fn new(from: u32) -> Self {
-        Self { from, ..Default::default() }
+        Self {
+            from,
+            ..Default::default()
+        }
     }
 
     pub fn resource_type(mut self, resource_type: u32) -> Self {
@@ -715,7 +721,10 @@ pub struct CreateResourceRequest {
 
 impl CreateResourceRequest {
     pub fn new(resource_type: u32) -> Self {
-        Self { resource_type, ..Default::default() }
+        Self {
+            resource_type,
+            ..Default::default()
+        }
     }
 
     pub fn archive(mut self, archive: i16) -> Self {
@@ -781,7 +790,10 @@ pub struct GetAlternativeFilesRequest {
 
 impl GetAlternativeFilesRequest {
     pub fn new(resource: u32) -> Self {
-        Self { resource, ..Default::default() }
+        Self {
+            resource,
+            ..Default::default()
+        }
     }
 
     pub fn orderby(mut self, orderby: impl Into<String>) -> Self {
@@ -854,7 +866,10 @@ pub struct GetResourceCommentsRequest {
 
 impl GetResourceCommentsRequest {
     pub fn new(resource_ref: u32) -> Self {
-        Self { resource_ref, ..Default::default() }
+        Self {
+            resource_ref,
+            ..Default::default()
+        }
     }
 
     pub fn flat_view(mut self, flat_view: bool) -> Self {
@@ -894,7 +909,10 @@ pub struct GetResourceLogRequest {
 
 impl GetResourceLogRequest {
     pub fn new(resource: u32) -> Self {
-        Self { resource, ..Default::default() }
+        Self {
+            resource,
+            ..Default::default()
+        }
     }
 
     pub fn fetchrows(mut self, fetchrows: u32) -> Self {
@@ -925,7 +943,10 @@ pub struct GetResourcePathRequest {
 
 impl GetResourcePathRequest {
     pub fn new(r#ref: u32) -> Self {
-        Self { r#ref, ..Default::default() }
+        Self {
+            r#ref,
+            ..Default::default()
+        }
     }
 
     pub fn size(mut self, size: impl Into<String>) -> Self {
@@ -972,7 +993,10 @@ pub struct PutResourceDataRequest {
 
 impl PutResourceDataRequest {
     pub fn new(resource: u32, data: impl Into<String>) -> Self {
-        Self { resource, data: data.into() }
+        Self {
+            resource,
+            data: data.into(),
+        }
     }
 }
 
@@ -983,7 +1007,9 @@ pub struct RelateAllResourcesRequest {
 
 impl RelateAllResourcesRequest {
     pub fn new(related: impl Into<String>) -> Self {
-        Self { related: related.into() }
+        Self {
+            related: related.into(),
+        }
     }
 }
 
@@ -1097,7 +1123,10 @@ pub struct UploadFileRequest {
 
 impl UploadFileRequest {
     pub fn new(r#ref: u32) -> Self {
-        Self { r#ref, ..Default::default() }
+        Self {
+            r#ref,
+            ..Default::default()
+        }
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
@@ -1137,7 +1166,10 @@ pub struct UploadFileByUrlRequest {
 
 impl UploadFileByUrlRequest {
     pub fn new(r#ref: u32) -> Self {
-        Self { r#ref, ..Default::default() }
+        Self {
+            r#ref,
+            ..Default::default()
+        }
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
@@ -1175,8 +1207,8 @@ pub struct UploadMultipartRequest {
 
 impl UploadMultipartRequest {
     pub fn new(r#ref: u32, no_exif: bool, revert: bool) -> Self {
-        Self { 
-            r#ref, 
+        Self {
+            r#ref,
             no_exif: no_exif as u8,
             revert: revert as u8,
             ..Default::default()
@@ -1204,9 +1236,14 @@ pub struct UpdateRelatedResourceRequest {
 
 impl UpdateRelatedResourceRequest {
     pub fn new(r#ref: u32, related: impl Into<String>) -> Self {
-        Self { r#ref, related: related.into(), ..Default::default() }
+        Self {
+            r#ref,
+            related: related.into(),
+            ..Default::default()
+        }
     }
 
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, add: bool) -> Self {
         self.add = Some(add as u8);
         self
@@ -1221,7 +1258,10 @@ pub struct UpdateResourceTypeRequest {
 
 impl UpdateResourceTypeRequest {
     pub fn new(resource: u32, resourcetype: u32) -> Self {
-        Self { resource, resourcetype }
+        Self {
+            resource,
+            resourcetype,
+        }
     }
 }
 

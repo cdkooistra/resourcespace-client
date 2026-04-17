@@ -1,14 +1,10 @@
 #![doc = include_str!("../README.md")]
-mod auth;
 pub mod api;
+mod auth;
 pub mod client;
 pub mod error;
 
-static APP_USER_AGENT: &str = concat!(
-    env!("CARGO_PKG_NAME"),
-    "/",
-    env!("CARGO_PKG_VERSION"),
-);
+static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 // TODO: tests
 #[cfg(test)]

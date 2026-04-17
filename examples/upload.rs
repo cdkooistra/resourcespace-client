@@ -1,5 +1,5 @@
-use resourcespace_client::client::Client;
 use resourcespace_client::api::resource::UploadMultipartRequest;
+use resourcespace_client::client::Client;
 
 use std::path::Path;
 
@@ -21,14 +21,11 @@ async fn main() {
         .await
         .expect("Error when building client");
 
-    let result = client.resource()
+    let result = client
+        .resource()
         .upload_multipart(
-            UploadMultipartRequest::new(
-                91287,
-                false,
-                false
-            ),
-            Path::new("pexels.jpg")
+            UploadMultipartRequest::new(91287, false, false),
+            Path::new("pexels.jpg"),
         )
         .await;
 
