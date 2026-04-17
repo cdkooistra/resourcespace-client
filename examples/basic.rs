@@ -10,7 +10,7 @@ async fn main() {
 
     let base_url = std::env::var("RS_BASE_URL").expect("RS_BASE_URL not set");
     let user = std::env::var("RS_USER").expect("RS_USER not set");
-    let password = std::env::var("RS_PASS").expect("RS_PASS not set");
+    let _password = std::env::var("RS_PASS").expect("RS_PASS not set");
     let key = std::env::var("RS_KEY").expect("RS_KEY not set");
 
     let client = Client::builder()
@@ -42,12 +42,12 @@ async fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    // let message_result = client.message()
-    //     .get_user_message(GetUserMessageRequest::new(12))
-    //     .await;
+    let message_result = client.message()
+        .get_user_message(GetUserMessageRequest::new(12))
+        .await;
 
-    // match message_result {
-    //     Ok(response) => println!("{:#?}", response),
-    //     Err(e) => println!("Error: {}", e),
-    // }
+    match message_result {
+        Ok(response) => println!("{:#?}", response),
+        Err(e) => println!("Error: {}", e),
+    }
 }

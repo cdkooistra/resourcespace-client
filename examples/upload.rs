@@ -9,7 +9,7 @@ async fn main() {
 
     let base_url = std::env::var("RS_BASE_URL").expect("RS_BASE_URL not set");
     let user = std::env::var("RS_USER").expect("RS_USER not set");
-    let password = std::env::var("RS_PASS").expect("RS_PASS not set");
+    let _password = std::env::var("RS_PASS").expect("RS_PASS not set");
     let key = std::env::var("RS_KEY").expect("RS_KEY not set");
 
     let client = Client::builder()
