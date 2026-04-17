@@ -1,8 +1,5 @@
 name: "Check: Lints"
 on:
-  push:
-    branches:
-      - main
   pull_request:
   workflow_dispatch:
 jobs:
