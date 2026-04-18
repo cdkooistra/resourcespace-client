@@ -42,7 +42,8 @@ async fn main() {
         Err(e) => println!("Error: {}", e),
     }
 
-    let message_result = client.message()
+    let message_result = client
+        .message()
         .get_user_message(GetUserMessageRequest::new(12))
         .await;
 

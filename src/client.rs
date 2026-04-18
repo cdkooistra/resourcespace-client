@@ -60,6 +60,7 @@ pub struct Client {
 }
 
 impl Client {
+    #[must_use]
     pub fn builder() -> ClientBuilder<private::NoUrl, private::NoAuth> {
         ClientBuilder {
             base_url: private::NoUrl,

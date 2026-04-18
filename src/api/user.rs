@@ -191,7 +191,9 @@ pub struct GetUsersByPermissionRequest {
 
 impl GetUsersByPermissionRequest {
     pub fn new(permissions: impl Into<List<String>>) -> Self {
-        Self { permissions: permissions.into() }
+        Self {
+            permissions: permissions.into(),
+        }
     }
 }
 

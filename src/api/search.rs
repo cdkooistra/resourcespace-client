@@ -3,7 +3,7 @@ use serde::{Serialize, Serializer};
 use crate::client::Client;
 use crate::error::RsError;
 
-use super::{SortOrder, List};
+use super::{List, SortOrder};
 
 /// Sub-API for search endpoints.
 #[derive(Debug)]
@@ -108,7 +108,7 @@ pub enum FetchRows {
     /// Return up to N rows
     Limit(u32),
     /// Return rows with explicit offset and limit, enables paginated response
-    Page {offset: u32, limit: u32 },
+    Page { offset: u32, limit: u32 },
 }
 
 impl FetchRows {
@@ -125,9 +125,7 @@ impl Serialize for FetchRows {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Limit(n) => n.serialize(serializer),
-            Self::Page { offset, limit } => {
-                format!("{},{}", offset, limit).serialize(serializer)
-            }
+            Self::Page { offset, limit } => format!("{},{}", offset, limit).serialize(serializer),
         }
     }
 }

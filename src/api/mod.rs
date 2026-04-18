@@ -6,8 +6,8 @@ pub mod search;
 pub mod system;
 pub mod user;
 
-use serde_with::{serde_as, StringWithSeparator, formats::CommaSeparator};
 use serde::Serialize;
+use serde_with::{StringWithSeparator, formats::CommaSeparator, serde_as};
 use std::fmt::Display;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -33,10 +33,7 @@ pub enum SortOrder {
 /// type-safe and free of manual string joining.
 #[serde_as]
 #[derive(Serialize, Debug, Clone, PartialEq)]
-pub struct List<T: Display>(
-    #[serde_as(as = "StringWithSeparator::<CommaSeparator, T>")]
-    Vec<T>
-);
+pub struct List<T: Display>(#[serde_as(as = "StringWithSeparator::<CommaSeparator, T>")] Vec<T>);
 
 // u32
 impl From<u32> for List<u32> {

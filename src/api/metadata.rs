@@ -398,10 +398,7 @@ pub struct AddResourceNodesMultiRequest {
 }
 
 impl AddResourceNodesMultiRequest {
-    pub fn new(
-        resourceid: impl Into<List<u32>>,
-        nodes: impl Into<List<u32>>,
-    ) -> Self {
+    pub fn new(resourceid: impl Into<List<u32>>, nodes: impl Into<List<u32>>) -> Self {
         Self {
             resourceid: resourceid.into(),
             nodes: nodes.into(),
@@ -532,14 +529,18 @@ pub struct UpdateFieldRequest {
     pub resource: u32,
     /// The ID or shortname of the metadata field to set a value on.
     pub field: FieldIdentifier,
-    /// The new value to assign to the field. 
+    /// The new value to assign to the field.
     /// This can be a comma separated list for fixed list option fields.
     #[serde(flatten)]
     pub value: FieldValue,
 }
 
 impl UpdateFieldRequest {
-    pub fn new(resource: u32, field: impl Into<FieldIdentifier>, value: impl Into<FieldValue>) -> Self {
+    pub fn new(
+        resource: u32,
+        field: impl Into<FieldIdentifier>,
+        value: impl Into<FieldValue>,
+    ) -> Self {
         Self {
             resource,
             field: field.into(),
@@ -602,7 +603,7 @@ impl<const N: usize> From<[u32; N]> for FieldValue {
 impl Serialize for FieldValue {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeMap;
-        
+
         let mut map = serializer.serialize_map(None)?;
         match self {
             Self::Text(text) => {

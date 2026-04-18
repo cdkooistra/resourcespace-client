@@ -3,7 +3,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
-use super::{SortOrder, List};
+use super::{List, SortOrder};
 
 /// Sub-API for collection endpoints.
 #[derive(Debug)]
