@@ -3,6 +3,8 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
+use super::List;
+
 #[derive(Debug)]
 pub struct UserApi<'a> {
     client: &'a Client,
@@ -181,19 +183,19 @@ impl GetUsersRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUsersByPermissionRequest {
     /// List of permission strings; only users holding all of these are returned.
-    pub permissions: Vec<String>,
+    pub permissions: List<String>,
 }
 
 impl GetUsersByPermissionRequest {
-    pub fn new(permissions: Vec<String>) -> Self {
-        Self { permissions }
+    pub fn new(permissions: impl Into<List<String>>) -> Self {
+        Self { permissions: permissions.into() }
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct MarkEmailAsInvalidRequest {
     /// The email address to mark as invalid.
     pub email: String,
@@ -207,7 +209,7 @@ impl MarkEmailAsInvalidRequest {
     }
 }
 
-#[derive(Clone, Default, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct NewUserRequest {
     /// The username for the new user account.
     pub username: String,
@@ -220,7 +222,7 @@ impl NewUserRequest {
     pub fn new(username: impl Into<String>) -> Self {
         Self {
             username: username.into(),
-            ..Default::default()
+            usergroup: None,
         }
     }
 

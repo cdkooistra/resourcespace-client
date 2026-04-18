@@ -3,7 +3,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
-use super::SortOrder;
+use super::{SortOrder, List};
 
 #[derive(Debug)]
 pub struct ResourceApi<'a> {
@@ -624,7 +624,7 @@ impl<'a> ResourceApi<'a> {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddAlternativeFileRequest {
     /// The ID of the resource to attach the alternative file to.
     pub resource: u32,
@@ -655,7 +655,12 @@ impl AddAlternativeFileRequest {
         Self {
             resource,
             name: name.into(),
-            ..Default::default()
+            description: None,
+            file_name: None,
+            file_extension: None,
+            file_size: None,
+            alt_type: None,
+            file: None,
         }
     }
 
@@ -690,7 +695,7 @@ impl AddAlternativeFileRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CopyResourceRequest {
     /// The ID of the resource to copy.
     pub from: u32,
@@ -703,7 +708,7 @@ impl CopyResourceRequest {
     pub fn new(from: u32) -> Self {
         Self {
             from,
-            ..Default::default()
+            resource_type: None,
         }
     }
 
@@ -713,7 +718,7 @@ impl CopyResourceRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceRequest {
     /// The resource type ID for the new resource.
     pub resource_type: u32,
@@ -738,7 +743,11 @@ impl CreateResourceRequest {
     pub fn new(resource_type: u32) -> Self {
         Self {
             resource_type,
-            ..Default::default()
+            archive: None,
+            url: None,
+            no_exif: None,
+            autorotate: None,
+            metadata: None,
         }
     }
 
@@ -795,7 +804,7 @@ impl DeleteResourceRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetAlternativeFilesRequest {
     /// The ID of the resource whose alternative files should be returned.
     pub resource: u32,
@@ -814,7 +823,9 @@ impl GetAlternativeFilesRequest {
     pub fn new(resource: u32) -> Self {
         Self {
             resource,
-            ..Default::default()
+            orderby: None,
+            sort: None,
+            r#type: None,
         }
     }
 
@@ -883,7 +894,7 @@ impl GetResourceAllImageSizesRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCommentsRequest {
     /// The ID of the resource to retrieve comments for.
     pub resource_ref: u32,
@@ -896,7 +907,7 @@ impl GetResourceCommentsRequest {
     pub fn new(resource_ref: u32) -> Self {
         Self {
             resource_ref,
-            ..Default::default()
+            flat_view: None,
         }
     }
 
@@ -930,7 +941,7 @@ impl GetResourceFieldDataRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceLogRequest {
     /// The ID of the resource whose log entries should be returned.
     pub resource: u32,
@@ -943,7 +954,7 @@ impl GetResourceLogRequest {
     pub fn new(resource: u32) -> Self {
         Self {
             resource,
-            ..Default::default()
+            fetchrows: None,
         }
     }
 
@@ -953,7 +964,7 @@ impl GetResourceLogRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourcePathRequest {
     /// The ID of the resource to generate a download URL for.
     #[serde(rename = "ref")]
@@ -985,7 +996,13 @@ impl GetResourcePathRequest {
     pub fn new(r#ref: u32) -> Self {
         Self {
             r#ref,
-            ..Default::default()
+            size: None,
+            generate: None,
+            extension: None,
+            page: None,
+            watermarked: None,
+            alternative: None,
+            write_metadata: None,
         }
     }
 
@@ -1045,18 +1062,18 @@ impl PutResourceDataRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RelateAllResourcesRequest {
     /// Comma-separated list of resource IDs to relate with each other.
-    pub related: String,
+    pub related: List<u32>,
 }
 
 impl RelateAllResourcesRequest {
-    pub fn new(related: impl Into<String>) -> Self {
+    pub fn new(related: impl Into<List<u32>>) -> Self {
         Self {
             related: related.into(),
         }
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ReplaceResourceFileRequest {
     /// The ID of the resource whose file should be replaced.
     pub resource: u32,
@@ -1078,7 +1095,9 @@ impl ReplaceResourceFileRequest {
         Self {
             resource,
             file_location: file_location.into(),
-            ..Default::default()
+            no_exif: None,
+            autorotate: None,
+            keep_original: None,
         }
     }
 
@@ -1122,12 +1141,12 @@ pub struct ResourceLogLastRowsRequest {
     /// Maximum number of log entries to return.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub maxrecords: Option<u32>,
-    /// Filter entries to those affecting this metadata field ID.
+    /// Comma-separated list of field IDs to limit results to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub field: Option<String>,
-    /// Filter entries by log code (e.g. `"FD"` for field data changes).
+    pub field: Option<List<u32>>,
+    /// Comma-separated list of log codes to limit results to (e.g. `"FD"` for field data changes).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub log_code: Option<String>,
+    pub log_code: Option<List<String>>,
 }
 
 impl ResourceLogLastRowsRequest {
@@ -1150,18 +1169,18 @@ impl ResourceLogLastRowsRequest {
         self
     }
 
-    pub fn field(mut self, field: impl Into<String>) -> Self {
+    pub fn field(mut self, field: impl Into<List<u32>>) -> Self {
         self.field = Some(field.into());
         self
     }
 
-    pub fn log_code(mut self, log_code: impl Into<String>) -> Self {
+    pub fn log_code(mut self, log_code: impl Into<List<String>>) -> Self {
         self.log_code = Some(log_code.into());
         self
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadFileRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
@@ -1184,7 +1203,10 @@ impl UploadFileRequest {
     pub fn new(r#ref: u32) -> Self {
         Self {
             r#ref,
-            ..Default::default()
+            no_exif: None,
+            revert: None,
+            autorotate: None,
+            file_path: None,
         }
     }
 
@@ -1209,7 +1231,7 @@ impl UploadFileRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadFileByUrlRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
@@ -1232,7 +1254,10 @@ impl UploadFileByUrlRequest {
     pub fn new(r#ref: u32) -> Self {
         Self {
             r#ref,
-            ..Default::default()
+            no_exif: None,
+            revert: None,
+            autorotate: None,
+            url: None,
         }
     }
 
@@ -1257,7 +1282,7 @@ impl UploadFileByUrlRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadMultipartRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
@@ -1280,7 +1305,8 @@ impl UploadMultipartRequest {
             r#ref,
             no_exif: no_exif as u8,
             revert: revert as u8,
-            ..Default::default()
+            previewonly: None,
+            alternative: None,
         }
     }
     pub fn previewonly(mut self, previewonly: bool) -> Self {
@@ -1294,24 +1320,24 @@ impl UploadMultipartRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateRelatedResourceRequest {
     /// The ID of the resource to update relationships for.
     #[serde(rename = "ref")]
     pub r#ref: u32,
     /// Comma-separated list of resource IDs to add or remove as related resources.
-    pub related: String,
+    pub related: List<u32>,
     /// If 1, adds the related resources; if 0, removes them.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub add: Option<u8>,
 }
 
 impl UpdateRelatedResourceRequest {
-    pub fn new(r#ref: u32, related: impl Into<String>) -> Self {
+    pub fn new(r#ref: u32, related: impl Into<List<u32>>) -> Self {
         Self {
             r#ref,
             related: related.into(),
-            ..Default::default()
+            add: None,
         }
     }
 

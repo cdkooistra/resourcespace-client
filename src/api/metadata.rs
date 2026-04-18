@@ -1,7 +1,9 @@
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::client::Client;
 use crate::error::RsError;
+
+use super::List;
 
 #[derive(Debug)]
 pub struct MetadataApi<'a> {
@@ -209,21 +211,63 @@ impl<'a> MetadataApi<'a> {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+/// A metadata field identifier, either a numeric ID or a shortname.
+///
+/// Accepts a `u32` field ID or a string shortname via [`Into`] conversions,
+/// making it ergonomic to reference fields at call sites:
+///
+/// ```no_run
+/// FieldIdentifier::from(72)       // numeric ID
+/// FieldIdentifier::from("title")  // shortname
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub enum FieldIdentifier {
+    Id(u32),
+    Shortname(String),
+}
+
+impl From<u32> for FieldIdentifier {
+    fn from(id: u32) -> Self {
+        Self::Id(id)
+    }
+}
+
+impl From<String> for FieldIdentifier {
+    fn from(name: String) -> Self {
+        Self::Shortname(name)
+    }
+}
+
+impl From<&str> for FieldIdentifier {
+    fn from(name: &str) -> Self {
+        Self::Shortname(name.to_string())
+    }
+}
+
+impl Serialize for FieldIdentifier {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Id(id) => id.serialize(serializer),
+            Self::Shortname(name) => name.serialize(serializer),
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFieldOptionsRequest {
-    /// The ID of the metadata field to retrieve options for.
+    /// The ID or shortname of the metadata field to retrieve options for.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub r#ref: FieldIdentifier,
     /// If set, returns additional node information alongside each option.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub nodeinfo: Option<bool>,
 }
 
 impl GetFieldOptionsRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(r#ref: impl Into<FieldIdentifier>) -> Self {
         Self {
-            r#ref,
-            ..Default::default()
+            r#ref: r#ref.into(),
+            nodeinfo: None,
         }
     }
 
@@ -250,7 +294,7 @@ impl GetNodeIdRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodesRequest {
     /// The ID of the metadata field to retrieve nodes from.
     #[serde(rename = "ref")]
@@ -273,7 +317,7 @@ pub struct GetNodesRequest {
     /// If set, includes the number of resources using each node.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_count: Option<bool>,
-    /// If true, orders results by the translated node name.
+    /// If set, orders results by the translated node name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by_translated_name: Option<bool>,
 }
@@ -282,7 +326,13 @@ impl GetNodesRequest {
     pub fn new(r#ref: u32) -> Self {
         Self {
             r#ref,
-            ..Default::default()
+            parent: None,
+            recursive: None,
+            offset: None,
+            rows: None,
+            name: None,
+            use_count: None,
+            order_by_translated_name: None,
         }
     }
 
@@ -327,11 +377,11 @@ pub struct AddResourceNodesRequest {
     /// The ID of the resource to add nodes to.
     pub resource: u32,
     /// Comma-separated list of node IDs to add to the resource.
-    pub nodestring: String,
+    pub nodestring: List<u32>,
 }
 
 impl AddResourceNodesRequest {
-    pub fn new(resource: u32, nodestring: impl Into<String>) -> Self {
+    pub fn new(resource: u32, nodestring: impl Into<List<u32>>) -> Self {
         Self {
             resource,
             nodestring: nodestring.into(),
@@ -342,15 +392,15 @@ impl AddResourceNodesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
-    pub resourceid: String,
+    pub resourceid: List<u32>,
     /// Comma-separated list of node IDs to add to each resource.
-    pub nodes: String,
+    pub nodes: List<u32>,
 }
 
 impl AddResourceNodesMultiRequest {
     pub fn new(
-        resourceid: impl Into<String>,
-        nodes: impl Into<String>,
+        resourceid: impl Into<List<u32>>,
+        nodes: impl Into<List<u32>>,
     ) -> Self {
         Self {
             resourceid: resourceid.into(),
@@ -359,7 +409,7 @@ impl AddResourceNodesMultiRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SetNodeRequest {
     /// The ID of an existing node to update, or 0 to create a new one.
     #[serde(rename = "ref")]
@@ -385,7 +435,9 @@ impl SetNodeRequest {
             r#ref,
             resource_type_field,
             name: name.into(),
-            ..Default::default()
+            parent: None,
+            order_by: None,
+            returnexisting: None,
         }
     }
     pub fn parent(mut self, parent: impl Into<String>) -> Self {
@@ -408,13 +460,13 @@ impl SetNodeRequest {
 pub struct GetResourceTypeFieldsRequest {
     /// Comma-separated list of resource type IDs to filter fields by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub by_resource_types: Option<String>,
+    pub by_resource_types: Option<List<u32>>,
     /// Search string to filter fields by name.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub find: Option<String>,
     /// Comma-separated list of field type IDs to filter by.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub by_types: Option<String>,
+    pub by_types: Option<List<u32>>,
 }
 
 impl GetResourceTypeFieldsRequest {
@@ -422,7 +474,7 @@ impl GetResourceTypeFieldsRequest {
         Self::default()
     }
 
-    pub fn by_resource_types(mut self, by_resource_types: impl Into<String>) -> Self {
+    pub fn by_resource_types(mut self, by_resource_types: impl Into<List<u32>>) -> Self {
         self.by_resource_types = Some(by_resource_types.into());
         self
     }
@@ -432,7 +484,7 @@ impl GetResourceTypeFieldsRequest {
         self
     }
 
-    pub fn by_types(mut self, by_types: impl Into<String>) -> Self {
+    pub fn by_types(mut self, by_types: impl Into<List<u32>>) -> Self {
         self.by_types = Some(by_types.into());
         self
     }
@@ -443,15 +495,15 @@ pub struct CreateResourceTypeFieldRequest {
     /// The name of the new metadata field.
     pub name: String,
     /// Comma-separated list of resource type IDs this field should apply to.
-    pub resource_types: String,
-    /// The field type (e.g. `"1"` for text, `"2"` for date, `"3"` for dropdown).
+    pub resource_types: List<u32>,
+    /// The field type, for values see the FIELD_TYPE_* constants.
     pub r#type: String,
 }
 
 impl CreateResourceTypeFieldRequest {
     pub fn new(
         name: impl Into<String>,
-        resource_types: impl Into<String>,
+        resource_types: impl Into<List<u32>>,
         r#type: impl Into<String>,
     ) -> Self {
         Self {
@@ -474,31 +526,93 @@ impl ToggleActiveStatesForNodesRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateFieldRequest {
     /// The ID of the resource to update.
     pub resource: u32,
-    /// The ID of the metadata field to set a value on.
-    pub field: u32,
-    /// The new value to assign to the field.
-    pub value: String,
-    /// If set, treats the value as node IDs rather than a plain string.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub nodevalues: Option<bool>,
+    /// The ID or shortname of the metadata field to set a value on.
+    pub field: FieldIdentifier,
+    /// The new value to assign to the field. 
+    /// This can be a comma separated list for fixed list option fields.
+    #[serde(flatten)]
+    pub value: FieldValue,
 }
 
 impl UpdateFieldRequest {
-    pub fn new(resource: u32, field: u32, value: impl Into<String>) -> Self {
+    pub fn new(resource: u32, field: impl Into<FieldIdentifier>, value: impl Into<FieldValue>) -> Self {
         Self {
             resource,
-            field,
+            field: field.into(),
             value: value.into(),
-            ..Default::default()
         }
     }
+}
 
-    pub fn nodevalues(mut self, nodevalues: bool) -> Self {
-        self.nodevalues = Some(nodevalues);
-        self
+/// The value to set for a metadata field.
+///
+/// Accepts plain text or a list of node IDs via named constructors:
+///
+/// ```no_run
+/// FieldValue::from("hello")          // plain text
+/// FieldValue::from("red")            // single option
+/// FieldValue::from(42u32)            // single node ID
+/// FieldValue::from([1u32, 2, 3])     // multiple node IDs
+/// ```
+///
+/// When constructed from node IDs, the `nodevalues` parameter is
+/// automatically set to `true`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum FieldValue {
+    /// A plain text value e.g. "hello"
+    Text(String),
+    /// A list of node IDs, sets nodevalues = true automatically
+    Nodes(List<u32>),
+}
+
+impl From<&str> for FieldValue {
+    fn from(val: &str) -> Self {
+        Self::Text(val.to_string())
+    }
+}
+
+impl From<String> for FieldValue {
+    fn from(val: String) -> Self {
+        Self::Text(val)
+    }
+}
+
+impl From<u32> for FieldValue {
+    fn from(val: u32) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+impl From<Vec<u32>> for FieldValue {
+    fn from(val: Vec<u32>) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+impl<const N: usize> From<[u32; N]> for FieldValue {
+    fn from(val: [u32; N]) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+impl Serialize for FieldValue {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+        
+        let mut map = serializer.serialize_map(None)?;
+        match self {
+            Self::Text(text) => {
+                map.serialize_entry("value", text)?;
+            }
+            Self::Nodes(nodes) => {
+                map.serialize_entry("value", nodes)?;
+                map.serialize_entry("nodevalues", &true)?;
+            }
+        }
+        map.end()
     }
 }

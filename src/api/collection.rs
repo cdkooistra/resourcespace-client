@@ -3,7 +3,7 @@ use serde::Serialize;
 use crate::client::Client;
 use crate::error::RsError;
 
-use super::SortOrder;
+use super::{SortOrder, List};
 
 /// Sub-API for collection endpoints.
 #[derive(Debug)]
@@ -329,7 +329,7 @@ impl RemoveResourceFromCollectionRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateCollectionRequest {
     /// The name of the new collection.
     pub name: String,
@@ -342,7 +342,7 @@ impl CreateCollectionRequest {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
-            ..Default::default()
+            forupload: None,
         }
     }
 
@@ -493,11 +493,11 @@ impl DeleteResourcesInCollectionRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {
     /// Comma-separated list of collection IDs to retrieve resource counts for.
-    pub refs: String,
+    pub refs: List<u32>,
 }
 
 impl GetCollectionsResourceCountRequest {
-    pub fn new(refs: impl Into<String>) -> Self {
+    pub fn new(refs: impl Into<List<u32>>) -> Self {
         Self { refs: refs.into() }
     }
 }

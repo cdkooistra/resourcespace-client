@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 
 use crate::client::Client;
 use crate::error::RsError;
 
-use super::SortOrder;
+use super::{SortOrder, List};
 
 /// Sub-API for search endpoints.
 #[derive(Debug)]
@@ -91,13 +91,54 @@ impl<'a> SearchApi<'a> {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+/// The row fetch mode for a search request.
+///
+/// Use [`FetchRows::limit`] to cap the number of results, or
+/// [`FetchRows::page`] to fetch a specific window with offset and limit.
+/// Note that these two modes return different response shapes from
+/// ResourceSpace — `page` returns a structured response with a `total`
+/// count alongside the results.
+///
+/// ```no_run
+/// FetchRows::limit(100)         // return up to 100 results
+/// FetchRows::page(0, 50)        // return results 0–50
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub enum FetchRows {
+    /// Return up to N rows
+    Limit(u32),
+    /// Return rows with explicit offset and limit, enables paginated response
+    Page {offset: u32, limit: u32 },
+}
+
+impl FetchRows {
+    pub fn limit(n: u32) -> Self {
+        Self::Limit(n)
+    }
+
+    pub fn page(offset: u32, limit: u32) -> Self {
+        Self::Page { offset, limit }
+    }
+}
+
+impl Serialize for FetchRows {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        match self {
+            Self::Limit(n) => n.serialize(serializer),
+            Self::Page { offset, limit } => {
+                format!("{},{}", offset, limit).serialize(serializer)
+            }
+        }
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DoSearchRequest {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub restypes: Option<String>,
+    pub restypes: Option<List<u32>>,
     /// Field name to order results by.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
@@ -106,7 +147,7 @@ pub struct DoSearchRequest {
     pub archive: Option<i8>,
     /// Number of rows to return, or `"offset,rows"` for paginated fetching.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fetchrows: Option<String>,
+    pub fetchrows: Option<FetchRows>,
     /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortOrder>,
@@ -119,11 +160,16 @@ impl DoSearchRequest {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),
-            ..Default::default()
+            restypes: None,
+            order_by: None,
+            archive: None,
+            fetchrows: None,
+            sort: None,
+            offset: None,
         }
     }
 
-    pub fn restypes(mut self, restypes: impl Into<String>) -> Self {
+    pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
@@ -138,8 +184,8 @@ impl DoSearchRequest {
         self
     }
 
-    pub fn fetchrows(mut self, fetchrows: impl Into<String>) -> Self {
-        self.fetchrows = Some(fetchrows.into());
+    pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
+        self.fetchrows = Some(fetchrows);
         self
     }
 
@@ -154,13 +200,13 @@ impl DoSearchRequest {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub restypes: Option<String>,
+    pub restypes: Option<List<u32>>,
     /// Field name to order results by.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
@@ -169,7 +215,7 @@ pub struct SearchGetPreviewsRequest {
     pub archive: Option<i8>,
     /// Number of rows to return, or `"offset,rows"` for paginated fetching.
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub fetchrows: Option<String>,
+    pub fetchrows: Option<FetchRows>,
     /// Sort direction for the results.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortOrder>,
@@ -178,7 +224,7 @@ pub struct SearchGetPreviewsRequest {
     pub recent_search_daylimit: Option<String>,
     /// Comma-separated list of preview sizes to include URLs for (e.g. `"thm,scr,pre"`).
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub getsizes: Option<String>,
+    pub getsizes: Option<List<u32>>,
     /// Override the preview file extension returned (e.g. `"jpg"`).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub previewext: Option<String>,
@@ -188,11 +234,18 @@ impl SearchGetPreviewsRequest {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),
-            ..Default::default()
+            restypes: None,
+            order_by: None,
+            archive: None,
+            fetchrows: None,
+            sort: None,
+            recent_search_daylimit: None,
+            getsizes: None,
+            previewext: None,
         }
     }
 
-    pub fn restypes(mut self, restypes: impl Into<String>) -> Self {
+    pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
@@ -207,8 +260,8 @@ impl SearchGetPreviewsRequest {
         self
     }
 
-    pub fn fetchrows(mut self, fetchrows: impl Into<String>) -> Self {
-        self.fetchrows = Some(fetchrows.into());
+    pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
+        self.fetchrows = Some(fetchrows);
         self
     }
 
@@ -222,7 +275,7 @@ impl SearchGetPreviewsRequest {
         self
     }
 
-    pub fn getsizes(mut self, getsizes: impl Into<String>) -> Self {
+    pub fn getsizes(mut self, getsizes: impl Into<List<u32>>) -> Self {
         self.getsizes = Some(getsizes.into());
         self
     }
