@@ -1,4 +1,5 @@
 use serde::Serialize;
+use serde_with::skip_serializing_none;
 use validator::Validate;
 
 use crate::client::Client;
@@ -87,11 +88,11 @@ impl<'a> SystemApi<'a> {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct GetDailyStatSummaryRequest {
     /// Number of past days to include in the summary (1–365). Defaults to 30 when omitted.
     #[validate(range(min = 1, max = 365))]
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub days: Option<u16>,
 }
 

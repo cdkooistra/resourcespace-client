@@ -1,4 +1,5 @@
 use serde::{Serialize, Serializer};
+use serde_with::skip_serializing_none;
 
 use crate::client::Client;
 use crate::error::RsError;
@@ -130,27 +131,22 @@ impl Serialize for FetchRows {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DoSearchRequest {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub restypes: Option<List<u32>>,
     /// Field name to order results by.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
     /// Archive status filter: 0 = live, 1 = archived, 2 = deleted.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<i8>,
     /// Number of rows to return, or `"offset,rows"` for paginated fetching.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub fetchrows: Option<FetchRows>,
     /// Sort direction for the results.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortOrder>,
     /// Number of results to skip, used for pagination.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub offset: Option<u32>,
 }
 
@@ -198,33 +194,26 @@ impl DoSearchRequest {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub restypes: Option<List<u32>>,
     /// Field name to order results by.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
     /// Archive status filter: 0 = live, 1 = archived, 2 = deleted.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub archive: Option<i8>,
     /// Number of rows to return, or `"offset,rows"` for paginated fetching.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub fetchrows: Option<FetchRows>,
     /// Sort direction for the results.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortOrder>,
     /// Only return resources modified within this many days.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub recent_search_daylimit: Option<String>,
     /// Comma-separated list of preview sizes to include URLs for (e.g. `"thm,scr,pre"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub getsizes: Option<List<u32>>,
     /// Override the preview file extension returned (e.g. `"jpg"`).
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub previewext: Option<String>,
 }
 

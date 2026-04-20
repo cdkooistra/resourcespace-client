@@ -1,4 +1,7 @@
 use serde::Serialize;
+use serde_with::json::JsonString;
+use serde_with::{serde_as, skip_serializing_none};
+use validator::Validate;
 
 use crate::client::Client;
 use crate::error::RsError;
@@ -329,12 +332,12 @@ impl RemoveResourceFromCollectionRequest {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateCollectionRequest {
     /// The name of the new collection.
     pub name: String,
     /// If set, marks this collection as an upload collection.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub forupload: Option<u8>,
 }
 
@@ -364,19 +367,16 @@ impl DeleteCollectionRequest {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchPublicCollectionsRequest {
     /// Optional search string to filter collections by name.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub search: Option<String>,
     /// Field name to order results by.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub order_by: Option<String>,
     /// Sort direction for the results.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub sort: Option<SortOrder>,
     /// If set, excludes theme/featured collections from results.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub exclude_themes: Option<u8>,
 }
 
@@ -419,19 +419,49 @@ impl GetCollectionRequest {
     }
 }
 
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveCollectionRequest {
     /// The ID of the collection to save.
     #[serde(rename = "ref")]
     pub r#ref: u32,
     /// JSON object containing the collection fields to update (e.g. name, description, public).
-    pub coldata: serde_json::Value,
+    #[serde_as(as = "JsonString")]
+    pub coldata: SaveCollectionColdata,
 }
 
 impl SaveCollectionRequest {
-    pub fn new(r#ref: u32, coldata: serde_json::Value) -> Self {
+    pub fn new(r#ref: u32, coldata: SaveCollectionColdata) -> Self {
         Self { r#ref, coldata }
     }
+}
+
+#[derive(Clone, Debug, PartialEq, Serialize, Validate)]
+pub struct SaveCollectionColdata {
+    /// Comma-separated value of keywords to be associated with this collection.
+    pub keywords: Option<List<String>>,
+    /// To set whether other users are allowed to add/remove resources when collection is shared or is public. The allowed value is 0 or 1.
+    #[validate(range(min = 0, max = 1))]
+    pub allow_changes: Option<u8>,
+    /// Comma-separated value of users to attach to the collection.
+    pub users: Option<List<String>>,
+    /// Collection name.
+    pub name: Option<String>,
+    /// 0 for private, 1 for public (legacy).
+    #[validate(range(min = 0, max = 1))]
+    pub public: Option<u8>,
+    /// 0 = standard, 3 = Featured collection, 4 = public. If 3 or 4 then public should be set to 1.
+    #[serde(rename = "type")]
+    pub r#type: Option<u8>,
+    /// ID of parent featured collection. Set to 0 to create a new root level collection (see below). Applies to Featured collections only.
+    pub parent: Option<u32>,
+    /// Required to be set to 1 if creating a root level featured collection (parent=0). Applies to Featured collections only.
+    #[validate(range(min = 0, max = 1))]
+    pub force_featured_collection_type: Option<u8>,
+    /// 0 = no image, 1 = most popular image, 10 - most popular images, 100 - manually select image. Applies to Featured collections only.
+    pub thumbnail_selection_method: Option<u32>,
+    /// Resource ID to use as thumbnail. Only if thumbnail_selection_method =100. Applies to Featured collections only.
+    pub bg_img_resource_ref: Option<u32>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]

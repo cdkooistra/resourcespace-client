@@ -1,4 +1,6 @@
 use serde::Serialize;
+use serde_with::json::JsonString;
+use serde_with::{serde_as, skip_serializing_none};
 
 use crate::client::Client;
 use crate::error::RsError;
@@ -157,13 +159,12 @@ impl CheckpermRequest {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersRequest {
     /// Search string to filter users by name or username.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub find: Option<String>,
     /// If set, only returns users whose username exactly matches `find`.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub exact_username_match: Option<bool>,
 }
 
@@ -211,12 +212,12 @@ impl MarkEmailAsInvalidRequest {
     }
 }
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct NewUserRequest {
     /// The username for the new user account.
     pub username: String,
     /// The ID of the user group to assign this user to.
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub usergroup: Option<u32>,
 }
 
@@ -234,17 +235,48 @@ impl NewUserRequest {
     }
 }
 
+#[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveUserRequest {
     /// The ID of the user to update.
     #[serde(rename = "ref")]
     pub r#ref: u32,
     /// JSON object containing the user fields to save (e.g. fullname, email, usergroup).
-    pub data: serde_json::Value,
+    #[serde_as(as = "JsonString")]
+    pub data: SaveUserData,
 }
 
 impl SaveUserRequest {
-    pub fn new(r#ref: u32, data: serde_json::Value) -> Self {
+    pub fn new(r#ref: u32, data: SaveUserData) -> Self {
         Self { r#ref, data }
     }
+}
+
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct SaveUserData {
+    /// Username used to log into the account.
+    pub username: Option<String>,
+    /// Password for the account in plain text.
+    pub password: Option<String>,
+    /// Full display name of the user.
+    pub fullname: Option<String>,
+    /// Email address associated with the account.
+    pub email: Option<String>,
+    /// ID of the user group to assign the user to.
+    pub usergroup: Option<u32>,
+    /// Optional IP restriction for the account. Can contain a single IP, or a wildcard pattern.
+    pub ip_restrict: Option<String>,
+    // pub search_filter_override: ?
+    // pub search_filter_o_id: ?
+    /// Administrative comments or notes about the user.
+    pub comments: Option<String>,
+    /// Whether the user should receive content suggestions.
+    pub suggest: Option<bool>,
+    /// Whether to send the user a password reset link by email instead of setting a password directly.
+    pub emailresetlink: Option<bool>,
+    /// Approval state of the account.
+    pub approved: Option<u8>,
+    /// Account expiry date in `YYYY-MM-DD` format, e.g. `"2026-12-31"`.
+    pub expires: Option<String>,
 }
