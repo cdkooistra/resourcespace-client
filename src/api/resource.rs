@@ -521,6 +521,7 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Arguments
     /// * `request` - Parameters built via [`UploadMultipartRequest`]
+    /// * `source` - Source accepts a file path or a stream as per [`UploadSource`].
     ///
     /// ## Returns
     ///
@@ -532,10 +533,10 @@ impl<'a> ResourceApi<'a> {
     pub async fn upload_multipart(
         &self,
         request: UploadMultipartRequest,
-        file: impl AsRef<std::path::Path>,
+        source: impl Into<UploadSource>,
     ) -> Result<serde_json::Value, RsError> {
         self.client
-            .send_multipart_request("upload_multipart", request, file.as_ref())
+            .send_multipart_request("upload_multipart", request, source.into())
             .await
     }
 
@@ -1254,6 +1255,47 @@ impl UploadFileByUrlRequest {
     pub fn url(mut self, url: impl Into<String>) -> Self {
         self.url = Some(url.into());
         self
+    }
+}
+
+/// Data source for a multipart upload
+pub enum UploadSource {
+    File(std::path::PathBuf),
+    Stream {
+        body: reqwest::Body,
+        filename: String,
+    },
+}
+
+impl UploadSource {
+    /// Creates a stream-based upload source.
+    ///
+    /// `body` accepts anything that converts into a [`reqwest::Body`]:
+    /// `Bytes`, `Vec<u8>`, or a `Stream<Item = Result<Bytes, E>>` via
+    /// `reqwest::Body::wrap_stream(ReaderStream::new(reader))`.
+    pub fn from_stream(body: impl Into<reqwest::Body>, filename: impl Into<String>) -> Self {
+        UploadSource::Stream {
+            body: body.into(),
+            filename: filename.into(),
+        }
+    }
+}
+
+impl From<std::path::PathBuf> for UploadSource {
+    fn from(path: std::path::PathBuf) -> Self {
+        UploadSource::File(path)
+    }
+}
+
+impl From<&std::path::Path> for UploadSource {
+    fn from(path: &std::path::Path) -> Self {
+        UploadSource::File(path.to_path_buf())
+    }
+}
+
+impl From<&str> for UploadSource {
+    fn from(s: &str) -> Self {
+        UploadSource::File(std::path::PathBuf::from(s))
     }
 }
 
