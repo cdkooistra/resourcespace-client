@@ -152,7 +152,7 @@ impl Client {
         &self,
         function: &str,
         params: P,
-        file: &std::path::Path,
+        source: crate::api::resource::UploadSource,
     ) -> Result<serde_json::Value, RsError>
     where
         P: Serialize,
@@ -173,6 +173,15 @@ impl Client {
 
         let full_url = format!("{}api/", self.base_url);
 
+        let file_part = match source {
+            crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
+                .await
+                .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?,
+            crate::api::resource::UploadSource::Stream { body, filename } => {
+                reqwest::multipart::Part::stream(body).file_name(filename)
+            }
+        };
+
         let response = self
             .client
             .post(&full_url)
@@ -182,9 +191,7 @@ impl Client {
                     .text("query", query)
                     .text("sign", signature)
                     .text("authmode", authmode.to_string())
-                    .file("file", file)
-                    .await
-                    .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?,
+                    .part("file", file_part),
             )
             .send()
             .await
