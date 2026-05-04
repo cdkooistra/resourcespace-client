@@ -27,7 +27,7 @@ async fn main() {
         .resource()
         .upload_multipart(
             UploadMultipartRequest::new(91287, false, false),
-            "pexels.jpg", // automatically becomes PathBuf 
+            "pexels.jpg", // automatically becomes PathBuf
         )
         .await;
 
