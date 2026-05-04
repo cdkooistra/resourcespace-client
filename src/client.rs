@@ -35,6 +35,13 @@ pub(crate) struct ApiRequest<'a, P: Serialize> {
     pub(crate) params: P,
 }
 
+struct PreparedRequest {
+    user: String,
+    query: String,
+    signature: String,
+    authmode: String,
+}
+
 pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
     serde_qs::Config::new()
         .use_form_encoding(true)
@@ -68,6 +75,31 @@ impl Client {
         }
     }
 
+    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, RsError>
+    where
+        P: Serialize,
+    {
+        let (user, key, authmode) = match &self.auth {
+            Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
+            Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
+        };
+
+        let req = ApiRequest {
+            user,
+            function,
+            params,
+        };
+        let query = build_query(&req)?;
+        let signature = sign(key, &query);
+
+        Ok(PreparedRequest {
+            user: user.clone(),
+            query,
+            signature,
+            authmode: authmode.to_string(),
+        })
+    }
+
     pub(crate) async fn send_request<P>(
         &self,
         function: &str,
@@ -77,25 +109,12 @@ impl Client {
     where
         P: Serialize,
     {
-        let (user, key, authmode) = match &self.auth {
-            Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
-            Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
-        };
-
-        // Build query string
-        let req = ApiRequest {
-            user,
-            function,
-            params,
-        };
-        let query = build_query(&req)?;
-        let signature = sign(key, &query);
-
+        let request = self.prepare_request(function, params)?;
         let response = match method {
             reqwest::Method::GET => {
                 let full_url = format!(
                     "{}api/?{}&sign={}&authmode={}",
-                    self.base_url, query, signature, authmode
+                    self.base_url, request.query, request.signature, request.authmode
                 );
                 self.client.get(&full_url).send().await
             }
@@ -104,10 +123,10 @@ impl Client {
                 self.client
                     .post(&full_url)
                     .form(&[
-                        ("user", user.clone()),
-                        ("query", query),
-                        ("sign", signature),
-                        ("authmode", authmode.to_string()),
+                        ("user", request.user.clone()),
+                        ("query", request.query),
+                        ("sign", request.signature),
+                        ("authmode", request.authmode.to_string()),
                     ])
                     .send()
                     .await
@@ -157,20 +176,7 @@ impl Client {
     where
         P: Serialize,
     {
-        let (user, key, authmode) = match &self.auth {
-            Auth::UserKey { user, key } => (user, key.expose_secret(), "userkey"),
-            Auth::SessionKey { user, key } => (user, key.expose_secret(), "sessionkey"),
-        };
-
-        // Build query string — same as regular POST, file is NOT included
-        let req = ApiRequest {
-            user,
-            function,
-            params,
-        };
-        let query = build_query(&req)?;
-        let signature = sign(key, &query);
-
+        let request = self.prepare_request(function, params)?;
         let full_url = format!("{}api/", self.base_url);
 
         let file_part = match source {
@@ -187,10 +193,10 @@ impl Client {
             .post(&full_url)
             .multipart(
                 reqwest::multipart::Form::new()
-                    .text("user", user.clone())
-                    .text("query", query)
-                    .text("sign", signature)
-                    .text("authmode", authmode.to_string())
+                    .text("user", request.user.clone())
+                    .text("query", request.query)
+                    .text("sign", request.signature)
+                    .text("authmode", request.authmode.to_string())
                     .part("file", file_part),
             )
             .send()
