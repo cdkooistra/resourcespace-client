@@ -2,7 +2,9 @@
 pub mod api;
 mod auth;
 pub mod client;
+pub use client::{Client, ClientBuilder};
 pub mod error;
+pub use error::RsError;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
