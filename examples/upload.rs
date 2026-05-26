@@ -1,7 +1,7 @@
+use resourcespace_client::api::resource::UploadFileByUrlRequest;
 use resourcespace_client::api::resource::UploadMultipartRequest;
+use resourcespace_client::api::resource::UploadSource;
 use resourcespace_client::client::Client;
-
-use std::path::Path;
 
 #[tokio::main]
 async fn main() {
@@ -21,11 +21,50 @@ async fn main() {
         .await
         .expect("Error when building client");
 
+    // upload_multipart using a file path
+
     let result = client
         .resource()
         .upload_multipart(
             UploadMultipartRequest::new(91287, false, false),
-            Path::new("pexels.jpg"),
+            "pexels.jpg", // automatically becomes PathBuf
+        )
+        .await;
+
+    match result {
+        Ok(response) => println!("{:#?}", response),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    // upload_multipart by piping a stream from a URL directly (no buffering)
+
+    let download =
+        reqwest::get("https://images.pexels.com/photos/36851963/pexels-photo-36851963.jpeg")
+            .await
+            .expect("Failed to fetch URL");
+
+    let source = UploadSource::from_stream(
+        reqwest::Body::wrap_stream(download.bytes_stream()),
+        "some-image-from-pexels.jpg",
+    );
+
+    let result = client
+        .resource()
+        .upload_multipart(UploadMultipartRequest::new(1228, false, false), source)
+        .await;
+
+    match result {
+        Ok(response) => println!("{:#?}", response),
+        Err(e) => println!("Error: {}", e),
+    }
+
+    // or just use upload_file_by_url
+
+    let result = client
+        .resource()
+        .upload_file_by_url(
+            UploadFileByUrlRequest::new(1228)
+                .url("https://images.pexels.com/photos/20063016/pexels-photo-20063016.jpeg"),
         )
         .await;
 

@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, ... }:
 
 {
   dotenv.enable = true;
@@ -6,8 +6,11 @@
   languages.rust = {
     enable = true;
     channel = "stable";
-    # mold.enable = true;
+    mold.enable = true;
   };
+
+  # used for rendering docs
+  languages.python.enable = true;
 
   packages = with pkgs; [
     openssl
