@@ -72,6 +72,9 @@ impl Client {
         ClientBuilder {
             base_url: private::NoUrl,
             auth: private::NoAuth,
+            timeout: None,
+            connect_timeout: None,
+            user_agent: None,
         }
     }
 
@@ -242,6 +245,46 @@ impl Client {
 pub struct ClientBuilder<U = private::NoUrl, A = private::NoAuth> {
     base_url: U,
     auth: A,
+    timeout: Option<Duration>,
+    connect_timeout: Option<Duration>,
+    user_agent: Option<String>,
+}
+
+impl<U, A> ClientBuilder<U, A> {
+    pub fn timeout(self, timeout: Duration) -> Self {
+        Self {
+            timeout: Some(timeout),
+            ..self
+        }
+    }
+    pub fn connect_timeout(self, connect_timeout: Duration) -> Self {
+        Self {
+            connect_timeout: Some(connect_timeout),
+            ..self
+        }
+    }
+    pub fn user_agent(self, user_agent: impl Into<String>) -> Self {
+        Self {
+            user_agent: Some(user_agent.into()),
+            ..self
+        }
+    }
+
+    fn build_http_client(&self) -> Result<reqwest::Client, RsError> {
+        let mut builder = reqwest::Client::builder();
+        if let Some(t) = self.timeout {
+            builder = builder.timeout(t);
+        }
+        if let Some(t) = self.connect_timeout {
+            builder = builder.connect_timeout(t);
+        }
+        if let Some(ref ua) = self.user_agent {
+            builder = builder.user_agent(ua.as_str());
+        } else {
+            builder = builder.user_agent(APP_USER_AGENT)
+        }
+        Ok(builder.build()?)
+    }
 }
 
 impl<A> ClientBuilder<private::NoUrl, A> {
@@ -255,6 +298,9 @@ impl<A> ClientBuilder<private::NoUrl, A> {
         Ok(ClientBuilder {
             base_url: private::WithUrl(parsed_url),
             auth: self.auth,
+            timeout: self.timeout,
+            connect_timeout: self.connect_timeout,
+            user_agent: self.user_agent,
         })
     }
 }
@@ -271,6 +317,9 @@ impl<U> ClientBuilder<U, private::NoAuth> {
                 user: user.into(),
                 key: SecretString::from(key.into()),
             },
+            timeout: self.timeout,
+            connect_timeout: self.connect_timeout,
+            user_agent: self.user_agent,
         }
     }
 
@@ -285,15 +334,18 @@ impl<U> ClientBuilder<U, private::NoAuth> {
                 user: user.into(),
                 password: SecretString::from(password.into()),
             },
+            timeout: self.timeout,
+            connect_timeout: self.connect_timeout,
+            user_agent: self.user_agent,
         }
     }
 }
 
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
     pub async fn build(self) -> Result<Client, RsError> {
-        let http = make_client()?;
+        let client = self.build_http_client()?;
         let session_key = login(
-            &http,
+            &client,
             &self.base_url.0,
             &self.auth.user,
             self.auth.password.expose_secret(),
@@ -307,14 +359,14 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
         Ok(Client {
             base_url: self.base_url.0,
             auth,
-            client: http,
+            client,
         })
     }
 }
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
     pub async fn build(self) -> Result<Client, RsError> {
-        let http = make_client()?;
+        let client = self.build_http_client()?;
         let auth = Auth::UserKey {
             user: self.auth.user,
             key: self.auth.key,
@@ -323,7 +375,7 @@ impl ClientBuilder<private::WithUrl, private::WithUserKey> {
         Ok(Client {
             base_url: self.base_url.0,
             auth,
-            client: http,
+            client,
         })
     }
 }
@@ -333,12 +385,4 @@ fn sign(key: &str, query: &str) -> String {
     hasher.update(key.as_bytes());
     hasher.update(query.as_bytes());
     hex::encode(hasher.finalize())
-}
-
-fn make_client() -> Result<reqwest::Client, RsError> {
-    Ok(reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .connect_timeout(Duration::from_secs(10))
-        .user_agent(APP_USER_AGENT)
-        .build()?)
 }
