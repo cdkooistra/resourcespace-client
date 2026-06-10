@@ -212,7 +212,7 @@ pub struct SearchGetPreviewsRequest {
     /// Only return resources modified within this many days.
     pub recent_search_daylimit: Option<String>,
     /// Comma-separated list of preview sizes to include URLs for (e.g. `"thm,scr,pre"`).
-    pub getsizes: Option<List<u32>>,
+    pub getsizes: Option<List<String>>,
     /// Override the preview file extension returned (e.g. `"jpg"`).
     pub previewext: Option<String>,
 }
@@ -262,7 +262,7 @@ impl SearchGetPreviewsRequest {
         self
     }
 
-    pub fn getsizes(mut self, getsizes: impl Into<List<u32>>) -> Self {
+    pub fn getsizes(mut self, getsizes: impl Into<List<String>>) -> Self {
         self.getsizes = Some(getsizes.into());
         self
     }
