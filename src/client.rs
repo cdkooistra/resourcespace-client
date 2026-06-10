@@ -1,6 +1,5 @@
 use secrecy::{ExposeSecret, SecretString};
 use serde::Serialize;
-use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use url::Url;
@@ -149,6 +148,11 @@ impl Client {
         let text = response.text().await.map_err(RsError::Http)?;
         let trimmed = text.trim();
 
+        // 1.5 RS returns invalid signature
+        if trimmed.eq_ignore_ascii_case("invalid_signature") {
+            return Err(RsError::Validation("invalid signature".to_string()));
+        }
+
         // 2. RS returns plain "false" for failed operations
         if trimmed.eq_ignore_ascii_case("false") {
             return Err(RsError::OperationFailed);
@@ -204,16 +208,14 @@ impl Client {
             .await
             .map_err(RsError::Http)?;
 
-        if !response.status().is_success() {
+        if response.status() != reqwest::StatusCode::NO_CONTENT {
             return Err(RsError::Api {
                 status: response.status().as_u16(),
                 message: response.text().await.unwrap_or_default(),
             });
         }
 
-        let text = response.text().await.map_err(RsError::Http)?;
-
-        Ok(json!(text))
+        Ok(serde_json::Value::String("".to_string()))
     }
 
     // Sub-APIs
