@@ -14,7 +14,7 @@ mod private {
     use secrecy::SecretString;
 
     pub struct NoUrl;
-    pub struct WithUrl(pub(crate) url::Url);
+    pub struct WithUrl(pub(crate) String);
     pub struct NoAuth;
     pub struct WithUserKey {
         pub(crate) user: String,
@@ -61,7 +61,7 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
 /// - "Invalid signature" strings, even with 200 status code
 #[derive(Debug)]
 pub struct Client {
-    base_url: Url,
+    api_url: Url,
     auth: Auth,
     client: reqwest::Client,
 }
@@ -115,16 +115,16 @@ impl Client {
         let request = self.prepare_request(function, params)?;
         let response = match method {
             reqwest::Method::GET => {
-                let full_url = format!(
-                    "{}api/?{}&sign={}&authmode={}",
-                    self.base_url, request.query, request.signature, request.authmode
-                );
-                self.client.get(&full_url).send().await
+                let mut url = self.api_url.clone();
+                url.set_query(Some(&format!(
+                    "{}&sign={}&authmode={}",
+                    request.query, request.signature, request.authmode
+                )));
+                self.client.get(url.as_str()).send().await
             }
             reqwest::Method::POST => {
-                let full_url = format!("{}api/", self.base_url);
                 self.client
-                    .post(&full_url)
+                    .post(self.api_url.as_str())
                     .form(&[
                         ("user", request.user.clone()),
                         ("query", request.query),
@@ -180,8 +180,6 @@ impl Client {
         P: Serialize,
     {
         let request = self.prepare_request(function, params)?;
-        let full_url = format!("{}api/", self.base_url);
-
         let file_part = match source {
             crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
                 .await
@@ -193,7 +191,7 @@ impl Client {
 
         let response = self
             .client
-            .post(&full_url)
+            .post(self.api_url.as_str()) // function is passed in the multipart request
             .multipart(
                 reqwest::multipart::Form::new()
                     .text("user", request.user.clone())
@@ -288,20 +286,14 @@ impl<U, A> ClientBuilder<U, A> {
 }
 
 impl<A> ClientBuilder<private::NoUrl, A> {
-    pub fn base_url(
-        self,
-        url: impl Into<String>,
-    ) -> Result<ClientBuilder<private::WithUrl, A>, RsError> {
-        let url = url.into();
-        let parsed_url = Url::parse(&url).map_err(|e| RsError::Other(e.to_string()))?;
-
-        Ok(ClientBuilder {
-            base_url: private::WithUrl(parsed_url),
+    pub fn base_url(self, url: impl Into<String>) -> ClientBuilder<private::WithUrl, A> {
+        ClientBuilder {
+            base_url: private::WithUrl(url.into()),
             auth: self.auth,
             timeout: self.timeout,
             connect_timeout: self.connect_timeout,
             user_agent: self.user_agent,
-        })
+        }
     }
 }
 
@@ -341,12 +333,24 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     }
 }
 
+impl<A> ClientBuilder<private::WithUrl, A> {
+    fn parse_url(&self) -> Result<Url, RsError> {
+        let base_url = Url::parse(&self.base_url.0).map_err(|e| RsError::Other(e.to_string()))?;
+        let api_url = base_url
+            .join("api/")
+            .map_err(|e| RsError::Other(e.to_string()))?;
+
+        Ok(api_url)
+    }
+}
+
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
     pub async fn build(self) -> Result<Client, RsError> {
+        let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let session_key = login(
             &client,
-            &self.base_url.0,
+            &api_url,
             &self.auth.user,
             self.auth.password.expose_secret(),
         )
@@ -357,7 +361,7 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
         };
 
         Ok(Client {
-            base_url: self.base_url.0,
+            api_url,
             auth,
             client,
         })
@@ -366,6 +370,7 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
     pub async fn build(self) -> Result<Client, RsError> {
+        let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let auth = Auth::UserKey {
             user: self.auth.user,
@@ -373,7 +378,7 @@ impl ClientBuilder<private::WithUrl, private::WithUserKey> {
         };
 
         Ok(Client {
-            base_url: self.base_url.0,
+            api_url,
             auth,
             client,
         })

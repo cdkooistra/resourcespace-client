@@ -21,15 +21,13 @@ struct LoginParams<'a> {
     password: &'a str,
 }
 
-// TODO: if this is truely internal, just swap to &str
+/// Logs in a user using the ResourceSpace API and returns a session key.
 pub(crate) async fn login(
     http: &Client,
-    base_url: &Url,
-    user: impl Into<String>,
-    password: impl Into<String>,
+    api_url: &Url,
+    user: &str,
+    password: &str,
 ) -> Result<String, RsError> {
-    let user = user.into();
-    let password = password.into();
     let req = ApiRequest {
         user: &user,
         function: "login",
@@ -39,10 +37,11 @@ pub(crate) async fn login(
         },
     };
     let query = build_query(&req)?;
-    let url = format!("{}api/?{}", base_url, query);
+    let mut url = api_url.clone();
+    url.set_query(Some(&query));
 
     let response = http
-        .get(&url)
+        .get(url.as_str())
         .send()
         .await
         .map_err(RsError::Http)?
