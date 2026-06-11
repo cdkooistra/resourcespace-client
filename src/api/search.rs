@@ -1,7 +1,7 @@
 use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
-use crate::client::Client;
+use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::{List, SortOrder};
@@ -48,7 +48,7 @@ impl<'a> SearchApi<'a> {
     /// ```
     pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("do_search", reqwest::Method::GET, request)
+            .send_request("do_search", HttpMethod::Get, request)
             .await
     }
 
@@ -87,7 +87,7 @@ impl<'a> SearchApi<'a> {
         request: SearchGetPreviewsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("search_get_previews", reqwest::Method::GET, request)
+            .send_request("search_get_previews", HttpMethod::Get, request)
             .await
     }
 }

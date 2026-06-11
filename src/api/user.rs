@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_with::json::JsonString;
 use serde_with::{serde_as, skip_serializing_none};
 
-use crate::client::Client;
+use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::List;
@@ -32,7 +32,7 @@ impl<'a> UserApi<'a> {
     /// ## TODO: Examples
     pub async fn checkperm(&self, request: CheckpermRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("checkperm", reqwest::Method::GET, request)
+            .send_request("checkperm", HttpMethod::Get, request)
             .await
     }
 
@@ -52,7 +52,7 @@ impl<'a> UserApi<'a> {
     /// ## TODO: Examples
     pub async fn get_users(&self, request: GetUsersRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_users", reqwest::Method::GET, request)
+            .send_request("get_users", HttpMethod::Get, request)
             .await
     }
 
@@ -75,7 +75,7 @@ impl<'a> UserApi<'a> {
         request: GetUsersByPermissionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_users_by_permission", reqwest::Method::GET, request)
+            .send_request("get_users_by_permission", HttpMethod::Get, request)
             .await
     }
 
@@ -98,7 +98,7 @@ impl<'a> UserApi<'a> {
         request: MarkEmailAsInvalidRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("mark_email_as_invalid", reqwest::Method::POST, request)
+            .send_request("mark_email_as_invalid", HttpMethod::Post, request)
             .await
     }
 
@@ -120,7 +120,7 @@ impl<'a> UserApi<'a> {
     /// ## TODO: Examples
     pub async fn save_user(&self, request: SaveUserRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("save_user", reqwest::Method::POST, request)
+            .send_request("save_user", HttpMethod::Post, request)
             .await
     }
 
@@ -142,7 +142,7 @@ impl<'a> UserApi<'a> {
     /// ## TODO: Examples
     pub async fn new_user(&self, request: NewUserRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("new_user", reqwest::Method::POST, request)
+            .send_request("new_user", HttpMethod::Post, request)
             .await
     }
 }

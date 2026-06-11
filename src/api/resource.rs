@@ -3,7 +3,7 @@ use serde_with::json::JsonString;
 use serde_with::{serde_as, skip_serializing_none};
 use std::collections::HashMap;
 
-use crate::client::Client;
+use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::{List, SortOrder};
@@ -36,7 +36,7 @@ impl<'a> ResourceApi<'a> {
         request: AddAlternativeFileRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_alternative_file", reqwest::Method::POST, request)
+            .send_request("add_alternative_file", HttpMethod::Post, request)
             .await
     }
 
@@ -58,7 +58,7 @@ impl<'a> ResourceApi<'a> {
         request: CopyResourceRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("copy_resource", reqwest::Method::POST, request)
+            .send_request("copy_resource", HttpMethod::Post, request)
             .await
     }
 
@@ -79,7 +79,7 @@ impl<'a> ResourceApi<'a> {
         request: CreateResourceRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("create_resource", reqwest::Method::POST, request)
+            .send_request("create_resource", HttpMethod::Post, request)
             .await
     }
 
@@ -100,7 +100,7 @@ impl<'a> ResourceApi<'a> {
         request: DeleteAlternativeFile,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("delete_alternative_file", reqwest::Method::POST, request)
+            .send_request("delete_alternative_file", HttpMethod::Post, request)
             .await
     }
 
@@ -125,7 +125,7 @@ impl<'a> ResourceApi<'a> {
         request: DeleteResourceRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("delete_resource", reqwest::Method::POST, request)
+            .send_request("delete_resource", HttpMethod::Post, request)
             .await
     }
 
@@ -146,7 +146,7 @@ impl<'a> ResourceApi<'a> {
         request: GetAlternativeFilesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_alternative_files", reqwest::Method::GET, request)
+            .send_request("get_alternative_files", HttpMethod::Get, request)
             .await
     }
 
@@ -167,7 +167,7 @@ impl<'a> ResourceApi<'a> {
         request: GetEditAccessRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_edit_access", reqwest::Method::GET, request)
+            .send_request("get_edit_access", HttpMethod::Get, request)
             .await
     }
 
@@ -184,7 +184,7 @@ impl<'a> ResourceApi<'a> {
         request: GetRelatedResourcesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_related_resources", reqwest::Method::GET, request)
+            .send_request("get_related_resources", HttpMethod::Get, request)
             .await
     }
 
@@ -203,7 +203,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceAccessRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_access", reqwest::Method::GET, request)
+            .send_request("get_resource_access", HttpMethod::Get, request)
             .await
     }
 
@@ -226,11 +226,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceAllImageSizesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "get_resource_all_image_sizes",
-                reqwest::Method::GET,
-                request,
-            )
+            .send_request("get_resource_all_image_sizes", HttpMethod::Get, request)
             .await
     }
 
@@ -255,7 +251,7 @@ impl<'a> ResourceApi<'a> {
     ) -> Result<serde_json::Value, Error> {
         todo!("available from RS v11.0");
         // self.client
-        //     .send_request("get_resource_comments", reqwest::Method::GET, request)
+        //     .send_request("get_resource_comments", HttpMethod::Get, request)
         //     .await
     }
 
@@ -278,7 +274,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceDataRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_data", reqwest::Method::GET, request)
+            .send_request("get_resource_data", HttpMethod::Get, request)
             .await
     }
 
@@ -299,7 +295,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceFieldDataRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_field_data", reqwest::Method::GET, request)
+            .send_request("get_resource_field_data", HttpMethod::Get, request)
             .await
     }
 
@@ -320,7 +316,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceLogRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_log", reqwest::Method::GET, request)
+            .send_request("get_resource_log", HttpMethod::Get, request)
             .await
     }
 
@@ -343,7 +339,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourcePathRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_path", reqwest::Method::GET, request)
+            .send_request("get_resource_path", HttpMethod::Get, request)
             .await
     }
 
@@ -356,7 +352,7 @@ impl<'a> ResourceApi<'a> {
     /// ## TODO: Examples
     pub async fn get_resource_types(&self) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_types", reqwest::Method::GET, ())
+            .send_request("get_resource_types", HttpMethod::Get, ())
             .await
     }
 
@@ -376,7 +372,7 @@ impl<'a> ResourceApi<'a> {
         request: PutResourceDataRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("put_resource_data", reqwest::Method::POST, request)
+            .send_request("put_resource_data", HttpMethod::Post, request)
             .await
     }
 
@@ -397,7 +393,7 @@ impl<'a> ResourceApi<'a> {
         request: RelateAllResourcesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("relate_all_resources", reqwest::Method::POST, request)
+            .send_request("relate_all_resources", HttpMethod::Post, request)
             .await
     }
 
@@ -421,7 +417,7 @@ impl<'a> ResourceApi<'a> {
         request: ReplaceResourceFileRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("replace_resource_file", reqwest::Method::POST, request)
+            .send_request("replace_resource_file", HttpMethod::Post, request)
             .await
     }
 
@@ -444,7 +440,7 @@ impl<'a> ResourceApi<'a> {
         request: ResourceFileReadonlyRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("resource_file_readonly", reqwest::Method::GET, request)
+            .send_request("resource_file_readonly", HttpMethod::Get, request)
             .await
     }
 
@@ -465,7 +461,7 @@ impl<'a> ResourceApi<'a> {
         request: ResourceLogLastRowsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("resource_log_last_rows", reqwest::Method::GET, request)
+            .send_request("resource_log_last_rows", HttpMethod::Get, request)
             .await
     }
 
@@ -489,7 +485,7 @@ impl<'a> ResourceApi<'a> {
         request: UploadFileRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("upload_file", reqwest::Method::POST, request)
+            .send_request("upload_file", HttpMethod::Post, request)
             .await
     }
 
@@ -513,7 +509,7 @@ impl<'a> ResourceApi<'a> {
         request: UploadFileByUrlRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("upload_file_by_url", reqwest::Method::POST, request)
+            .send_request("upload_file_by_url", HttpMethod::Post, request)
             .await
     }
 
@@ -557,7 +553,7 @@ impl<'a> ResourceApi<'a> {
         request: UpdateRelatedResourceRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("update_related_resource", reqwest::Method::POST, request)
+            .send_request("update_related_resource", HttpMethod::Post, request)
             .await
     }
 
@@ -578,7 +574,7 @@ impl<'a> ResourceApi<'a> {
         request: UpdateResourceTypeRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("update_resource_type", reqwest::Method::POST, request)
+            .send_request("update_resource_type", HttpMethod::Post, request)
             .await
     }
 
@@ -599,7 +595,7 @@ impl<'a> ResourceApi<'a> {
         request: GetResourceCollectionsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_collections", reqwest::Method::GET, request)
+            .send_request("get_resource_collections", HttpMethod::Get, request)
             .await
     }
 
@@ -623,7 +619,7 @@ impl<'a> ResourceApi<'a> {
         request: ValidateUploadUrlRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("validate_upload_url", reqwest::Method::GET, request)
+            .send_request("validate_upload_url", HttpMethod::Get, request)
             .await
     }
 }

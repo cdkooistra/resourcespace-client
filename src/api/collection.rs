@@ -3,7 +3,7 @@ use serde_with::json::JsonString;
 use serde_with::{serde_as, skip_serializing_none};
 use validator::Validate;
 
-use crate::client::Client;
+use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::{List, SortOrder};
@@ -34,7 +34,7 @@ impl<'a> CollectionApi<'a> {
     /// ```
     pub async fn get_user_collections(&self) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_user_collections", reqwest::Method::GET, ())
+            .send_request("get_user_collections", HttpMethod::Get, ())
             .await
     }
 
@@ -54,7 +54,7 @@ impl<'a> CollectionApi<'a> {
         request: AddResourceToCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_resource_to_collection", reqwest::Method::POST, request)
+            .send_request("add_resource_to_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -74,11 +74,7 @@ impl<'a> CollectionApi<'a> {
         request: RemoveResourceFromCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "remove_resource_from_collection",
-                reqwest::Method::POST,
-                request,
-            )
+            .send_request("remove_resource_from_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -98,7 +94,7 @@ impl<'a> CollectionApi<'a> {
         request: CreateCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("create_collection", reqwest::Method::POST, request)
+            .send_request("create_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -118,7 +114,7 @@ impl<'a> CollectionApi<'a> {
         request: DeleteCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("delete_collection", reqwest::Method::POST, request)
+            .send_request("delete_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -138,7 +134,7 @@ impl<'a> CollectionApi<'a> {
         request: SearchPublicCollectionsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("search_public_collections", reqwest::Method::GET, request)
+            .send_request("search_public_collections", HttpMethod::Get, request)
             .await
     }
 
@@ -160,7 +156,7 @@ impl<'a> CollectionApi<'a> {
         request: GetCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_collection", reqwest::Method::GET, request)
+            .send_request("get_collection", HttpMethod::Get, request)
             .await
     }
 
@@ -180,7 +176,7 @@ impl<'a> CollectionApi<'a> {
         request: SaveCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("save_collection", reqwest::Method::POST, request)
+            .send_request("save_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -200,7 +196,7 @@ impl<'a> CollectionApi<'a> {
         request: ShowHideCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("show_hide_collection", reqwest::Method::POST, request)
+            .send_request("show_hide_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -220,7 +216,7 @@ impl<'a> CollectionApi<'a> {
         request: SendCollectionToAdminRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("send_collection_to_admin", reqwest::Method::POST, request)
+            .send_request("send_collection_to_admin", HttpMethod::Post, request)
             .await
     }
 
@@ -240,7 +236,7 @@ impl<'a> CollectionApi<'a> {
         request: GetFeaturedCollectionsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_featured_collections", reqwest::Method::GET, request)
+            .send_request("get_featured_collections", HttpMethod::Get, request)
             .await
     }
 
@@ -262,11 +258,7 @@ impl<'a> CollectionApi<'a> {
         request: DeleteResourcesInCollectionRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "delete_resources_in_collection",
-                reqwest::Method::POST,
-                request,
-            )
+            .send_request("delete_resources_in_collection", HttpMethod::Post, request)
             .await
     }
 
@@ -289,11 +281,7 @@ impl<'a> CollectionApi<'a> {
         request: GetCollectionsResourceCountRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "get_collections_resource_count",
-                reqwest::Method::GET,
-                request,
-            )
+            .send_request("get_collections_resource_count", HttpMethod::Get, request)
             .await
     }
 }

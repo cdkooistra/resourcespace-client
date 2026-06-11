@@ -29,14 +29,14 @@ pub(crate) async fn login(
     password: &str,
 ) -> Result<String, Error> {
     let req = ApiRequest {
-        user: &user,
+        user,
         function: "login",
         params: LoginParams {
-            username: &user,
-            password: &password,
+            username: user,
+            password,
         },
     };
-    let query = build_query(&req)?;
+    let query = build_query(&req);
     let mut url = api_url.clone();
     url.set_query(Some(&query));
 
@@ -44,16 +44,13 @@ pub(crate) async fn login(
         .get(url.as_str())
         .send()
         .await
-        .map_err(Error::Http)?
+        .map_err(|e| Error::Transport(e.into()))? // transport/connectivity error
         .text()
         .await
-        .map_err(Error::Http)?;
+        .map_err(|e| Error::Transport(e.into()))?; // body read error
 
     if response.trim().to_lowercase() == "false" {
-        return Err(Error::Api {
-            status: 401,
-            message: "Invalid credentials".into(),
-        });
+        return Err(Error::InvalidCredentials);
     }
 
     Ok(response.trim().trim_matches('"').to_string())

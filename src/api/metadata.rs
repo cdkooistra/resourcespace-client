@@ -2,7 +2,7 @@ use serde::{Serialize, Serializer};
 use serde_with::json::JsonString;
 use serde_with::{serde_as, skip_serializing_none};
 
-use crate::client::Client;
+use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::List;
@@ -33,7 +33,7 @@ impl<'a> MetadataApi<'a> {
         request: GetFieldOptionsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_field_options", reqwest::Method::GET, request)
+            .send_request("get_field_options", HttpMethod::Get, request)
             .await
     }
 
@@ -47,12 +47,9 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn get_node_id(
-        &self,
-        request: GetNodeIdRequest,
-    ) -> Result<serde_json::Value, Error> {
+    pub async fn get_node_id(&self, request: GetNodeIdRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_node_id", reqwest::Method::GET, request)
+            .send_request("get_node_id", HttpMethod::Get, request)
             .await
     }
 
@@ -68,7 +65,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_nodes", reqwest::Method::GET, request)
+            .send_request("get_nodes", HttpMethod::Get, request)
             .await
     }
 
@@ -87,7 +84,7 @@ impl<'a> MetadataApi<'a> {
         request: AddResourceNodesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_resource_nodes", reqwest::Method::POST, request)
+            .send_request("add_resource_nodes", HttpMethod::Post, request)
             .await
     }
 
@@ -106,7 +103,7 @@ impl<'a> MetadataApi<'a> {
         request: AddResourceNodesMultiRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_resource_nodes_multi", reqwest::Method::POST, request)
+            .send_request("add_resource_nodes_multi", HttpMethod::Post, request)
             .await
     }
 
@@ -122,7 +119,7 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Examples
     pub async fn set_node(&self, request: SetNodeRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("set_node", reqwest::Method::POST, request)
+            .send_request("set_node", HttpMethod::Post, request)
             .await
     }
 
@@ -143,7 +140,7 @@ impl<'a> MetadataApi<'a> {
         request: GetResourceTypeFieldsRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_type_fields", reqwest::Method::GET, request)
+            .send_request("get_resource_type_fields", HttpMethod::Get, request)
             .await
     }
 
@@ -164,7 +161,7 @@ impl<'a> MetadataApi<'a> {
         request: CreateResourceTypeFieldRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("create_resource_type_field", reqwest::Method::POST, request)
+            .send_request("create_resource_type_field", HttpMethod::Post, request)
             .await
     }
 
@@ -185,11 +182,7 @@ impl<'a> MetadataApi<'a> {
         request: ToggleActiveStatesForNodesRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "toggle_active_state_for_nodes",
-                reqwest::Method::POST,
-                request,
-            )
+            .send_request("toggle_active_state_for_nodes", HttpMethod::Post, request)
             .await
     }
 
@@ -208,7 +201,7 @@ impl<'a> MetadataApi<'a> {
         request: UpdateFieldRequest,
     ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("update_field", reqwest::Method::POST, request)
+            .send_request("update_field", HttpMethod::Post, request)
             .await
     }
 }
