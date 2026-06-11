@@ -2,8 +2,8 @@ use serde::{Serialize, Serializer};
 use serde_with::json::JsonString;
 use serde_with::{serde_as, skip_serializing_none};
 
-use crate::client::Client;
-use crate::error::RsError;
+use crate::client::{Client, HttpMethod};
+use crate::error::Error;
 
 use super::List;
 
@@ -31,9 +31,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn get_field_options(
         &self,
         request: GetFieldOptionsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_field_options", reqwest::Method::GET, request)
+            .send_request("get_field_options", HttpMethod::Get, request)
             .await
     }
 
@@ -47,12 +47,9 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn get_node_id(
-        &self,
-        request: GetNodeIdRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    pub async fn get_node_id(&self, request: GetNodeIdRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_node_id", reqwest::Method::GET, request)
+            .send_request("get_node_id", HttpMethod::Get, request)
             .await
     }
 
@@ -66,9 +63,9 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<serde_json::Value, RsError> {
+    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_nodes", reqwest::Method::GET, request)
+            .send_request("get_nodes", HttpMethod::Get, request)
             .await
     }
 
@@ -85,9 +82,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn add_resource_nodes(
         &self,
         request: AddResourceNodesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_resource_nodes", reqwest::Method::POST, request)
+            .send_request("add_resource_nodes", HttpMethod::Post, request)
             .await
     }
 
@@ -104,9 +101,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn add_resource_nodes_multi(
         &self,
         request: AddResourceNodesMultiRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("add_resource_nodes_multi", reqwest::Method::POST, request)
+            .send_request("add_resource_nodes_multi", HttpMethod::Post, request)
             .await
     }
 
@@ -120,9 +117,9 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn set_node(&self, request: SetNodeRequest) -> Result<serde_json::Value, RsError> {
+    pub async fn set_node(&self, request: SetNodeRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("set_node", reqwest::Method::POST, request)
+            .send_request("set_node", HttpMethod::Post, request)
             .await
     }
 
@@ -141,9 +138,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn get_resource_type_fields(
         &self,
         request: GetResourceTypeFieldsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_resource_type_fields", reqwest::Method::GET, request)
+            .send_request("get_resource_type_fields", HttpMethod::Get, request)
             .await
     }
 
@@ -162,9 +159,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn create_resource_type_field(
         &self,
         request: CreateResourceTypeFieldRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("create_resource_type_field", reqwest::Method::POST, request)
+            .send_request("create_resource_type_field", HttpMethod::Post, request)
             .await
     }
 
@@ -183,13 +180,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn toggle_active_state_for_nodes(
         &self,
         request: ToggleActiveStatesForNodesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request(
-                "toggle_active_state_for_nodes",
-                reqwest::Method::POST,
-                request,
-            )
+            .send_request("toggle_active_state_for_nodes", HttpMethod::Post, request)
             .await
     }
 
@@ -206,9 +199,9 @@ impl<'a> MetadataApi<'a> {
     pub async fn update_field(
         &self,
         request: UpdateFieldRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("update_field", reqwest::Method::POST, request)
+            .send_request("update_field", HttpMethod::Post, request)
             .await
     }
 }
@@ -219,8 +212,9 @@ impl<'a> MetadataApi<'a> {
 /// making it ergonomic to reference fields at call sites:
 ///
 /// ```no_run
-/// FieldIdentifier::from(72)       // numeric ID
-/// FieldIdentifier::from("title")  // shortname
+/// # use resourcespace_client::api::metadata::FieldIdentifier;
+/// let _ = FieldIdentifier::from(72u32);       // numeric ID
+/// let _ = FieldIdentifier::from("title");     // shortname
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub enum FieldIdentifier {
@@ -255,20 +249,21 @@ impl Serialize for FieldIdentifier {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFieldOptionsRequest {
     /// The ID or shortname of the metadata field to retrieve options for.
     #[serde(rename = "ref")]
-    pub r#ref: FieldIdentifier,
+    pub field: FieldIdentifier,
     /// If set, returns additional node information alongside each option.
     pub nodeinfo: Option<bool>,
 }
 
 impl GetFieldOptionsRequest {
-    pub fn new(r#ref: impl Into<FieldIdentifier>) -> Self {
+    pub fn new(field: impl Into<FieldIdentifier>) -> Self {
         Self {
-            r#ref: r#ref.into(),
+            field: field.into(),
             nodeinfo: None,
         }
     }
@@ -279,6 +274,7 @@ impl GetFieldOptionsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
     /// The name of the node to look up.
@@ -296,15 +292,16 @@ impl GetNodeIdRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodesRequest {
     /// The ID of the metadata field to retrieve nodes from.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub field_id: u32,
     /// Restrict results to children of this parent node ID.
     pub parent: Option<u32>,
-    /// If set, retrieves all descendant nodes recursively.
+    /// If true, retrieves all descendant nodes recursively.
     pub recursive: Option<bool>,
     /// Number of nodes to skip, used for pagination.
     pub offset: Option<u32>,
@@ -312,16 +309,16 @@ pub struct GetNodesRequest {
     pub rows: Option<u32>,
     /// Filter nodes by name (partial match).
     pub name: Option<String>,
-    /// If set, includes the number of resources using each node.
+    /// If true, includes the number of resources using each node.
     pub use_count: Option<bool>,
-    /// If set, orders results by the translated node name.
+    /// If true, orders results by the translated node name.
     pub order_by_translated_name: Option<bool>,
 }
 
 impl GetNodesRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(field_id: u32) -> Self {
         Self {
-            r#ref,
+            field_id,
             parent: None,
             recursive: None,
             offset: None,
@@ -368,6 +365,7 @@ impl GetNodesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
     /// The ID of the resource to add nodes to.
@@ -385,29 +383,33 @@ impl AddResourceNodesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
-    pub resourceid: List<u32>,
+    #[serde(rename = "resourceid")]
+    pub resource_id: List<u32>,
     /// Comma-separated list of node IDs to add to each resource.
-    pub nodes: List<u32>,
+    #[serde(rename = "nodes")]
+    pub node_ids: List<u32>,
 }
 
 impl AddResourceNodesMultiRequest {
-    pub fn new(resourceid: impl Into<List<u32>>, nodes: impl Into<List<u32>>) -> Self {
+    pub fn new(resource_id: impl Into<List<u32>>, node_ids: impl Into<List<u32>>) -> Self {
         Self {
-            resourceid: resourceid.into(),
-            nodes: nodes.into(),
+            resource_id: resource_id.into(),
+            node_ids: node_ids.into(),
         }
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SetNodeRequest {
     /// The ID of an existing node to update, or 0 to create a new one.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub node_id: u32,
     /// The ID of the resource type field this node belongs to.
     pub resource_type_field: u32,
     /// The name of the node.
@@ -421,9 +423,9 @@ pub struct SetNodeRequest {
 }
 
 impl SetNodeRequest {
-    pub fn new(r#ref: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
+    pub fn new(node_id: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
         Self {
-            r#ref,
+            node_id,
             resource_type_field,
             name: name.into(),
             parent: None,
@@ -447,15 +449,18 @@ impl SetNodeRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceTypeFieldsRequest {
     /// Comma-separated list of resource type IDs to filter fields by.
-    pub by_resource_types: Option<List<u32>>,
+    #[serde(rename = "by_resource_types")]
+    pub resource_type_ids: Option<List<u32>>,
     /// Search string to filter fields by name.
     pub find: Option<String>,
     /// Comma-separated list of field type IDs to filter by.
-    pub by_types: Option<List<u32>>,
+    #[serde(rename = "by_types")]
+    pub field_type_ids: Option<List<u32>>,
 }
 
 impl GetResourceTypeFieldsRequest {
@@ -463,8 +468,8 @@ impl GetResourceTypeFieldsRequest {
         Self::default()
     }
 
-    pub fn by_resource_types(mut self, by_resource_types: impl Into<List<u32>>) -> Self {
-        self.by_resource_types = Some(by_resource_types.into());
+    pub fn resource_type_ids(mut self, resource_type_ids: impl Into<List<u32>>) -> Self {
+        self.resource_type_ids = Some(resource_type_ids.into());
         self
     }
 
@@ -473,18 +478,20 @@ impl GetResourceTypeFieldsRequest {
         self
     }
 
-    pub fn by_types(mut self, by_types: impl Into<List<u32>>) -> Self {
-        self.by_types = Some(by_types.into());
+    pub fn field_type_ids(mut self, field_type_ids: impl Into<List<u32>>) -> Self {
+        self.field_type_ids = Some(field_type_ids.into());
         self
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceTypeFieldRequest {
     /// The name of the new metadata field.
     pub name: String,
     /// Comma-separated list of resource type IDs this field should apply to.
-    pub resource_types: List<u32>,
+    #[serde(rename = "resource_types")]
+    pub resource_type_ids: List<u32>,
     /// The field type, for values see the FIELD_TYPE_* constants.
     pub r#type: String,
 }
@@ -492,33 +499,36 @@ pub struct CreateResourceTypeFieldRequest {
 impl CreateResourceTypeFieldRequest {
     pub fn new(
         name: impl Into<String>,
-        resource_types: impl Into<List<u32>>,
+        resource_type_ids: impl Into<List<u32>>,
         r#type: impl Into<String>,
     ) -> Self {
         Self {
             name: name.into(),
-            resource_types: resource_types.into(),
+            resource_type_ids: resource_type_ids.into(),
             r#type: r#type.into(),
         }
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ToggleActiveStatesForNodesRequest {
     /// JSON-encoded array of node IDs whose active states should be toggled.
     #[serde_as(as = "JsonString")]
-    pub refs: Vec<u32>,
+    #[serde(rename = "refs")]
+    pub node_ids: Vec<u32>,
 }
 
 impl ToggleActiveStatesForNodesRequest {
-    pub fn new(refs: impl Into<List<u32>>) -> Self {
+    pub fn new(node_ids: impl Into<List<u32>>) -> Self {
         Self {
-            refs: refs.into().0,
+            node_ids: node_ids.into().into_inner(),
         }
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateFieldRequest {
     /// The ID of the resource to update.
@@ -550,10 +560,11 @@ impl UpdateFieldRequest {
 /// Accepts plain text or a list of node IDs via named constructors:
 ///
 /// ```no_run
-/// FieldValue::from("hello")          // plain text
-/// FieldValue::from("red")            // single option
-/// FieldValue::from(42u32)            // single node ID
-/// FieldValue::from([1u32, 2, 3])     // multiple node IDs
+/// # use resourcespace_client::api::metadata::FieldValue;
+/// let _ = FieldValue::from("hello");          // plain text
+/// let _ = FieldValue::from("red");            // single option
+/// let _ = FieldValue::from(42u32);            // single node ID
+/// let _ = FieldValue::from([1u32, 2, 3]);     // multiple node IDs
 /// ```
 ///
 /// When constructed from node IDs, the `nodevalues` parameter is

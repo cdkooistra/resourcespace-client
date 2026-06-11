@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] - 2026-06-11
+
+### Added
+
+- CI for running cargo (doc)tests
+
+### Changed
+
+- Overhauled error handling to a more Rust idiomatic way
+- Renamed `RsError` to `Error` (breaking!!)
+- Correct return value for `send_request_multipart`
+- Changed the way the library handles bool as u8 (now more ergonomically)
+
+### Fixed
+
+- Missing builder methods
+- Fragile URL assembly
+- Fallible `ClientBuilder.base_url()`
+- Incorrect types for `SearchGetPreviewsRequest`
+- Non-compiling doctests
+
 ## [0.1.2] - 2026-06-04
 
 ### Added

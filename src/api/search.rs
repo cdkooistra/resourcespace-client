@@ -1,8 +1,8 @@
 use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
-use crate::client::Client;
-use crate::error::RsError;
+use crate::client::{Client, HttpMethod};
+use crate::error::Error;
 
 use super::{List, SortOrder};
 
@@ -28,7 +28,7 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest}};
+    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
@@ -38,7 +38,7 @@ impl<'a> SearchApi<'a> {
     /// let specific_results = client.search()
     ///     .do_search(
     ///         DoSearchRequest::new("cat")
-    ///             .fetchrows("100")
+    ///             .fetchrows(FetchRows::limit(100))
     ///             .offset(50)
     ///             .archive(0)
     ///     )
@@ -46,9 +46,9 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, RsError> {
+    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("do_search", reqwest::Method::GET, request)
+            .send_request("do_search", HttpMethod::Get, request)
             .await
     }
 
@@ -63,7 +63,7 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::SearchGetPreviewsRequest};
+    /// # use resourcespace_client::{Client, api::search::{SearchGetPreviewsRequest, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
@@ -76,7 +76,7 @@ impl<'a> SearchApi<'a> {
     ///             .getsizes("thm,scr,pre")
     ///             .previewext("jpg")
     ///             .sort(SortOrder::Desc)
-    ///             .fetchrows("0,50")
+    ///             .fetchrows(FetchRows::page(0, 50))
     ///     )
     ///     .await?;
     /// # Ok(())
@@ -85,9 +85,9 @@ impl<'a> SearchApi<'a> {
     pub async fn search_get_previews(
         &self,
         request: SearchGetPreviewsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("search_get_previews", reqwest::Method::GET, request)
+            .send_request("search_get_previews", HttpMethod::Get, request)
             .await
     }
 }
@@ -101,22 +101,24 @@ impl<'a> SearchApi<'a> {
 /// count alongside the results.
 ///
 /// ```no_run
-/// FetchRows::limit(100)         // return up to 100 results
-/// FetchRows::page(0, 50)        // return results 0–50
+/// # use resourcespace_client::api::search::FetchRows;
+/// let _ = FetchRows::limit(100);         // return up to 100 results
+/// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FetchRows {
-    /// Return up to N rows
     Limit(u32),
-    /// Return rows with explicit offset and limit, enables paginated response
     Page { offset: u32, limit: u32 },
 }
 
 impl FetchRows {
+    /// Return up to N rows
     pub fn limit(n: u32) -> Self {
         Self::Limit(n)
     }
 
+    /// Return rows with explicit offset and limit, enables paginated response
     pub fn page(offset: u32, limit: u32) -> Self {
         Self::Page { offset, limit }
     }
@@ -131,6 +133,7 @@ impl Serialize for FetchRows {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DoSearchRequest {
@@ -194,6 +197,7 @@ impl DoSearchRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {
@@ -212,7 +216,7 @@ pub struct SearchGetPreviewsRequest {
     /// Only return resources modified within this many days.
     pub recent_search_daylimit: Option<String>,
     /// Comma-separated list of preview sizes to include URLs for (e.g. `"thm,scr,pre"`).
-    pub getsizes: Option<List<u32>>,
+    pub getsizes: Option<List<String>>,
     /// Override the preview file extension returned (e.g. `"jpg"`).
     pub previewext: Option<String>,
 }
@@ -262,7 +266,7 @@ impl SearchGetPreviewsRequest {
         self
     }
 
-    pub fn getsizes(mut self, getsizes: impl Into<List<u32>>) -> Self {
+    pub fn getsizes(mut self, getsizes: impl Into<List<String>>) -> Self {
         self.getsizes = Some(getsizes.into());
         self
     }

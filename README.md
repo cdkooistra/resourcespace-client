@@ -17,13 +17,16 @@ This example initializes a simple client to search for resources and then update
 
 ```rust,no_run
 use resourcespace_client::Client;
+use resourcespace_client::api::search::DoSearchRequest;
+use resourcespace_client::api::metadata::UpdateFieldRequest;
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::builder()
-        .base_url("https://your-rs-instance.com/")?
+        .base_url("https://your-rs-instance.com/")
         .user_key("your_username", "your_api_key")
-        .build()?;
+        .build()
+        .await?;
 
     // Search for resources
     let results = client

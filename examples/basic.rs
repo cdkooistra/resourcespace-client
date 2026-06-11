@@ -15,7 +15,6 @@ async fn main() {
 
     let client = Client::builder()
         .base_url(&base_url)
-        .expect("Error when setting base_url")
         .user_key(&user, &key)
         // .session_key(&user, &password)
         .build()

@@ -1,20 +1,19 @@
 use secrecy::{ExposeSecret, SecretString};
 use serde::Serialize;
-use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use url::Url;
 
 use crate::APP_USER_AGENT;
 use crate::auth::{Auth, login};
-use crate::error::RsError;
+use crate::error::Error;
 
 // Typestates
 mod private {
     use secrecy::SecretString;
 
     pub struct NoUrl;
-    pub struct WithUrl(pub(crate) url::Url);
+    pub struct WithUrl(pub(crate) String);
     pub struct NoAuth;
     pub struct WithUserKey {
         pub(crate) user: String,
@@ -42,11 +41,16 @@ struct PreparedRequest {
     authmode: String,
 }
 
-pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
+pub(crate) enum HttpMethod {
+    Get,
+    Post,
+}
+
+pub(crate) fn build_query<P: Serialize>(params: &P) -> String {
     serde_qs::Config::new()
         .use_form_encoding(true)
         .serialize_string(params)
-        .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
+        .expect("Query param serialization failed — this is a bug, please open an issue")
 }
 
 /// some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
@@ -59,9 +63,9 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
 /// - Raw integers (resource IDs)
 /// - "FAILED: ..." strings for certain errors, even with 200 status code
 /// - "Invalid signature" strings, even with 200 status code
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Client {
-    base_url: Url,
+    api_url: Url,
     auth: Auth,
     client: reqwest::Client,
 }
@@ -78,7 +82,7 @@ impl Client {
         }
     }
 
-    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, RsError>
+    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, Error>
     where
         P: Serialize,
     {
@@ -92,7 +96,7 @@ impl Client {
             function,
             params,
         };
-        let query = build_query(&req)?;
+        let query = build_query(&req);
         let signature = sign(key, &query);
 
         Ok(PreparedRequest {
@@ -106,25 +110,25 @@ impl Client {
     pub(crate) async fn send_request<P>(
         &self,
         function: &str,
-        method: reqwest::Method,
+        method: HttpMethod,
         params: P,
-    ) -> Result<serde_json::Value, RsError>
+    ) -> Result<serde_json::Value, Error>
     where
         P: Serialize,
     {
         let request = self.prepare_request(function, params)?;
         let response = match method {
-            reqwest::Method::GET => {
-                let full_url = format!(
-                    "{}api/?{}&sign={}&authmode={}",
-                    self.base_url, request.query, request.signature, request.authmode
-                );
-                self.client.get(&full_url).send().await
+            HttpMethod::Get => {
+                let mut url = self.api_url.clone();
+                url.set_query(Some(&format!(
+                    "{}&sign={}&authmode={}",
+                    request.query, request.signature, request.authmode
+                )));
+                self.client.get(url.as_str()).send().await
             }
-            reqwest::Method::POST => {
-                let full_url = format!("{}api/", self.base_url);
+            HttpMethod::Post => {
                 self.client
-                    .post(&full_url)
+                    .post(self.api_url.as_str())
                     .form(&[
                         ("user", request.user.clone()),
                         ("query", request.query),
@@ -134,30 +138,39 @@ impl Client {
                     .send()
                     .await
             }
-            _ => return Err(RsError::Other("Unsupported HTTP method".into())),
         }
-        .map_err(RsError::Http)?;
+        .map_err(|e| Error::Transport(e.into()))?;
 
         // 1. check HTTP status before touching the body
         if !response.status().is_success() {
-            return Err(RsError::Api {
+            return Err(Error::Http {
                 status: response.status().as_u16(),
-                message: response.text().await.unwrap_or_default(),
+                body: response.text().await.unwrap_or_default(),
             });
         }
 
-        let text = response.text().await.map_err(RsError::Http)?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| Error::Transport(e.into()))?;
         let trimmed = text.trim();
+
+        // 1.5 RS returns invalid signature
+        if trimmed.eq_ignore_ascii_case("invalid_signature") {
+            return Err(Error::InvalidSignature);
+        }
 
         // 2. RS returns plain "false" for failed operations
         if trimmed.eq_ignore_ascii_case("false") {
-            return Err(RsError::OperationFailed);
+            return Err(Error::OperationFailed {
+                function: function.to_string(),
+            });
         }
 
         // 3. RS returns "FAILED: ..." strings from upload functions
         if let Some(msg) = trimmed.strip_prefix("FAILED:") {
-            return Err(RsError::Api {
-                status: 400,
+            return Err(Error::Api {
+                function: function.to_string(),
                 message: msg.trim().to_string(),
             });
         }
@@ -175,17 +188,15 @@ impl Client {
         function: &str,
         params: P,
         source: crate::api::resource::UploadSource,
-    ) -> Result<serde_json::Value, RsError>
+    ) -> Result<serde_json::Value, Error>
     where
         P: Serialize,
     {
         let request = self.prepare_request(function, params)?;
-        let full_url = format!("{}api/", self.base_url);
-
         let file_part = match source {
             crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
                 .await
-                .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?,
+                .map_err(|e| Error::Io(e.into()))?,
             crate::api::resource::UploadSource::Stream { body, filename } => {
                 reqwest::multipart::Part::stream(body).file_name(filename)
             }
@@ -193,7 +204,7 @@ impl Client {
 
         let response = self
             .client
-            .post(&full_url)
+            .post(self.api_url.as_str()) // function is passed in the multipart request
             .multipart(
                 reqwest::multipart::Form::new()
                     .text("user", request.user.clone())
@@ -204,18 +215,16 @@ impl Client {
             )
             .send()
             .await
-            .map_err(RsError::Http)?;
+            .map_err(|e| Error::Transport(e.into()))?;
 
-        if !response.status().is_success() {
-            return Err(RsError::Api {
+        if response.status() != reqwest::StatusCode::NO_CONTENT {
+            return Err(Error::Http {
                 status: response.status().as_u16(),
-                message: response.text().await.unwrap_or_default(),
+                body: response.text().await.unwrap_or_default(),
             });
         }
 
-        let text = response.text().await.map_err(RsError::Http)?;
-
-        Ok(json!(text))
+        Ok(serde_json::Value::String("".to_string()))
     }
 
     // Sub-APIs
@@ -270,7 +279,7 @@ impl<U, A> ClientBuilder<U, A> {
         }
     }
 
-    fn build_http_client(&self) -> Result<reqwest::Client, RsError> {
+    fn build_http_client(&self) -> Result<reqwest::Client, Error> {
         let mut builder = reqwest::Client::builder();
         if let Some(t) = self.timeout {
             builder = builder.timeout(t);
@@ -283,25 +292,19 @@ impl<U, A> ClientBuilder<U, A> {
         } else {
             builder = builder.user_agent(APP_USER_AGENT)
         }
-        Ok(builder.build()?)
+        builder.build().map_err(|e| Error::Client(e.into()))
     }
 }
 
 impl<A> ClientBuilder<private::NoUrl, A> {
-    pub fn base_url(
-        self,
-        url: impl Into<String>,
-    ) -> Result<ClientBuilder<private::WithUrl, A>, RsError> {
-        let url = url.into();
-        let parsed_url = Url::parse(&url).map_err(|e| RsError::Other(e.to_string()))?;
-
-        Ok(ClientBuilder {
-            base_url: private::WithUrl(parsed_url),
+    pub fn base_url(self, url: impl Into<String>) -> ClientBuilder<private::WithUrl, A> {
+        ClientBuilder {
+            base_url: private::WithUrl(url.into()),
             auth: self.auth,
             timeout: self.timeout,
             connect_timeout: self.connect_timeout,
             user_agent: self.user_agent,
-        })
+        }
     }
 }
 
@@ -341,12 +344,22 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     }
 }
 
+impl<A> ClientBuilder<private::WithUrl, A> {
+    fn parse_url(&self) -> Result<Url, Error> {
+        let base_url = Url::parse(&self.base_url.0).map_err(|e| Error::Url(e.into()))?;
+        let api_url = base_url.join("api/").map_err(|e| Error::Url(e.into()))?;
+
+        Ok(api_url)
+    }
+}
+
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
-    pub async fn build(self) -> Result<Client, RsError> {
+    pub async fn build(self) -> Result<Client, Error> {
+        let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let session_key = login(
             &client,
-            &self.base_url.0,
+            &api_url,
             &self.auth.user,
             self.auth.password.expose_secret(),
         )
@@ -357,7 +370,7 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
         };
 
         Ok(Client {
-            base_url: self.base_url.0,
+            api_url,
             auth,
             client,
         })
@@ -365,7 +378,8 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
 }
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
-    pub async fn build(self) -> Result<Client, RsError> {
+    pub async fn build(self) -> Result<Client, Error> {
+        let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let auth = Auth::UserKey {
             user: self.auth.user,
@@ -373,7 +387,7 @@ impl ClientBuilder<private::WithUrl, private::WithUserKey> {
         };
 
         Ok(Client {
-            base_url: self.base_url.0,
+            api_url,
             auth,
             client,
         })

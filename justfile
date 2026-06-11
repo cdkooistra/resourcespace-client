@@ -7,6 +7,9 @@ fmt:
 fmt-check:
     @cargo fmt --check
 
+test:
+    @cargo test --all-features --no-fail-fast
+
 clippy:
     @cargo clippy --all-targets --all-features -- -D warnings
 
