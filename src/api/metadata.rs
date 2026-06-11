@@ -219,8 +219,9 @@ impl<'a> MetadataApi<'a> {
 /// making it ergonomic to reference fields at call sites:
 ///
 /// ```no_run
-/// FieldIdentifier::from(72)       // numeric ID
-/// FieldIdentifier::from("title")  // shortname
+/// # use resourcespace_client::api::metadata::FieldIdentifier;
+/// let _ = FieldIdentifier::from(72u32);       // numeric ID
+/// let _ = FieldIdentifier::from("title");     // shortname
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub enum FieldIdentifier {
@@ -550,10 +551,11 @@ impl UpdateFieldRequest {
 /// Accepts plain text or a list of node IDs via named constructors:
 ///
 /// ```no_run
-/// FieldValue::from("hello")          // plain text
-/// FieldValue::from("red")            // single option
-/// FieldValue::from(42u32)            // single node ID
-/// FieldValue::from([1u32, 2, 3])     // multiple node IDs
+/// # use resourcespace_client::api::metadata::FieldValue;
+/// let _ = FieldValue::from("hello");          // plain text
+/// let _ = FieldValue::from("red");            // single option
+/// let _ = FieldValue::from(42u32);            // single node ID
+/// let _ = FieldValue::from([1u32, 2, 3]);     // multiple node IDs
 /// ```
 ///
 /// When constructed from node IDs, the `nodevalues` parameter is

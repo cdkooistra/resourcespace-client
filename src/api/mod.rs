@@ -23,9 +23,10 @@ pub enum SortOrder {
 /// making it ergonomic to pass one or many values at call sites:
 ///
 /// ```no_run
-/// List::from(42)               // single value
-/// List::from([1, 2, 3])        // array
-/// List::from(vec![1, 2, 3])    // vec
+/// # use resourcespace_client::api::List;
+/// let _ = List::from(42);               // single value
+/// let _ = List::from([1, 2, 3]);        // array
+/// let _ = List::from(vec![1, 2, 3]);    // vec
 /// ```
 ///
 /// This type exists to satisfy ResourceSpace API parameters that expect

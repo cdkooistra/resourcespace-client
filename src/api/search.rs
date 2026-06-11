@@ -28,7 +28,7 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest}};
+    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
@@ -38,7 +38,7 @@ impl<'a> SearchApi<'a> {
     /// let specific_results = client.search()
     ///     .do_search(
     ///         DoSearchRequest::new("cat")
-    ///             .fetchrows("100")
+    ///             .fetchrows(FetchRows::limit(100))
     ///             .offset(50)
     ///             .archive(0)
     ///     )
@@ -63,7 +63,7 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::SearchGetPreviewsRequest};
+    /// # use resourcespace_client::{Client, api::search::{SearchGetPreviewsRequest, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
@@ -76,7 +76,7 @@ impl<'a> SearchApi<'a> {
     ///             .getsizes("thm,scr,pre")
     ///             .previewext("jpg")
     ///             .sort(SortOrder::Desc)
-    ///             .fetchrows("0,50")
+    ///             .fetchrows(FetchRows::page(0, 50))
     ///     )
     ///     .await?;
     /// # Ok(())
@@ -101,8 +101,9 @@ impl<'a> SearchApi<'a> {
 /// count alongside the results.
 ///
 /// ```no_run
-/// FetchRows::limit(100)         // return up to 100 results
-/// FetchRows::page(0, 50)        // return results 0–50
+/// # use resourcespace_client::api::search::FetchRows;
+/// let _ = FetchRows::limit(100);         // return up to 100 results
+/// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
 #[derive(Clone, Debug, PartialEq)]
 pub enum FetchRows {
