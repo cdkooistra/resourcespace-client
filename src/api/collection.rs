@@ -6,7 +6,7 @@ use validator::Validate;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{List, SortOrder};
+use super::{List, SortOrder, bool_as_u8, opt_bool_as_u8};
 
 /// Sub-API for collection endpoints.
 #[derive(Debug)]
@@ -328,8 +328,12 @@ impl RemoveResourceFromCollectionRequest {
 pub struct CreateCollectionRequest {
     /// The name of the new collection.
     pub name: String,
-    /// If set, marks this collection as an upload collection.
-    pub forupload: Option<u8>,
+    /// If true, marks this collection as an upload collection.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub forupload: Option<bool>,
 }
 
 impl CreateCollectionRequest {
@@ -341,7 +345,7 @@ impl CreateCollectionRequest {
     }
 
     pub fn forupload(mut self, forupload: bool) -> Self {
-        self.forupload = Some(forupload as u8);
+        self.forupload = Some(forupload);
         self
     }
 }
@@ -369,8 +373,12 @@ pub struct SearchPublicCollectionsRequest {
     pub order_by: Option<String>,
     /// Sort direction for the results.
     pub sort: Option<SortOrder>,
-    /// If set, excludes theme/featured collections from results.
-    pub exclude_themes: Option<u8>,
+    /// If true, excludes theme/featured collections from results.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub exclude_themes: Option<bool>,
 }
 
 impl SearchPublicCollectionsRequest {
@@ -394,7 +402,7 @@ impl SearchPublicCollectionsRequest {
     }
 
     pub fn exclude_themes(mut self, exclude_themes: bool) -> Self {
-        self.exclude_themes = Some(exclude_themes as u8);
+        self.exclude_themes = Some(exclude_themes);
         self
     }
 }
@@ -404,12 +412,12 @@ impl SearchPublicCollectionsRequest {
 pub struct GetCollectionRequest {
     /// The ID of the collection to retrieve.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub collection_id: u32,
 }
 
 impl GetCollectionRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(collection_id: u32) -> Self {
+        Self { collection_id }
     }
 }
 
@@ -419,45 +427,113 @@ impl GetCollectionRequest {
 pub struct SaveCollectionRequest {
     /// The ID of the collection to save.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub collection_id: u32,
     /// JSON object containing the collection fields to update (e.g. name, description, public).
     #[serde_as(as = "JsonString")]
     pub coldata: SaveCollectionColdata,
 }
 
 impl SaveCollectionRequest {
-    pub fn new(r#ref: u32, coldata: SaveCollectionColdata) -> Self {
-        Self { r#ref, coldata }
+    pub fn new(collection_id: u32, coldata: SaveCollectionColdata) -> Self {
+        Self {
+            collection_id,
+            coldata,
+        }
     }
 }
 
 #[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Serialize, Validate)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct SaveCollectionColdata {
     /// Comma-separated value of keywords to be associated with this collection.
     pub keywords: Option<List<String>>,
-    /// To set whether other users are allowed to add/remove resources when collection is shared or is public. The allowed value is 0 or 1.
-    #[validate(range(min = 0, max = 1))]
-    pub allow_changes: Option<u8>,
+    /// If true, other users are allowed to add/remove resources when collection is shared or is public.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub allow_changes: Option<bool>,
     /// Comma-separated value of users to attach to the collection.
     pub users: Option<List<String>>,
     /// Collection name.
     pub name: Option<String>,
-    /// 0 for private, 1 for public (legacy).
-    #[validate(range(min = 0, max = 1))]
-    pub public: Option<u8>,
+    /// If true, public. Otherwise private (legacy).
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub public: Option<bool>,
     /// 0 = standard, 3 = Featured collection, 4 = public. If 3 or 4 then public should be set to 1.
     #[serde(rename = "type")]
     pub r#type: Option<u8>,
     /// ID of parent featured collection. Set to 0 to create a new root level collection (see below). Applies to Featured collections only.
     pub parent: Option<u32>,
-    /// Required to be set to 1 if creating a root level featured collection (parent=0). Applies to Featured collections only.
-    #[validate(range(min = 0, max = 1))]
-    pub force_featured_collection_type: Option<u8>,
+    /// If true, creates a root level featured collection (parent=0). Applies to Featured collections only.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub force_featured_collection_type: Option<bool>,
     /// 0 = no image, 1 = most popular image, 10 - most popular images, 100 - manually select image. Applies to Featured collections only.
     pub thumbnail_selection_method: Option<u32>,
     /// Resource ID to use as thumbnail. Only if thumbnail_selection_method =100. Applies to Featured collections only.
     pub bg_img_resource_ref: Option<u32>,
+}
+
+impl SaveCollectionColdata {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn keywords(mut self, keywords: impl Into<List<String>>) -> Self {
+        self.keywords = Some(keywords.into());
+        self
+    }
+
+    pub fn allow_changes(mut self, allow_changes: bool) -> Self {
+        self.allow_changes = Some(allow_changes);
+        self
+    }
+
+    pub fn users(mut self, users: impl Into<List<String>>) -> Self {
+        self.users = Some(users.into());
+        self
+    }
+
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+
+    pub fn public(mut self, public: bool) -> Self {
+        self.public = Some(public);
+        self
+    }
+
+    pub fn r#type(mut self, r#type: u8) -> Self {
+        self.r#type = Some(r#type);
+        self
+    }
+
+    pub fn parent(mut self, parent: u32) -> Self {
+        self.parent = Some(parent);
+        self
+    }
+
+    pub fn force_featured_collection_type(mut self, force: bool) -> Self {
+        self.force_featured_collection_type = Some(force);
+        self
+    }
+
+    pub fn thumbnail_selection_method(mut self, method: u32) -> Self {
+        self.thumbnail_selection_method = Some(method);
+        self
+    }
+
+    pub fn bg_img_resource_ref(mut self, resource_ref: u32) -> Self {
+        self.bg_img_resource_ref = Some(resource_ref);
+        self
+    }
 }
 
 #[non_exhaustive]
@@ -465,8 +541,9 @@ pub struct SaveCollectionColdata {
 pub struct ShowHideCollectionRequest {
     /// The ID of the collection to show or hide.
     pub collection: u32,
-    /// If set, shows the collection in the drop-down list.
-    pub show: u8,
+    /// If true, shows the collection in the drop-down list. Otherwise, hides it.
+    #[serde(serialize_with = "bool_as_u8")]
+    pub show: bool,
     /// The ID of the user whose drop-down list is being updated.
     pub user: u32,
 }
@@ -475,7 +552,7 @@ impl ShowHideCollectionRequest {
     pub fn new(collection: u32, show: bool, user: u32) -> Self {
         Self {
             collection,
-            show: show as u8,
+            show: show,
             user,
         }
     }
@@ -524,11 +601,14 @@ impl DeleteResourcesInCollectionRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {
     /// Comma-separated list of collection IDs to retrieve resource counts for.
-    pub refs: List<u32>,
+    #[serde(rename = "refs")]
+    pub collection_ids: List<u32>,
 }
 
 impl GetCollectionsResourceCountRequest {
-    pub fn new(refs: impl Into<List<u32>>) -> Self {
-        Self { refs: refs.into() }
+    pub fn new(collection_ids: impl Into<List<u32>>) -> Self {
+        Self {
+            collection_ids: collection_ids.into(),
+        }
     }
 }

@@ -6,7 +6,7 @@ pub mod search;
 pub mod system;
 pub mod user;
 
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use serde_with::{StringWithSeparator, formats::CommaSeparator, serde_as};
 use std::fmt::Display;
 
@@ -35,6 +35,12 @@ pub enum SortOrder {
 #[serde_as]
 #[derive(Serialize, Debug, Clone, PartialEq)]
 pub struct List<T: Display>(#[serde_as(as = "StringWithSeparator::<CommaSeparator, T>")] Vec<T>);
+
+impl<T: Display> List<T> {
+    pub fn into_inner(self) -> Vec<T> {
+        self.0
+    }
+}
 
 // u32
 impl From<u32> for List<u32> {
@@ -83,4 +89,40 @@ impl<const N: usize> From<[&str; N]> for List<String> {
     fn from(arr: [&str; N]) -> Self {
         Self(arr.into_iter().map(|s| s.to_string()).collect())
     }
+}
+
+// extend From and FromIterator for List
+impl<T: Display> FromIterator<T> for List<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self(iter.into_iter().collect())
+    }
+}
+
+impl<T: Display + Clone> From<&[T]> for List<T> {
+    fn from(arr: &[T]) -> Self {
+        Self(arr.iter().cloned().collect())
+    }
+}
+
+/// Serializes a `bool` as an integer (`1` for `true`, `0` for `false`).
+///
+/// ResourceSpace expects boolean values to be serialized as integers.
+fn bool_as_u8<S: Serializer>(b: &bool, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_u8(if *b { 1 } else { 0 })
+}
+
+/// Serializes an `Option<bool>` as an integer (`1` for `Some(true)`, `0` for `Some(false)` or `None`).
+///
+/// ResourceSpace expects boolean values to be serialized as integers.
+fn opt_bool_as_u8<S: Serializer>(b: &Option<bool>, s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_u8(
+        // In case a Request struct has an `Option<bool>` field that is `None`,
+        // `skip_serializing_if` will omit it from the request body.
+        // If that does not happen, we should panic to notify a bad Request struct.
+        if b.expect("opt_bool_as_u8 called on None; pair with skip_serializing_if") {
+            1
+        } else {
+            0
+        },
+    )
 }

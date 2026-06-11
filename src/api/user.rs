@@ -5,7 +5,7 @@ use serde_with::{serde_as, skip_serializing_none};
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::List;
+use super::{List, opt_bool_as_u8};
 
 #[derive(Debug)]
 pub struct UserApi<'a> {
@@ -246,21 +246,21 @@ impl NewUserRequest {
 pub struct SaveUserRequest {
     /// The ID of the user to update.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub user_id: u32,
     /// JSON object containing the user fields to save (e.g. fullname, email, usergroup).
     #[serde_as(as = "JsonString")]
     pub data: SaveUserData,
 }
 
 impl SaveUserRequest {
-    pub fn new(r#ref: u32, data: SaveUserData) -> Self {
-        Self { r#ref, data }
+    pub fn new(user_id: u32, data: SaveUserData) -> Self {
+        Self { user_id, data }
     }
 }
 
 #[non_exhaustive]
 #[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SaveUserData {
     /// Username used to log into the account.
     pub username: Option<String>,
@@ -283,7 +283,72 @@ pub struct SaveUserData {
     /// Whether to send the user a password reset link by email instead of setting a password directly.
     pub emailresetlink: Option<bool>,
     /// Approval state of the account.
-    pub approved: Option<u8>,
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub approved: Option<bool>,
     /// Account expiry date in `YYYY-MM-DD` format, e.g. `"2026-12-31"`.
     pub expires: Option<String>,
+}
+
+impl SaveUserData {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn username(mut self, username: impl Into<String>) -> Self {
+        self.username = Some(username.into());
+        self
+    }
+
+    pub fn password(mut self, password: impl Into<String>) -> Self {
+        self.password = Some(password.into());
+        self
+    }
+
+    pub fn fullname(mut self, fullname: impl Into<String>) -> Self {
+        self.fullname = Some(fullname.into());
+        self
+    }
+
+    pub fn email(mut self, email: impl Into<String>) -> Self {
+        self.email = Some(email.into());
+        self
+    }
+
+    pub fn usergroup(mut self, usergroup: u32) -> Self {
+        self.usergroup = Some(usergroup);
+        self
+    }
+
+    pub fn ip_restrict(mut self, ip_restrict: impl Into<String>) -> Self {
+        self.ip_restrict = Some(ip_restrict.into());
+        self
+    }
+
+    pub fn comments(mut self, comments: impl Into<String>) -> Self {
+        self.comments = Some(comments.into());
+        self
+    }
+
+    pub fn suggest(mut self, suggest: bool) -> Self {
+        self.suggest = Some(suggest);
+        self
+    }
+
+    pub fn emailresetlink(mut self, emailresetlink: bool) -> Self {
+        self.emailresetlink = Some(emailresetlink);
+        self
+    }
+
+    pub fn approved(mut self, approved: bool) -> Self {
+        self.approved = Some(approved);
+        self
+    }
+
+    pub fn expires(mut self, expires: impl Into<String>) -> Self {
+        self.expires = Some(expires.into());
+        self
+    }
 }

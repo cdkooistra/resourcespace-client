@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{List, SortOrder};
+use super::{List, SortOrder, bool_as_u8, opt_bool_as_u8};
 
 #[derive(Debug)]
 pub struct ResourceApi<'a> {
@@ -696,15 +696,16 @@ impl AddAlternativeFileRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CopyResourceRequest {
     /// The ID of the resource to copy.
-    pub from: u32,
+    #[serde(rename = "from")]
+    pub resource_id: u32,
     /// Resource type ID to assign to the copy; defaults to the source resource type if omitted.
     pub resource_type: Option<u32>,
 }
 
 impl CopyResourceRequest {
-    pub fn new(from: u32) -> Self {
+    pub fn new(resource_id: u32) -> Self {
         Self {
-            from,
+            resource_id,
             resource_type: None,
         }
     }
@@ -726,10 +727,18 @@ pub struct CreateResourceRequest {
     pub archive: Option<i16>,
     /// URL of a remote file to attach to the resource at creation time.
     pub url: Option<String>,
-    /// If 1, skips reading EXIF data from the attached file.
-    pub no_exif: Option<u8>,
-    /// If 1, automatically rotates the image based on EXIF orientation.
-    pub autorotate: Option<u8>,
+    /// If true, skips reading EXIF data from the attached file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
     /// JSON-encoded metadata fields to set on the resource at creation time.
     #[serde_as(as = "JsonString")]
     pub metadata: Option<HashMap<u32, String>>,
@@ -758,12 +767,12 @@ impl CreateResourceRequest {
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
-        self.no_exif = Some(no_exif as u8);
+        self.no_exif = Some(no_exif);
         self
     }
 
     pub fn autorotate(mut self, autorotate: bool) -> Self {
-        self.autorotate = Some(autorotate as u8);
+        self.autorotate = Some(autorotate);
         self
     }
 
@@ -780,12 +789,15 @@ pub struct DeleteAlternativeFile {
     pub resource: u32,
     /// The ID of the alternative file to delete.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub alternative_file_id: u32,
 }
 
 impl DeleteAlternativeFile {
-    pub fn new(resource: u32, r#ref: u32) -> Self {
-        Self { resource, r#ref }
+    pub fn new(resource: u32, alternative_file_id: u32) -> Self {
+        Self {
+            resource,
+            alternative_file_id,
+        }
     }
 }
 
@@ -860,12 +872,12 @@ impl GetEditAccessRequest {
 pub struct GetRelatedResourcesRequest {
     /// The ID of the resource whose related resources should be returned.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub resource_id: u32,
 }
 
 impl GetRelatedResourcesRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
     }
 }
 
@@ -900,15 +912,16 @@ impl GetResourceAllImageSizesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCommentsRequest {
     /// The ID of the resource to retrieve comments for.
-    pub resource_ref: u32,
-    /// If set, returns comments as a flat list rather than a threaded tree.
+    #[serde(rename = "resource_ref")]
+    pub resource_id: u32,
+    /// If true, returns comments as a flat list rather than a threaded tree.
     pub flat_view: Option<bool>,
 }
 
 impl GetResourceCommentsRequest {
-    pub fn new(resource_ref: u32) -> Self {
+    pub fn new(resource_id: u32) -> Self {
         Self {
-            resource_ref,
+            resource_id,
             flat_view: None,
         }
     }
@@ -975,17 +988,25 @@ impl GetResourceLogRequest {
 pub struct GetResourcePathRequest {
     /// The ID of the resource to generate a download URL for.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub resource_id: u32,
     /// Preview size to retrieve (e.g. `"thm"`, `"scr"`, `"pre"`). Omit for the original file.
     pub size: Option<String>,
-    /// If 1, generates the preview if it does not yet exist.
-    pub generate: Option<u8>,
+    /// If true, generates the preview if it does not yet exist.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub generate: Option<bool>,
     /// Override the file extension of the returned URL.
     pub extension: Option<String>,
     /// Page number for multi-page resources (e.g. PDF).
     pub page: Option<u32>,
-    /// If 1, returns a URL to the watermarked version of the file.
-    pub watermarked: Option<u8>,
+    /// If true, returns a URL to the watermarked version of the file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub watermarked: Option<bool>,
     /// ID of the alternative file to return a URL for, or -1 for the original.
     pub alternative: Option<i32>,
     /// If set, writes embedded metadata into the file before returning the URL.
@@ -993,9 +1014,9 @@ pub struct GetResourcePathRequest {
 }
 
 impl GetResourcePathRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(resource_id: u32) -> Self {
         Self {
-            r#ref,
+            resource_id,
             size: None,
             generate: None,
             extension: None,
@@ -1012,7 +1033,7 @@ impl GetResourcePathRequest {
     }
 
     pub fn generate(mut self, generate: bool) -> Self {
-        self.generate = Some(generate as u8);
+        self.generate = Some(generate);
         self
     }
 
@@ -1027,7 +1048,7 @@ impl GetResourcePathRequest {
     }
 
     pub fn watermarked(mut self, watermarked: bool) -> Self {
-        self.watermarked = Some(watermarked as u8);
+        self.watermarked = Some(watermarked);
         self
     }
 
@@ -1082,12 +1103,24 @@ pub struct ReplaceResourceFileRequest {
     pub resource: u32,
     /// Local server path or publicly accessible URL of the replacement file.
     pub file_location: String,
-    /// If 1, skips reading EXIF data from the replacement file.
-    pub no_exif: Option<u8>,
-    /// If 1, automatically rotates the image based on EXIF orientation.
-    pub autorotate: Option<u8>,
-    /// If 1, retains the previous file as an alternative file rather than deleting it.
-    pub keep_original: Option<u8>,
+    /// If true, skips reading EXIF data from the replacement file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+    /// If true, retains the previous file as an alternative file rather than deleting it.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub keep_original: Option<bool>,
 }
 
 impl ReplaceResourceFileRequest {
@@ -1102,17 +1135,17 @@ impl ReplaceResourceFileRequest {
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
-        self.no_exif = Some(no_exif as u8);
+        self.no_exif = Some(no_exif);
         self
     }
 
     pub fn autorotate(mut self, autorotate: bool) -> Self {
-        self.autorotate = Some(autorotate as u8);
+        self.autorotate = Some(autorotate);
         self
     }
 
     pub fn keep_original(mut self, keep_original: bool) -> Self {
-        self.keep_original = Some(keep_original as u8);
+        self.keep_original = Some(keep_original);
         self
     }
 }
@@ -1122,12 +1155,12 @@ impl ReplaceResourceFileRequest {
 pub struct ResourceFileReadonlyRequest {
     /// The ID of the resource to check for read-only file status.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub resource_id: u32,
 }
 
 impl ResourceFileReadonlyRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
     }
 }
 
@@ -1142,7 +1175,8 @@ pub struct ResourceLogLastRowsRequest {
     /// Maximum number of log entries to return.
     pub maxrecords: Option<u32>,
     /// Comma-separated list of field IDs to limit results to.
-    pub field: Option<List<u32>>,
+    #[serde(rename = "field")]
+    pub field_ids: Option<List<u32>>,
     /// Comma-separated list of log codes to limit results to (e.g. `"FD"` for field data changes).
     pub log_code: Option<List<String>>,
 }
@@ -1167,8 +1201,8 @@ impl ResourceLogLastRowsRequest {
         self
     }
 
-    pub fn field(mut self, field: impl Into<List<u32>>) -> Self {
-        self.field = Some(field.into());
+    pub fn field_ids(mut self, field_ids: impl Into<List<u32>>) -> Self {
+        self.field_ids = Some(field_ids.into());
         self
     }
 
@@ -1184,21 +1218,33 @@ impl ResourceLogLastRowsRequest {
 pub struct UploadFileRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
-    /// If 1, skips reading EXIF data from the uploaded file.
-    pub no_exif: Option<u8>,
-    /// If 1, reverts to the original file instead of uploading a new one.
-    pub revert: Option<u8>,
-    /// If 1, automatically rotates the image based on EXIF orientation.
-    pub autorotate: Option<u8>,
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the uploaded file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
     /// Local server path of the file to upload (must be within `$valid_upload_paths`).
     pub file_path: Option<String>,
 }
 
 impl UploadFileRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(resource_id: u32) -> Self {
         Self {
-            r#ref,
+            resource_id,
             no_exif: None,
             revert: None,
             autorotate: None,
@@ -1207,17 +1253,17 @@ impl UploadFileRequest {
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
-        self.no_exif = Some(no_exif as u8);
+        self.no_exif = Some(no_exif);
         self
     }
 
     pub fn revert(mut self, revert: bool) -> Self {
-        self.revert = Some(revert as u8);
+        self.revert = Some(revert);
         self
     }
 
     pub fn autorotate(mut self, autorotate: bool) -> Self {
-        self.autorotate = Some(autorotate as u8);
+        self.autorotate = Some(autorotate);
         self
     }
 
@@ -1233,21 +1279,33 @@ impl UploadFileRequest {
 pub struct UploadFileByUrlRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
-    /// If 1, skips reading EXIF data from the downloaded file.
-    pub no_exif: Option<u8>,
-    /// If 1, reverts to the original file instead of uploading a new one.
-    pub revert: Option<u8>,
-    /// If 1, automatically rotates the image based on EXIF orientation.
-    pub autorotate: Option<u8>,
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the downloaded file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
     /// Publicly accessible URL for the RS server to fetch and attach (hostname must be in `$api_upload_urls`).
     pub url: Option<String>,
 }
 
 impl UploadFileByUrlRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(resource_id: u32) -> Self {
         Self {
-            r#ref,
+            resource_id,
             no_exif: None,
             revert: None,
             autorotate: None,
@@ -1256,17 +1314,17 @@ impl UploadFileByUrlRequest {
     }
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
-        self.no_exif = Some(no_exif as u8);
+        self.no_exif = Some(no_exif);
         self
     }
 
     pub fn revert(mut self, revert: bool) -> Self {
-        self.revert = Some(revert as u8);
+        self.revert = Some(revert);
         self
     }
 
     pub fn autorotate(mut self, autorotate: bool) -> Self {
-        self.autorotate = Some(autorotate as u8);
+        self.autorotate = Some(autorotate);
         self
     }
 
@@ -1329,11 +1387,13 @@ impl From<&str> for UploadSource {
 pub struct UploadMultipartRequest {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
-    /// If 1, skips reading EXIF data from the uploaded file.
-    pub no_exif: u8,
-    /// If 1, reverts to the original file instead of uploading a new one.
-    pub revert: u8,
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the uploaded file.
+    #[serde(serialize_with = "bool_as_u8")]
+    pub no_exif: bool,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(serialize_with = "bool_as_u8")]
+    pub revert: bool,
     /// If set, only generates a preview without replacing the stored file.
     pub previewonly: Option<bool>,
     /// ID of an alternative file slot to upload into instead of the primary file.
@@ -1341,11 +1401,18 @@ pub struct UploadMultipartRequest {
 }
 
 impl UploadMultipartRequest {
-    pub fn new(r#ref: u32, no_exif: bool, revert: bool) -> Self {
+    /// Creates a new `UploadMultipartRequest` with the given parameters.
+    ///
+    /// # Arguments
+    ///
+    /// * `resource_id` - The ID of the resource to upload the file to.
+    /// * `no_exif` - If true, skips reading EXIF data from the uploaded file.
+    /// * `revert` - If true, reverts to the original file instead of uploading a new one.
+    pub fn new(resource_id: u32, no_exif: bool, revert: bool) -> Self {
         Self {
-            r#ref,
-            no_exif: no_exif as u8,
-            revert: revert as u8,
+            resource_id,
+            no_exif,
+            revert,
             previewonly: None,
             alternative: None,
         }
@@ -1367,17 +1434,21 @@ impl UploadMultipartRequest {
 pub struct UpdateRelatedResourceRequest {
     /// The ID of the resource to update relationships for.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub resource_id: u32,
     /// Comma-separated list of resource IDs to add or remove as related resources.
     pub related: List<u32>,
-    /// If 1, adds the related resources; if 0, removes them.
-    pub add: Option<u8>,
+    /// If true, adds the related resources; if false, removes them.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub add: Option<bool>,
 }
 
 impl UpdateRelatedResourceRequest {
-    pub fn new(r#ref: u32, related: impl Into<List<u32>>) -> Self {
+    pub fn new(resource_id: u32, related: impl Into<List<u32>>) -> Self {
         Self {
-            r#ref,
+            resource_id,
             related: related.into(),
             add: None,
         }
@@ -1385,7 +1456,7 @@ impl UpdateRelatedResourceRequest {
 
     #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, add: bool) -> Self {
-        self.add = Some(add as u8);
+        self.add = Some(add);
         self
     }
 }
@@ -1413,12 +1484,12 @@ impl UpdateResourceTypeRequest {
 pub struct GetResourceCollectionsRequest {
     /// The ID of the resource to retrieve associated collections for.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub resource_id: u32,
 }
 
 impl GetResourceCollectionsRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
     }
 }
 

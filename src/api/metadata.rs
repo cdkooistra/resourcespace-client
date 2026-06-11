@@ -255,15 +255,15 @@ impl Serialize for FieldIdentifier {
 pub struct GetFieldOptionsRequest {
     /// The ID or shortname of the metadata field to retrieve options for.
     #[serde(rename = "ref")]
-    pub r#ref: FieldIdentifier,
+    pub field: FieldIdentifier,
     /// If set, returns additional node information alongside each option.
     pub nodeinfo: Option<bool>,
 }
 
 impl GetFieldOptionsRequest {
-    pub fn new(r#ref: impl Into<FieldIdentifier>) -> Self {
+    pub fn new(field: impl Into<FieldIdentifier>) -> Self {
         Self {
-            r#ref: r#ref.into(),
+            field: field.into(),
             nodeinfo: None,
         }
     }
@@ -298,10 +298,10 @@ impl GetNodeIdRequest {
 pub struct GetNodesRequest {
     /// The ID of the metadata field to retrieve nodes from.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub field_id: u32,
     /// Restrict results to children of this parent node ID.
     pub parent: Option<u32>,
-    /// If set, retrieves all descendant nodes recursively.
+    /// If true, retrieves all descendant nodes recursively.
     pub recursive: Option<bool>,
     /// Number of nodes to skip, used for pagination.
     pub offset: Option<u32>,
@@ -309,16 +309,16 @@ pub struct GetNodesRequest {
     pub rows: Option<u32>,
     /// Filter nodes by name (partial match).
     pub name: Option<String>,
-    /// If set, includes the number of resources using each node.
+    /// If true, includes the number of resources using each node.
     pub use_count: Option<bool>,
-    /// If set, orders results by the translated node name.
+    /// If true, orders results by the translated node name.
     pub order_by_translated_name: Option<bool>,
 }
 
 impl GetNodesRequest {
-    pub fn new(r#ref: u32) -> Self {
+    pub fn new(field_id: u32) -> Self {
         Self {
-            r#ref,
+            field_id,
             parent: None,
             recursive: None,
             offset: None,
@@ -387,16 +387,18 @@ impl AddResourceNodesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
-    pub resourceid: List<u32>,
+    #[serde(rename = "resourceid")]
+    pub resource_id: List<u32>,
     /// Comma-separated list of node IDs to add to each resource.
-    pub nodes: List<u32>,
+    #[serde(rename = "nodes")]
+    pub node_ids: List<u32>,
 }
 
 impl AddResourceNodesMultiRequest {
-    pub fn new(resourceid: impl Into<List<u32>>, nodes: impl Into<List<u32>>) -> Self {
+    pub fn new(resource_id: impl Into<List<u32>>, node_ids: impl Into<List<u32>>) -> Self {
         Self {
-            resourceid: resourceid.into(),
-            nodes: nodes.into(),
+            resource_id: resource_id.into(),
+            node_ids: node_ids.into(),
         }
     }
 }
@@ -407,7 +409,7 @@ impl AddResourceNodesMultiRequest {
 pub struct SetNodeRequest {
     /// The ID of an existing node to update, or 0 to create a new one.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub node_id: u32,
     /// The ID of the resource type field this node belongs to.
     pub resource_type_field: u32,
     /// The name of the node.
@@ -421,9 +423,9 @@ pub struct SetNodeRequest {
 }
 
 impl SetNodeRequest {
-    pub fn new(r#ref: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
+    pub fn new(node_id: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
         Self {
-            r#ref,
+            node_id,
             resource_type_field,
             name: name.into(),
             parent: None,
@@ -452,11 +454,13 @@ impl SetNodeRequest {
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceTypeFieldsRequest {
     /// Comma-separated list of resource type IDs to filter fields by.
-    pub by_resource_types: Option<List<u32>>,
+    #[serde(rename = "by_resource_types")]
+    pub resource_type_ids: Option<List<u32>>,
     /// Search string to filter fields by name.
     pub find: Option<String>,
     /// Comma-separated list of field type IDs to filter by.
-    pub by_types: Option<List<u32>>,
+    #[serde(rename = "by_types")]
+    pub field_type_ids: Option<List<u32>>,
 }
 
 impl GetResourceTypeFieldsRequest {
@@ -464,8 +468,8 @@ impl GetResourceTypeFieldsRequest {
         Self::default()
     }
 
-    pub fn by_resource_types(mut self, by_resource_types: impl Into<List<u32>>) -> Self {
-        self.by_resource_types = Some(by_resource_types.into());
+    pub fn resource_type_ids(mut self, resource_type_ids: impl Into<List<u32>>) -> Self {
+        self.resource_type_ids = Some(resource_type_ids.into());
         self
     }
 
@@ -474,8 +478,8 @@ impl GetResourceTypeFieldsRequest {
         self
     }
 
-    pub fn by_types(mut self, by_types: impl Into<List<u32>>) -> Self {
-        self.by_types = Some(by_types.into());
+    pub fn field_type_ids(mut self, field_type_ids: impl Into<List<u32>>) -> Self {
+        self.field_type_ids = Some(field_type_ids.into());
         self
     }
 }
@@ -486,7 +490,8 @@ pub struct CreateResourceTypeFieldRequest {
     /// The name of the new metadata field.
     pub name: String,
     /// Comma-separated list of resource type IDs this field should apply to.
-    pub resource_types: List<u32>,
+    #[serde(rename = "resource_types")]
+    pub resource_type_ids: List<u32>,
     /// The field type, for values see the FIELD_TYPE_* constants.
     pub r#type: String,
 }
@@ -494,12 +499,12 @@ pub struct CreateResourceTypeFieldRequest {
 impl CreateResourceTypeFieldRequest {
     pub fn new(
         name: impl Into<String>,
-        resource_types: impl Into<List<u32>>,
+        resource_type_ids: impl Into<List<u32>>,
         r#type: impl Into<String>,
     ) -> Self {
         Self {
             name: name.into(),
-            resource_types: resource_types.into(),
+            resource_type_ids: resource_type_ids.into(),
             r#type: r#type.into(),
         }
     }
@@ -511,13 +516,14 @@ impl CreateResourceTypeFieldRequest {
 pub struct ToggleActiveStatesForNodesRequest {
     /// JSON-encoded array of node IDs whose active states should be toggled.
     #[serde_as(as = "JsonString")]
-    pub refs: Vec<u32>,
+    #[serde(rename = "refs")]
+    pub node_ids: Vec<u32>,
 }
 
 impl ToggleActiveStatesForNodesRequest {
-    pub fn new(refs: impl Into<List<u32>>) -> Self {
+    pub fn new(node_ids: impl Into<List<u32>>) -> Self {
         Self {
-            refs: refs.into().0,
+            node_ids: node_ids.into().into_inner(),
         }
     }
 }

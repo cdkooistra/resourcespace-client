@@ -50,11 +50,11 @@ impl<'a> MessageApi<'a> {
 pub struct GetUserMessageRequest {
     /// The ID of the message to retrieve.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub message_id: u32,
 }
 
 impl GetUserMessageRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(message_id: u32) -> Self {
+        Self { message_id }
     }
 }
