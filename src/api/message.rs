@@ -45,6 +45,7 @@ impl<'a> MessageApi<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUserMessageRequest {
     /// The ID of the message to retrieve.

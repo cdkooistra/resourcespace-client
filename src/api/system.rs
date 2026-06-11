@@ -88,6 +88,7 @@ impl<'a> SystemApi<'a> {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct GetDailyStatSummaryRequest {

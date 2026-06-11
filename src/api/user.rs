@@ -147,6 +147,7 @@ impl<'a> UserApi<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CheckpermRequest {
     /// The permission string to check (e.g. `"a"` for admin, `"e"` for edit).
@@ -159,6 +160,7 @@ impl CheckpermRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetUsersRequest {
@@ -184,6 +186,7 @@ impl GetUsersRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUsersByPermissionRequest {
     /// List of permission strings; only users holding all of these are returned.
@@ -198,6 +201,7 @@ impl GetUsersByPermissionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct MarkEmailAsInvalidRequest {
     /// The email address to mark as invalid.
@@ -212,6 +216,7 @@ impl MarkEmailAsInvalidRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct NewUserRequest {
@@ -235,6 +240,7 @@ impl NewUserRequest {
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveUserRequest {
@@ -252,6 +258,7 @@ impl SaveUserRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveUserData {

@@ -249,6 +249,7 @@ impl Serialize for FieldIdentifier {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFieldOptionsRequest {
@@ -273,6 +274,7 @@ impl GetFieldOptionsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
     /// The name of the node to look up.
@@ -290,6 +292,7 @@ impl GetNodeIdRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodesRequest {
@@ -362,6 +365,7 @@ impl GetNodesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
     /// The ID of the resource to add nodes to.
@@ -379,6 +383,7 @@ impl AddResourceNodesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
@@ -396,6 +401,7 @@ impl AddResourceNodesMultiRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SetNodeRequest {
@@ -441,6 +447,7 @@ impl SetNodeRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetResourceTypeFieldsRequest {
@@ -473,6 +480,7 @@ impl GetResourceTypeFieldsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceTypeFieldRequest {
     /// The name of the new metadata field.
@@ -497,6 +505,7 @@ impl CreateResourceTypeFieldRequest {
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ToggleActiveStatesForNodesRequest {
@@ -513,6 +522,7 @@ impl ToggleActiveStatesForNodesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateFieldRequest {
     /// The ID of the resource to update.

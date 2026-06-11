@@ -105,19 +105,20 @@ impl<'a> SearchApi<'a> {
 /// let _ = FetchRows::limit(100);         // return up to 100 results
 /// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FetchRows {
-    /// Return up to N rows
     Limit(u32),
-    /// Return rows with explicit offset and limit, enables paginated response
     Page { offset: u32, limit: u32 },
 }
 
 impl FetchRows {
+    /// Return up to N rows
     pub fn limit(n: u32) -> Self {
         Self::Limit(n)
     }
 
+    /// Return rows with explicit offset and limit, enables paginated response
     pub fn page(offset: u32, limit: u32) -> Self {
         Self::Page { offset, limit }
     }
@@ -132,6 +133,7 @@ impl Serialize for FetchRows {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DoSearchRequest {
@@ -195,6 +197,7 @@ impl DoSearchRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {

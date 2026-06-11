@@ -624,6 +624,7 @@ impl<'a> ResourceApi<'a> {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddAlternativeFileRequest {
@@ -690,6 +691,7 @@ impl AddAlternativeFileRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CopyResourceRequest {
@@ -713,6 +715,7 @@ impl CopyResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -770,6 +773,7 @@ impl CreateResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteAlternativeFile {
     /// The ID of the resource the alternative file belongs to.
@@ -785,6 +789,7 @@ impl DeleteAlternativeFile {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourceRequest {
     /// The ID of the resource to delete.
@@ -797,6 +802,7 @@ impl DeleteResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetAlternativeFilesRequest {
@@ -836,6 +842,7 @@ impl GetAlternativeFilesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetEditAccessRequest {
     /// The ID of the resource to check edit access for.
@@ -848,6 +855,7 @@ impl GetEditAccessRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetRelatedResourcesRequest {
     /// The ID of the resource whose related resources should be returned.
@@ -861,6 +869,7 @@ impl GetRelatedResourcesRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAccessRequest {
     /// The ID of the resource to retrieve the access level for.
@@ -873,6 +882,7 @@ impl GetResourceAccessRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAllImageSizesRequest {
     /// The ID of the resource to retrieve available preview sizes for.
@@ -885,6 +895,7 @@ impl GetResourceAllImageSizesRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCommentsRequest {
@@ -908,6 +919,7 @@ impl GetResourceCommentsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceDataRequest {
     /// The ID of the resource to retrieve top-level property data for.
@@ -920,6 +932,7 @@ impl GetResourceDataRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceFieldDataRequest {
     /// The ID of the resource to retrieve full metadata field data for.
@@ -932,6 +945,7 @@ impl GetResourceFieldDataRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceLogRequest {
@@ -955,6 +969,7 @@ impl GetResourceLogRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourcePathRequest {
@@ -1027,6 +1042,7 @@ impl GetResourcePathRequest {
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct PutResourceDataRequest {
@@ -1043,6 +1059,7 @@ impl PutResourceDataRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RelateAllResourcesRequest {
     /// Comma-separated list of resource IDs to relate with each other.
@@ -1057,6 +1074,7 @@ impl RelateAllResourcesRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ReplaceResourceFileRequest {
@@ -1099,6 +1117,7 @@ impl ReplaceResourceFileRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResourceFileReadonlyRequest {
     /// The ID of the resource to check for read-only file status.
@@ -1112,6 +1131,7 @@ impl ResourceFileReadonlyRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct ResourceLogLastRowsRequest {
@@ -1158,6 +1178,7 @@ impl ResourceLogLastRowsRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadFileRequest {
@@ -1206,6 +1227,7 @@ impl UploadFileRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadFileByUrlRequest {
@@ -1255,6 +1277,7 @@ impl UploadFileByUrlRequest {
 }
 
 /// Data source for a multipart upload
+#[non_exhaustive]
 pub enum UploadSource {
     File(std::path::PathBuf),
     Stream {
@@ -1264,6 +1287,11 @@ pub enum UploadSource {
 }
 
 impl UploadSource {
+    /// Creates a file-based upload source.
+    pub fn from_file(path: impl Into<std::path::PathBuf>) -> Self {
+        UploadSource::File(path.into())
+    }
+
     /// Creates a stream-based upload source.
     ///
     /// `body` accepts anything that converts into a [`reqwest::Body`]:
@@ -1295,6 +1323,7 @@ impl From<&str> for UploadSource {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UploadMultipartRequest {
@@ -1332,6 +1361,7 @@ impl UploadMultipartRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateRelatedResourceRequest {
@@ -1360,6 +1390,7 @@ impl UpdateRelatedResourceRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateResourceTypeRequest {
     /// The ID of the resource to update.
@@ -1377,6 +1408,7 @@ impl UpdateResourceTypeRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCollectionsRequest {
     /// The ID of the resource to retrieve associated collections for.
@@ -1390,6 +1422,7 @@ impl GetResourceCollectionsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ValidateUploadUrlRequest {
     /// The URL to validate against the server's allowed `$api_upload_urls` list.

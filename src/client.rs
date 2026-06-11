@@ -63,7 +63,7 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> String {
 /// - Raw integers (resource IDs)
 /// - "FAILED: ..." strings for certain errors, even with 200 status code
 /// - "Invalid signature" strings, even with 200 status code
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Client {
     api_url: Url,
     auth: Auth,

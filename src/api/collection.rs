@@ -286,6 +286,7 @@ impl<'a> CollectionApi<'a> {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceToCollectionRequest {
     /// The ID of the resource to add.
@@ -303,6 +304,7 @@ impl AddResourceToCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RemoveResourceFromCollectionRequest {
     /// The ID of the resource to remove.
@@ -320,6 +322,7 @@ impl RemoveResourceFromCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateCollectionRequest {
@@ -343,6 +346,7 @@ impl CreateCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCollectionRequest {
     /// The ID of the collection to delete.
@@ -355,6 +359,7 @@ impl DeleteCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct SearchPublicCollectionsRequest {
@@ -394,6 +399,7 @@ impl SearchPublicCollectionsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionRequest {
     /// The ID of the collection to retrieve.
@@ -407,6 +413,7 @@ impl GetCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SaveCollectionRequest {
@@ -424,6 +431,7 @@ impl SaveCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize, Validate)]
 pub struct SaveCollectionColdata {
     /// Comma-separated value of keywords to be associated with this collection.
@@ -452,6 +460,7 @@ pub struct SaveCollectionColdata {
     pub bg_img_resource_ref: Option<u32>,
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ShowHideCollectionRequest {
     /// The ID of the collection to show or hide.
@@ -472,6 +481,7 @@ impl ShowHideCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SendCollectionToAdminRequest {
     /// The ID of the collection to send to the administrator for review.
@@ -484,6 +494,7 @@ impl SendCollectionToAdminRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFeaturedCollectionsRequest {
     /// The ID of the parent featured collection (category) to retrieve children for. Use 0 for top-level.
@@ -496,6 +507,7 @@ impl GetFeaturedCollectionsRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourcesInCollectionRequest {
     /// The ID of the collection whose resources should all be deleted.
@@ -508,6 +520,7 @@ impl DeleteResourcesInCollectionRequest {
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {
     /// Comma-separated list of collection IDs to retrieve resource counts for.
