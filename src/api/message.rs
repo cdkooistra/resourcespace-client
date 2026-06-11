@@ -1,7 +1,7 @@
 use serde::Serialize;
 
 use crate::client::Client;
-use crate::error::RsError;
+use crate::error::Error;
 
 /// Sub-API for message endpoints.
 #[derive(Debug)]
@@ -38,7 +38,7 @@ impl<'a> MessageApi<'a> {
     pub async fn get_user_message(
         &self,
         request: GetUserMessageRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_user_message", reqwest::Method::GET, request)
             .await

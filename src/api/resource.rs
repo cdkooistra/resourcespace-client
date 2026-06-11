@@ -4,7 +4,7 @@ use serde_with::{serde_as, skip_serializing_none};
 use std::collections::HashMap;
 
 use crate::client::Client;
-use crate::error::RsError;
+use crate::error::Error;
 
 use super::{List, SortOrder};
 
@@ -34,7 +34,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn add_alternative_file(
         &self,
         request: AddAlternativeFileRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("add_alternative_file", reqwest::Method::POST, request)
             .await
@@ -56,7 +56,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn copy_resource(
         &self,
         request: CopyResourceRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("copy_resource", reqwest::Method::POST, request)
             .await
@@ -77,7 +77,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn create_resource(
         &self,
         request: CreateResourceRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("create_resource", reqwest::Method::POST, request)
             .await
@@ -98,13 +98,13 @@ impl<'a> ResourceApi<'a> {
     pub async fn delete_alternative_file(
         &self,
         request: DeleteAlternativeFile,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("delete_alternative_file", reqwest::Method::POST, request)
             .await
     }
 
-    pub async fn delete_comment() -> Result<serde_json::Value, RsError> {
+    pub async fn delete_comment() -> Result<serde_json::Value, Error> {
         todo!("available from RS v11.0")
     }
 
@@ -123,7 +123,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn delete_resource(
         &self,
         request: DeleteResourceRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("delete_resource", reqwest::Method::POST, request)
             .await
@@ -144,7 +144,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_alternative_files(
         &self,
         request: GetAlternativeFilesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_alternative_files", reqwest::Method::GET, request)
             .await
@@ -165,7 +165,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_edit_access(
         &self,
         request: GetEditAccessRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_edit_access", reqwest::Method::GET, request)
             .await
@@ -182,7 +182,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_related_resources(
         &self,
         request: GetRelatedResourcesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_related_resources", reqwest::Method::GET, request)
             .await
@@ -201,7 +201,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_access(
         &self,
         request: GetResourceAccessRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_access", reqwest::Method::GET, request)
             .await
@@ -224,7 +224,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_all_image_sizes(
         &self,
         request: GetResourceAllImageSizesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request(
                 "get_resource_all_image_sizes",
@@ -252,7 +252,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_comments(
         &self,
         _request: GetResourceCommentsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         todo!("available from RS v11.0");
         // self.client
         //     .send_request("get_resource_comments", reqwest::Method::GET, request)
@@ -276,7 +276,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_data(
         &self,
         request: GetResourceDataRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_data", reqwest::Method::GET, request)
             .await
@@ -297,7 +297,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_field_data(
         &self,
         request: GetResourceFieldDataRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_field_data", reqwest::Method::GET, request)
             .await
@@ -318,7 +318,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_log(
         &self,
         request: GetResourceLogRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_log", reqwest::Method::GET, request)
             .await
@@ -341,7 +341,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_path(
         &self,
         request: GetResourcePathRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_path", reqwest::Method::GET, request)
             .await
@@ -354,7 +354,7 @@ impl<'a> ResourceApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
-    pub async fn get_resource_types(&self) -> Result<serde_json::Value, RsError> {
+    pub async fn get_resource_types(&self) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_types", reqwest::Method::GET, ())
             .await
@@ -374,7 +374,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn put_resource_data(
         &self,
         request: PutResourceDataRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("put_resource_data", reqwest::Method::POST, request)
             .await
@@ -395,7 +395,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn relate_all_resources(
         &self,
         request: RelateAllResourcesRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("relate_all_resources", reqwest::Method::POST, request)
             .await
@@ -419,7 +419,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn replace_resource_file(
         &self,
         request: ReplaceResourceFileRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("replace_resource_file", reqwest::Method::POST, request)
             .await
@@ -442,7 +442,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn resource_file_readonly(
         &self,
         request: ResourceFileReadonlyRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("resource_file_readonly", reqwest::Method::GET, request)
             .await
@@ -463,7 +463,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn resource_log_last_rows(
         &self,
         request: ResourceLogLastRowsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("resource_log_last_rows", reqwest::Method::GET, request)
             .await
@@ -487,7 +487,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn upload_file(
         &self,
         request: UploadFileRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("upload_file", reqwest::Method::POST, request)
             .await
@@ -511,7 +511,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn upload_file_by_url(
         &self,
         request: UploadFileByUrlRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("upload_file_by_url", reqwest::Method::POST, request)
             .await
@@ -534,7 +534,7 @@ impl<'a> ResourceApi<'a> {
         &self,
         request: UploadMultipartRequest,
         source: impl Into<UploadSource>,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_multipart_request("upload_multipart", request, source.into())
             .await
@@ -555,7 +555,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn update_related_resource(
         &self,
         request: UpdateRelatedResourceRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("update_related_resource", reqwest::Method::POST, request)
             .await
@@ -576,7 +576,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn update_resource_type(
         &self,
         request: UpdateResourceTypeRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("update_resource_type", reqwest::Method::POST, request)
             .await
@@ -597,7 +597,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn get_resource_collections(
         &self,
         request: GetResourceCollectionsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_resource_collections", reqwest::Method::GET, request)
             .await
@@ -621,7 +621,7 @@ impl<'a> ResourceApi<'a> {
     pub async fn validate_upload_url(
         &self,
         request: ValidateUploadUrlRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("validate_upload_url", reqwest::Method::GET, request)
             .await

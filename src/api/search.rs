@@ -2,7 +2,7 @@ use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
 use crate::client::Client;
-use crate::error::RsError;
+use crate::error::Error;
 
 use super::{List, SortOrder};
 
@@ -46,7 +46,7 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, RsError> {
+    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("do_search", reqwest::Method::GET, request)
             .await
@@ -85,7 +85,7 @@ impl<'a> SearchApi<'a> {
     pub async fn search_get_previews(
         &self,
         request: SearchGetPreviewsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("search_get_previews", reqwest::Method::GET, request)
             .await

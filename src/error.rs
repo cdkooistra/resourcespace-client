@@ -4,7 +4,7 @@ use thiserror::Error;
 
 #[non_exhaustive]
 #[derive(Debug, Error)]
-pub enum RsError {
+pub enum Error {
     #[error("API error {status}: {message}")]
     Api { status: u16, message: String },
 
