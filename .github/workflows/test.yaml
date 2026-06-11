@@ -1,0 +1,15 @@
+name: "Check: Tests"
+on:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@stable
+      # check tests and doc tests separately
+      - name: check unit and integration tests
+        run: cargo test --release --all-features --no-fail-fast --workspace --lib --bins --tests
+      - name: check doctests
+        run: cargo test --doc --all-features --workspace
