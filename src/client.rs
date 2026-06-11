@@ -292,7 +292,7 @@ impl<U, A> ClientBuilder<U, A> {
         } else {
             builder = builder.user_agent(APP_USER_AGENT)
         }
-        Ok(builder.build().map_err(|e| Error::Client(e.into()))?)
+        builder.build().map_err(|e| Error::Client(e.into()))
     }
 }
 

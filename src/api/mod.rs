@@ -100,7 +100,7 @@ impl<T: Display> FromIterator<T> for List<T> {
 
 impl<T: Display + Clone> From<&[T]> for List<T> {
     fn from(arr: &[T]) -> Self {
-        Self(arr.iter().cloned().collect())
+        Self(arr.to_vec())
     }
 }
 

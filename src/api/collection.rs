@@ -552,7 +552,7 @@ impl ShowHideCollectionRequest {
     pub fn new(collection: u32, show: bool, user: u32) -> Self {
         Self {
             collection,
-            show: show,
+            show,
             user,
         }
     }
