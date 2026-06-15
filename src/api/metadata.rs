@@ -5,7 +5,7 @@ use serde_with::{serde_as, skip_serializing_none};
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::List;
+use super::{FieldValue, List};
 
 #[derive(Debug)]
 pub struct MetadataApi<'a> {
@@ -188,6 +188,9 @@ impl<'a> MetadataApi<'a> {
 
     /// Set the value of a metadata field.
     ///
+    /// When constructing FieldValue from node IDs, the `nodevalues` parameter is
+    /// automatically set to `true`.
+    ///
     /// ## Arguments
     /// * `request` - Parameters built via [`UpdateFieldRequest`]
     ///
@@ -196,6 +199,31 @@ impl<'a> MetadataApi<'a> {
     /// ## TODO: Errors
     ///
     /// ## TODO: Examples
+    ///
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::metadata::UpdateFieldRequest;
+    /// # use resourcespace_client::api::FieldValue;
+    /// # #[tokio::main] async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let client = Client::builder().base_url("https://example.com").user_key("user", "key").build().await?;
+    /// # let rs_id = 11u32;
+    ///
+    /// // single text value
+    /// client.metadata().update_field(
+    ///     UpdateFieldRequest::new(rs_id, "name", FieldValue::from("Doe, John"))
+    /// ).await?;
+    ///
+    /// // node IDs
+    /// client.metadata().update_field(
+    ///     UpdateFieldRequest::new(rs_id, "nodes", FieldValue::from([1u32, 2]))
+    /// ).await?;
+    ///
+    /// // multiple keywords, auto-quoted if containing commas
+    /// client.metadata().update_field(
+    ///     UpdateFieldRequest::new(rs_id, "name_keywords", FieldValue::from(["Doe, John", "Smith, Jane"]))
+    /// ).await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn update_field(
         &self,
         request: UpdateFieldRequest,
@@ -529,7 +557,7 @@ impl ToggleActiveStatesForNodesRequest {
 }
 
 #[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Serialize)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct UpdateFieldRequest {
     /// The ID of the resource to update.
     pub resource: u32,
@@ -537,8 +565,24 @@ pub struct UpdateFieldRequest {
     pub field: FieldIdentifier,
     /// The new value to assign to the field.
     /// This can be a comma separated list for fixed list option fields.
-    #[serde(flatten)]
     pub value: FieldValue,
+}
+
+// Serializes FieldValue::Nodes with an extra `nodevalues = true` entry.
+impl Serialize for UpdateFieldRequest {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        use serde::ser::SerializeMap;
+
+        let mut map = serializer.serialize_map(None)?;
+        map.serialize_entry("resource", &self.resource)?;
+        map.serialize_entry("field", &self.field)?;
+        map.serialize_entry("value", &self.value.to_wire_string())?;
+
+        if matches!(self.value, FieldValue::Nodes(_)) {
+            map.serialize_entry("nodevalues", &true)?;
+        }
+        map.end()
+    }
 }
 
 impl UpdateFieldRequest {
@@ -552,75 +596,5 @@ impl UpdateFieldRequest {
             field: field.into(),
             value: value.into(),
         }
-    }
-}
-
-/// The value to set for a metadata field.
-///
-/// Accepts plain text or a list of node IDs via named constructors:
-///
-/// ```no_run
-/// # use resourcespace_client::api::metadata::FieldValue;
-/// let _ = FieldValue::from("hello");          // plain text
-/// let _ = FieldValue::from("red");            // single option
-/// let _ = FieldValue::from(42u32);            // single node ID
-/// let _ = FieldValue::from([1u32, 2, 3]);     // multiple node IDs
-/// ```
-///
-/// When constructed from node IDs, the `nodevalues` parameter is
-/// automatically set to `true`.
-#[derive(Clone, Debug, PartialEq)]
-pub enum FieldValue {
-    /// A plain text value e.g. "hello"
-    Text(String),
-    /// A list of node IDs, sets nodevalues = true automatically
-    Nodes(List<u32>),
-}
-
-impl From<&str> for FieldValue {
-    fn from(val: &str) -> Self {
-        Self::Text(val.to_string())
-    }
-}
-
-impl From<String> for FieldValue {
-    fn from(val: String) -> Self {
-        Self::Text(val)
-    }
-}
-
-impl From<u32> for FieldValue {
-    fn from(val: u32) -> Self {
-        Self::Nodes(List::from(val))
-    }
-}
-
-impl From<Vec<u32>> for FieldValue {
-    fn from(val: Vec<u32>) -> Self {
-        Self::Nodes(List::from(val))
-    }
-}
-
-impl<const N: usize> From<[u32; N]> for FieldValue {
-    fn from(val: [u32; N]) -> Self {
-        Self::Nodes(List::from(val))
-    }
-}
-
-impl Serialize for FieldValue {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        use serde::ser::SerializeMap;
-
-        let mut map = serializer.serialize_map(None)?;
-        match self {
-            Self::Text(text) => {
-                map.serialize_entry("value", text)?;
-            }
-            Self::Nodes(nodes) => {
-                map.serialize_entry("value", nodes)?;
-                map.serialize_entry("nodevalues", &true)?;
-            }
-        }
-        map.end()
     }
 }

@@ -40,9 +40,13 @@ impl<T: Display> List<T> {
     pub fn into_inner(self) -> Vec<T> {
         self.0
     }
+
+    pub fn as_slice(&self) -> &[T] {
+        &self.0
+    }
 }
 
-// u32
+// List<u32>
 impl From<u32> for List<u32> {
     fn from(val: u32) -> Self {
         Self(vec![val])
@@ -59,7 +63,7 @@ impl<const N: usize> From<[u32; N]> for List<u32> {
     }
 }
 
-// String
+// List<String>
 impl From<String> for List<String> {
     fn from(val: String) -> Self {
         Self(vec![val])
@@ -125,4 +129,110 @@ fn opt_bool_as_u8<S: Serializer>(b: &Option<bool>, s: S) -> Result<S::Ok, S::Err
             0
         },
     )
+}
+
+/// The value to set for a metadata field.
+///
+/// Accepts plain text, keywords or a list of node IDs via named constructors:
+///
+/// ```no_run
+/// # use resourcespace_client::api::FieldValue;
+/// let _ = FieldValue::from("hello");                      // plain text
+/// let _ = FieldValue::from(["red"]);                      // single keyword
+/// let _ = FieldValue::from(["red", "blue"]);              // multiple keywords
+/// let _ = FieldValue::from(["Doe, John", "Smith, Jane"]); // multiple quoted keywords
+/// let _ = FieldValue::from(42u32);                        // single node ID
+/// let _ = FieldValue::from([1u32, 2, 3]);                 // multiple node IDs
+/// ```
+#[derive(Clone, Debug, PartialEq)]
+pub enum FieldValue {
+    /// A text value e.g. "hello", used for single text values.
+    Text(String),
+    /// (Multiple) keyword values; each value is quoted if it contains a comma.
+    Keywords(List<String>),
+    /// A list of node IDs, sets nodevalues = true automatically.
+    Nodes(List<u32>),
+}
+
+impl FieldValue {
+    pub(crate) fn to_wire_string(&self) -> String {
+        match self {
+            Self::Text(s) => s.to_owned(),
+            Self::Keywords(vs) => vs
+                .as_slice()
+                .iter()
+                .map(|s| {
+                    if s.contains(',') {
+                        format!("\"{s}\"")
+                    } else {
+                        s.to_owned()
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join(","),
+            Self::Nodes(ids) => ids
+                .as_slice()
+                .iter()
+                .map(|id| id.to_string())
+                .collect::<Vec<_>>()
+                .join(","),
+        }
+    }
+}
+
+// Text
+impl From<&str> for FieldValue {
+    fn from(val: &str) -> Self {
+        Self::Text(val.to_owned())
+    }
+}
+
+impl From<String> for FieldValue {
+    fn from(val: String) -> Self {
+        Self::Text(val)
+    }
+}
+
+// Nodes
+impl From<u32> for FieldValue {
+    fn from(val: u32) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+impl From<Vec<u32>> for FieldValue {
+    fn from(val: Vec<u32>) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+impl<const N: usize> From<[u32; N]> for FieldValue {
+    fn from(val: [u32; N]) -> Self {
+        Self::Nodes(List::from(val))
+    }
+}
+
+// Keywords
+impl From<Vec<String>> for FieldValue {
+    fn from(val: Vec<String>) -> Self {
+        Self::Keywords(List::from(val))
+    }
+}
+
+impl From<Vec<&str>> for FieldValue {
+    fn from(val: Vec<&str>) -> Self {
+        Self::Keywords(List::from(val))
+    }
+}
+
+impl<const N: usize> From<[String; N]> for FieldValue {
+    fn from(val: [String; N]) -> Self {
+        Self::Keywords(List::from(val))
+    }
+}
+
+impl<const N: usize> From<[&str; N]> for FieldValue {
+    fn from(val: [&str; N]) -> Self {
+        Self::Keywords(List::from(val))
+    }
 }

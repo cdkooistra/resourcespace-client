@@ -1,12 +1,12 @@
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use serde_with::json::JsonString;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{Same, SerializeAs, serde_as, skip_serializing_none};
 use std::collections::HashMap;
 
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{List, SortOrder, bool_as_u8, opt_bool_as_u8};
+use super::{FieldValue, List, SortOrder, bool_as_u8, opt_bool_as_u8};
 
 #[derive(Debug)]
 pub struct ResourceApi<'a> {
@@ -73,7 +73,26 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## TODO: Errors
     ///
-    /// ## TODO: Examples
+    /// ## Examples
+    ///
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use std::collections::HashMap;
+    /// # #[tokio::main] async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let client = Client::builder().base_url("https://example.com").user_key("user", "key").build().await?;
+    /// use resourcespace_client::api::FieldValue;
+    /// use resourcespace_client::api::resource::CreateResourceRequest;
+    ///
+    /// client.resource().create_resource(
+    ///     CreateResourceRequest::new(1)
+    ///         .metadata(HashMap::from([
+    ///             (90u32, FieldValue::from("A plain text description")),       // Text field
+    ///             (91u32, FieldValue::from(["Doe, John", "Smith, Jane"])),     // Keywords, auto-quoted
+    ///             (92u32, FieldValue::from([1u32, 2, 3])),                     // Node IDs
+    ///         ]))
+    /// ).await?;
+    /// # Ok(()) }
+    /// ```
     pub async fn create_resource(
         &self,
         request: CreateResourceRequest,
@@ -740,8 +759,16 @@ pub struct CreateResourceRequest {
     )]
     pub autorotate: Option<bool>,
     /// JSON-encoded metadata fields to set on the resource at creation time.
-    #[serde_as(as = "JsonString")]
-    pub metadata: Option<HashMap<u32, String>>,
+    #[serde_as(as = "Option<JsonString<HashMap<Same, FieldValueAsString>>>")]
+    pub metadata: Option<HashMap<u32, FieldValue>>,
+}
+
+struct FieldValueAsString;
+
+impl SerializeAs<FieldValue> for FieldValueAsString {
+    fn serialize_as<S: Serializer>(val: &FieldValue, s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_str(&val.to_wire_string())
+    }
 }
 
 impl CreateResourceRequest {
@@ -776,7 +803,7 @@ impl CreateResourceRequest {
         self
     }
 
-    pub fn metadata(mut self, metadata: HashMap<u32, String>) -> Self {
+    pub fn metadata(mut self, metadata: HashMap<u32, FieldValue>) -> Self {
         self.metadata = Some(metadata);
         self
     }
