@@ -4,7 +4,7 @@ A Rust client library for the [ResourceSpace](https://www.resourcespace.com/) Di
 
 [![GitHub](https://img.shields.io/badge/github-resourcespace--client-blue?logo=github&label=cdkooistra)](https://github.com/cdkooistra/resourcespace-client) [![crates.io](https://img.shields.io/badge/crates.io-resourcespace--client-orange?logo=rust)](https://crates.io/crates/resourcespace-client) [![docs.rs](https://img.shields.io/badge/docs.rs-resourcespace--client-red?logo=rust)](https://docs.rs/resourcespace-client)
 
-`resourcespace-client` provides an ergonomic async Rust interface to the ResourceSpace API. ResourceSpace is an open-source Digital Asset Management system developed.
+`resourcespace-client` provides an ergonomic async Rust interface to the ResourceSpace API. ResourceSpace is an open-source Digital Asset Management system developed by [Montala](https://www.resourcespace.com/about).
 
 - Support userkey and sessionkey authentication
 - Support all (non-native usermode) API endpoints
