@@ -123,8 +123,40 @@ impl<'a> ResourceApi<'a> {
             .await
     }
 
-    pub async fn delete_comment() -> Result<serde_json::Value, Error> {
-        todo!("available from RS v11.0")
+    /// Delete a comment.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`DeleteCommentRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// The success of the operation (true/false).
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if resource commenting is disabled
+    /// system-wide (`$comments_resource_enable`), or if the comment does not
+    /// exist.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::resource::DeleteCommentRequest;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .resource()
+    ///     .delete_comment(DeleteCommentRequest::new(12))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete_comment(
+        &self,
+        request: DeleteCommentRequest,
+    ) -> Result<serde_json::Value, Error> {
+        self.client
+            .send_request("delete_comment", HttpMethod::Post, request)
+            .await
     }
 
     /// Delete a resource.
@@ -261,17 +293,30 @@ impl<'a> ResourceApi<'a> {
     /// Array of comments in tree view by default, or flat list if requested. Returns an empty
     /// array if the user lacks permission or commenting is disabled.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns an empty array rather than an error when resource commenting is
+    /// disabled system-wide (`$comments_resource_enable`).
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::resource::GetResourceCommentsRequest;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let comments = client
+    ///     .resource()
+    ///     .get_resource_comments(GetResourceCommentsRequest::new(1234).flat_view(true))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_comments(
         &self,
-        _request: GetResourceCommentsRequest,
+        request: GetResourceCommentsRequest,
     ) -> Result<serde_json::Value, Error> {
-        todo!("available from RS v11.0");
-        // self.client
-        //     .send_request("get_resource_comments", HttpMethod::Get, request)
-        //     .await
+        self.client
+            .send_request("get_resource_comments", HttpMethod::Get, request)
+            .await
     }
 
     /// Returns the top level property data for a resource, including truncated summary metadata.
@@ -931,6 +976,19 @@ pub struct GetResourceAllImageSizesRequest {
 impl GetResourceAllImageSizesRequest {
     pub fn new(resource: u32) -> Self {
         Self { resource }
+    }
+}
+
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct DeleteCommentRequest {
+    /// The ID of the comment to delete.
+    pub comment_ref: u32,
+}
+
+impl DeleteCommentRequest {
+    pub fn new(comment_ref: u32) -> Self {
+        Self { comment_ref }
     }
 }
 
