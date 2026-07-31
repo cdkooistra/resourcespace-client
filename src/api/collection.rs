@@ -354,6 +354,7 @@ impl CreateCollectionRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCollectionRequest {
     /// The ID of the collection to delete.
+    #[serde(rename = "ref")]
     pub collection: u32,
 }
 
