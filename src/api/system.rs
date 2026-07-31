@@ -2,8 +2,8 @@ use serde::Serialize;
 use serde_with::skip_serializing_none;
 use validator::Validate;
 
-use crate::client::Client;
-use crate::error::RsError;
+use crate::client::{Client, HttpMethod};
+use crate::error::Error;
 
 /// Sub-API for system endpoints.
 #[derive(Debug)]
@@ -32,9 +32,9 @@ impl<'a> SystemApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_system_status(&self) -> Result<serde_json::Value, RsError> {
+    pub async fn get_system_status(&self) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_system_status", reqwest::Method::GET, ())
+            .send_request("get_system_status", HttpMethod::Get, ())
             .await
     }
 
@@ -70,24 +70,25 @@ impl<'a> SystemApi<'a> {
     pub async fn get_daily_stat_summary(
         &self,
         request: GetDailyStatSummaryRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         request
             .validate()
-            .map_err(|e| RsError::Validation(e.to_string()))?;
+            .map_err(|e| Error::Validation(e.into()))?;
         self.client
-            .send_request("get_daily_stat_summary", reqwest::Method::GET, request)
+            .send_request("get_daily_stat_summary", HttpMethod::Get, request)
             .await
     }
 
-    pub async fn get_reports(&self) -> Result<serde_json::Value, RsError> {
+    pub async fn get_reports(&self) -> Result<serde_json::Value, Error> {
         todo!("available from RS v11.0")
     }
 
-    pub async fn do_report(&self) -> Result<serde_json::Value, RsError> {
+    pub async fn do_report(&self) -> Result<serde_json::Value, Error> {
         todo!("available from RS v11.0")
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
 pub struct GetDailyStatSummaryRequest {

@@ -6,7 +6,7 @@ use url::Url;
 
 use crate::APP_USER_AGENT;
 use crate::auth::{Auth, login};
-use crate::error::RsError;
+use crate::error::Error;
 
 // Typestates
 mod private {
@@ -41,11 +41,16 @@ struct PreparedRequest {
     authmode: String,
 }
 
-pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
+pub(crate) enum HttpMethod {
+    Get,
+    Post,
+}
+
+pub(crate) fn build_query<P: Serialize>(params: &P) -> String {
     serde_qs::Config::new()
         .use_form_encoding(true)
         .serialize_string(params)
-        .map_err(|e| RsError::Other(format!("Failed to serialize request: {}", e)))
+        .expect("Query param serialization failed — this is a bug, please open an issue")
 }
 
 /// some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
@@ -58,7 +63,7 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> Result<String, RsError> {
 /// - Raw integers (resource IDs)
 /// - "FAILED: ..." strings for certain errors, even with 200 status code
 /// - "Invalid signature" strings, even with 200 status code
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Client {
     api_url: Url,
     auth: Auth,
@@ -77,7 +82,7 @@ impl Client {
         }
     }
 
-    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, RsError>
+    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, Error>
     where
         P: Serialize,
     {
@@ -91,7 +96,7 @@ impl Client {
             function,
             params,
         };
-        let query = build_query(&req)?;
+        let query = build_query(&req);
         let signature = sign(key, &query);
 
         Ok(PreparedRequest {
@@ -105,15 +110,15 @@ impl Client {
     pub(crate) async fn send_request<P>(
         &self,
         function: &str,
-        method: reqwest::Method,
+        method: HttpMethod,
         params: P,
-    ) -> Result<serde_json::Value, RsError>
+    ) -> Result<serde_json::Value, Error>
     where
         P: Serialize,
     {
         let request = self.prepare_request(function, params)?;
         let response = match method {
-            reqwest::Method::GET => {
+            HttpMethod::Get => {
                 let mut url = self.api_url.clone();
                 url.set_query(Some(&format!(
                     "{}&sign={}&authmode={}",
@@ -121,7 +126,7 @@ impl Client {
                 )));
                 self.client.get(url.as_str()).send().await
             }
-            reqwest::Method::POST => {
+            HttpMethod::Post => {
                 self.client
                     .post(self.api_url.as_str())
                     .form(&[
@@ -133,35 +138,39 @@ impl Client {
                     .send()
                     .await
             }
-            _ => return Err(RsError::Other("Unsupported HTTP method".into())),
         }
-        .map_err(RsError::Http)?;
+        .map_err(|e| Error::Transport(e.into()))?;
 
         // 1. check HTTP status before touching the body
         if !response.status().is_success() {
-            return Err(RsError::Api {
+            return Err(Error::Http {
                 status: response.status().as_u16(),
-                message: response.text().await.unwrap_or_default(),
+                body: response.text().await.unwrap_or_default(),
             });
         }
 
-        let text = response.text().await.map_err(RsError::Http)?;
+        let text = response
+            .text()
+            .await
+            .map_err(|e| Error::Transport(e.into()))?;
         let trimmed = text.trim();
 
         // 1.5 RS returns invalid signature
         if trimmed.eq_ignore_ascii_case("invalid_signature") {
-            return Err(RsError::Validation("invalid signature".to_string()));
+            return Err(Error::InvalidSignature);
         }
 
         // 2. RS returns plain "false" for failed operations
         if trimmed.eq_ignore_ascii_case("false") {
-            return Err(RsError::OperationFailed);
+            return Err(Error::OperationFailed {
+                function: function.to_string(),
+            });
         }
 
         // 3. RS returns "FAILED: ..." strings from upload functions
         if let Some(msg) = trimmed.strip_prefix("FAILED:") {
-            return Err(RsError::Api {
-                status: 400,
+            return Err(Error::Api {
+                function: function.to_string(),
                 message: msg.trim().to_string(),
             });
         }
@@ -179,7 +188,7 @@ impl Client {
         function: &str,
         params: P,
         source: crate::api::resource::UploadSource,
-    ) -> Result<serde_json::Value, RsError>
+    ) -> Result<serde_json::Value, Error>
     where
         P: Serialize,
     {
@@ -187,7 +196,7 @@ impl Client {
         let file_part = match source {
             crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
                 .await
-                .map_err(|e| RsError::Other(format!("Failed to read file: {}", e)))?,
+                .map_err(|e| Error::Io(e.into()))?,
             crate::api::resource::UploadSource::Stream { body, filename } => {
                 reqwest::multipart::Part::stream(body).file_name(filename)
             }
@@ -206,12 +215,12 @@ impl Client {
             )
             .send()
             .await
-            .map_err(RsError::Http)?;
+            .map_err(|e| Error::Transport(e.into()))?;
 
         if response.status() != reqwest::StatusCode::NO_CONTENT {
-            return Err(RsError::Api {
+            return Err(Error::Http {
                 status: response.status().as_u16(),
-                message: response.text().await.unwrap_or_default(),
+                body: response.text().await.unwrap_or_default(),
             });
         }
 
@@ -270,7 +279,7 @@ impl<U, A> ClientBuilder<U, A> {
         }
     }
 
-    fn build_http_client(&self) -> Result<reqwest::Client, RsError> {
+    fn build_http_client(&self) -> Result<reqwest::Client, Error> {
         let mut builder = reqwest::Client::builder();
         if let Some(t) = self.timeout {
             builder = builder.timeout(t);
@@ -283,7 +292,7 @@ impl<U, A> ClientBuilder<U, A> {
         } else {
             builder = builder.user_agent(APP_USER_AGENT)
         }
-        Ok(builder.build()?)
+        builder.build().map_err(|e| Error::Client(e.into()))
     }
 }
 
@@ -336,18 +345,16 @@ impl<U> ClientBuilder<U, private::NoAuth> {
 }
 
 impl<A> ClientBuilder<private::WithUrl, A> {
-    fn parse_url(&self) -> Result<Url, RsError> {
-        let base_url = Url::parse(&self.base_url.0).map_err(|e| RsError::Other(e.to_string()))?;
-        let api_url = base_url
-            .join("api/")
-            .map_err(|e| RsError::Other(e.to_string()))?;
+    fn parse_url(&self) -> Result<Url, Error> {
+        let base_url = Url::parse(&self.base_url.0).map_err(|e| Error::Url(e.into()))?;
+        let api_url = base_url.join("api/").map_err(|e| Error::Url(e.into()))?;
 
         Ok(api_url)
     }
 }
 
 impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
-    pub async fn build(self) -> Result<Client, RsError> {
+    pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let session_key = login(
@@ -371,7 +378,7 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
 }
 
 impl ClientBuilder<private::WithUrl, private::WithUserKey> {
-    pub async fn build(self) -> Result<Client, RsError> {
+    pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
         let auth = Auth::UserKey {

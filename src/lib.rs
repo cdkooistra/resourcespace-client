@@ -4,17 +4,10 @@ mod auth;
 pub mod client;
 pub use client::{Client, ClientBuilder};
 pub mod error;
-pub use error::RsError;
+pub use error::Error;
 
 static APP_USER_AGENT: &str = concat!(env!("CARGO_PKG_NAME"), "/", env!("CARGO_PKG_VERSION"),);
 
 // TODO: tests
 #[cfg(test)]
-mod tests {
-
-    // #[test]
-    // fn it_works() {
-    //     let result = add(2, 2);
-    //     assert_eq!(result, 4);
-    // }
-}
+mod tests {}

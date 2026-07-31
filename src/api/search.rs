@@ -1,8 +1,8 @@
 use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
-use crate::client::Client;
-use crate::error::RsError;
+use crate::client::{Client, HttpMethod};
+use crate::error::Error;
 
 use super::{List, SortOrder};
 
@@ -46,9 +46,9 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, RsError> {
+    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("do_search", reqwest::Method::GET, request)
+            .send_request("do_search", HttpMethod::Get, request)
             .await
     }
 
@@ -85,9 +85,9 @@ impl<'a> SearchApi<'a> {
     pub async fn search_get_previews(
         &self,
         request: SearchGetPreviewsRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("search_get_previews", reqwest::Method::GET, request)
+            .send_request("search_get_previews", HttpMethod::Get, request)
             .await
     }
 }
@@ -105,19 +105,20 @@ impl<'a> SearchApi<'a> {
 /// let _ = FetchRows::limit(100);         // return up to 100 results
 /// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub enum FetchRows {
-    /// Return up to N rows
     Limit(u32),
-    /// Return rows with explicit offset and limit, enables paginated response
     Page { offset: u32, limit: u32 },
 }
 
 impl FetchRows {
+    /// Return up to N rows
     pub fn limit(n: u32) -> Self {
         Self::Limit(n)
     }
 
+    /// Return rows with explicit offset and limit, enables paginated response
     pub fn page(offset: u32, limit: u32) -> Self {
         Self::Page { offset, limit }
     }
@@ -132,6 +133,7 @@ impl Serialize for FetchRows {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DoSearchRequest {
@@ -195,6 +197,7 @@ impl DoSearchRequest {
     }
 }
 
+#[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SearchGetPreviewsRequest {

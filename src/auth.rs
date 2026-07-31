@@ -4,12 +4,12 @@ use serde::Serialize;
 use url::Url;
 
 use crate::client::{ApiRequest, build_query};
-use crate::error::RsError;
+use crate::error::Error;
 
 /// For a ResourceSpace external client we can only communicate with a
 /// userkey or a sessionkey. `native` authmode is only available for
 /// client side API calls -> browser initiated activity.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub(crate) enum Auth {
     UserKey { user: String, key: SecretString },
     SessionKey { user: String, key: SecretString },
@@ -27,16 +27,16 @@ pub(crate) async fn login(
     api_url: &Url,
     user: &str,
     password: &str,
-) -> Result<String, RsError> {
+) -> Result<String, Error> {
     let req = ApiRequest {
-        user: &user,
+        user,
         function: "login",
         params: LoginParams {
-            username: &user,
-            password: &password,
+            username: user,
+            password,
         },
     };
-    let query = build_query(&req)?;
+    let query = build_query(&req);
     let mut url = api_url.clone();
     url.set_query(Some(&query));
 
@@ -44,16 +44,13 @@ pub(crate) async fn login(
         .get(url.as_str())
         .send()
         .await
-        .map_err(RsError::Http)?
+        .map_err(|e| Error::Transport(e.into()))? // transport/connectivity error
         .text()
         .await
-        .map_err(RsError::Http)?;
+        .map_err(|e| Error::Transport(e.into()))?; // body read error
 
     if response.trim().to_lowercase() == "false" {
-        return Err(RsError::Api {
-            status: 401,
-            message: "Invalid credentials".into(),
-        });
+        return Err(Error::InvalidCredentials);
     }
 
     Ok(response.trim().trim_matches('"').to_string())

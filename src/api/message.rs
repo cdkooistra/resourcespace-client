@@ -1,7 +1,7 @@
 use serde::Serialize;
 
-use crate::client::Client;
-use crate::error::RsError;
+use crate::client::{Client, HttpMethod};
+use crate::error::Error;
 
 /// Sub-API for message endpoints.
 #[derive(Debug)]
@@ -38,22 +38,23 @@ impl<'a> MessageApi<'a> {
     pub async fn get_user_message(
         &self,
         request: GetUserMessageRequest,
-    ) -> Result<serde_json::Value, RsError> {
+    ) -> Result<serde_json::Value, Error> {
         self.client
-            .send_request("get_user_message", reqwest::Method::GET, request)
+            .send_request("get_user_message", HttpMethod::Get, request)
             .await
     }
 }
 
+#[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUserMessageRequest {
     /// The ID of the message to retrieve.
     #[serde(rename = "ref")]
-    pub r#ref: u32,
+    pub message_id: u32,
 }
 
 impl GetUserMessageRequest {
-    pub fn new(r#ref: u32) -> Self {
-        Self { r#ref }
+    pub fn new(message_id: u32) -> Self {
+        Self { message_id }
     }
 }
