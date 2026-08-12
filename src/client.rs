@@ -176,10 +176,7 @@ impl Client {
             });
         }
 
-        let text = response
-            .text()
-            .await
-            .map_err(error::transport)?;
+        let text = response.text().await.map_err(error::transport)?;
         let trimmed = text.trim();
 
         // 1.5 RS returns invalid signature

@@ -6,7 +6,8 @@ pub mod search;
 pub mod system;
 pub mod user;
 
-use serde::{Serialize, Serializer};
+use serde::de::{self, DeserializeOwned};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde_with::{StringWithSeparator, formats::CommaSeparator, serde_as};
 use std::fmt::Display;
 
@@ -106,6 +107,48 @@ impl<T: Display + Clone> From<&[T]> for List<T> {
     fn from(arr: &[T]) -> Self {
         Self(arr.to_vec())
     }
+}
+
+/// Deserializes `null`, `""` and a missing key into `None`.
+///
+/// ResourceSpace is not consistent about how it represents an absent value:
+/// for the very same column, `get_collection` returns `null` where
+/// `search_public_collections` returns an empty string. Plain
+/// `Option<T>` handles only the first, and on a numeric field an empty string
+/// fails to deserialize outright.
+pub(crate) fn empty_as_none<'de, D, T>(deserializer: D) -> Result<Option<T>, D::Error>
+where
+    D: Deserializer<'de>,
+    T: DeserializeOwned,
+{
+    let value = Option::<serde_json::Value>::deserialize(deserializer)?;
+    match value {
+        None | Some(serde_json::Value::Null) => Ok(None),
+        Some(serde_json::Value::String(s)) if s.is_empty() => Ok(None),
+        Some(value) => T::deserialize(value).map(Some).map_err(de::Error::custom),
+    }
+}
+
+/// Deserializes ResourceSpace's `0`/`1` flags into a `bool`, whether they
+/// arrive as a number or as a quoted string.
+///
+/// [`serde_with::BoolFromInt`] is the right tool when an endpoint sends a
+/// bare integer, and should be preferred where it works. This exists for the
+/// endpoints that quote the same column: `get_users` returns
+/// `"approved": "1"` while `get_users_by_permission` returns
+/// `"approved": 1`, and a shared response type has to accept both.
+pub(crate) fn flexible_bool<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    Ok(
+        match Option::<serde_json::Value>::deserialize(deserializer)? {
+            Some(serde_json::Value::Bool(b)) => b,
+            Some(serde_json::Value::Number(n)) => n.as_u64().is_some_and(|n| n != 0),
+            Some(serde_json::Value::String(s)) => !s.is_empty() && s != "0",
+            _ => false,
+        },
+    )
 }
 
 /// Serializes a `bool` as an integer (`1` for `true`, `0` for `false`).
