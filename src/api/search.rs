@@ -1,10 +1,31 @@
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
 use super::{List, SortOrder};
+
+/// The result of [`SearchApi::do_search`] or [`SearchApi::search_get_previews`].
+///
+/// ResourceSpace returns one of two shapes depending on which
+/// [`FetchRows`] mode the request used: [`FetchRows::page`] gets a
+/// structured [`Self::Paged`] response with a total count, anything else
+/// gets a bare array of results.
+///
+/// Individual rows are left as [`serde_json::Value`] rather than a resource
+/// struct — full resource typing is a separate, larger pass and would only
+/// need doing twice.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum SearchResults {
+    Paged {
+        total: u32,
+        data: Vec<serde_json::Value>,
+    },
+    Flat(Vec<serde_json::Value>),
+}
 
 /// Sub-API for search endpoints.
 #[derive(Debug)]
@@ -22,9 +43,16 @@ impl<'a> SearchApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`DoSearchRequest`]
     ///
-    /// ## TODO: Errors
-    /// Returns [`RsError::OperationFailed`] if the search returns no results
-    /// or the user lacks search permissions.
+    /// ## Returns
+    ///
+    /// [`SearchResults::Paged`] when [`DoSearchRequest::fetchrows`] is
+    /// [`FetchRows::page`], otherwise [`SearchResults::Flat`].
+    ///
+    /// ## Errors
+    ///
+    /// Does not error on "no results" or missing permissions — the user
+    /// lacking the `s` permission and a search matching nothing both return
+    /// an empty result rather than [`Error::OperationFailed`].
     ///
     /// ## Examples
     /// ```no_run
@@ -46,7 +74,7 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<serde_json::Value, Error> {
+    pub async fn do_search(&self, request: DoSearchRequest) -> Result<SearchResults, Error> {
         self.client
             .send_request("do_search", HttpMethod::Get, request)
             .await
@@ -57,9 +85,18 @@ impl<'a> SearchApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`SearchGetPreviewsRequest`]
     ///
-    /// ## TODO: Errors
-    /// Returns [`RsError::OperationFailed`] if the search returns no results
-    /// or the user lacks search permissions.
+    /// ## Returns
+    ///
+    /// [`SearchResults::Paged`] when [`SearchGetPreviewsRequest::fetchrows`]
+    /// is [`FetchRows::page`], otherwise [`SearchResults::Flat`]. Each row
+    /// has a `url_<size>` key per requested size in
+    /// [`SearchGetPreviewsRequest::getsizes`].
+    ///
+    /// ## Errors
+    ///
+    /// Does not error on "no results" or missing permissions — the user
+    /// lacking the `s` permission and a search matching nothing both return
+    /// an empty result rather than [`Error::OperationFailed`].
     ///
     /// ## Examples
     /// ```no_run
@@ -85,7 +122,7 @@ impl<'a> SearchApi<'a> {
     pub async fn search_get_previews(
         &self,
         request: SearchGetPreviewsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<SearchResults, Error> {
         self.client
             .send_request("search_get_previews", HttpMethod::Get, request)
             .await
