@@ -1,16 +1,329 @@
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_with::json::JsonString;
-use serde_with::{Same, SerializeAs, serde_as, skip_serializing_none};
+use serde_with::{DisplayFromStr, PickFirst, Same, SerializeAs, serde_as, skip_serializing_none};
 use std::collections::HashMap;
 
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{FieldValue, List, SortOrder, bool_as_u8, opt_bool_as_u8};
+use super::{
+    FieldValue, List, SortOrder, bool_as_u8, empty_as_none, flexible_bool, opt_bool_as_u8,
+};
 
 #[derive(Debug)]
 pub struct ResourceApi<'a> {
     client: &'a Client,
+}
+
+/// ResourceSpace's `ajax_response_ok`/`ajax_response_fail` envelope.
+///
+/// `resource_file_readonly` wraps its reply in
+/// `{"status": ..., "data": ...}`. Kept private; only the inner value is
+/// exposed.
+#[derive(Debug, Deserialize)]
+struct AjaxEnvelope<T> {
+    #[allow(dead_code)]
+    status: String,
+    data: T,
+}
+
+/// The `data` payload of `resource_file_readonly`.
+#[derive(Debug, Deserialize)]
+struct ReadonlyData {
+    readonly: bool,
+}
+
+/// A resource's own properties, from [`ResourceApi::get_resource_data`].
+///
+/// The denormalised metadata columns ResourceSpace keeps on the resource row
+/// — `field8`, `field12` and friends, one per field with a
+/// `resource_column` — land in [`Self::extra`], since which of them exist
+/// depends entirely on how the instance is configured.
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct Resource {
+    /// The resource's own ID.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// Resource type ID.
+    pub resource_type: u32,
+    /// Archive state: `0` live, `-2` pending review, `1` archived, `2` deleted.
+    pub archive: i16,
+    /// Access level: `0` open, `1` restricted, `2` confidential.
+    pub access: u8,
+    /// ID of the user who created the resource.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub created_by: Option<u32>,
+    /// When the resource was created, as `YYYY-MM-DD HH:MM:SS`.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub creation_date: Option<String>,
+    /// When the resource was last modified.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub modified: Option<String>,
+    /// Extension of the attached file, empty when there is none.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_extension: Option<String>,
+    /// Size of the attached file in bytes.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_size: Option<u64>,
+    /// MD5 checksum of the attached file.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_checksum: Option<String>,
+    /// Path on disk, usually `None` unless the instance exposes it.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_path: Option<String>,
+    /// Whether a preview image exists.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub has_image: bool,
+    /// Whether the resource has no file attached.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub no_file: bool,
+    /// Extension of the generated preview.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub preview_extension: Option<String>,
+    /// Thumbnail width in pixels.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub thumb_width: Option<u32>,
+    /// Thumbnail height in pixels.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub thumb_height: Option<u32>,
+    /// Bytes this resource occupies including all generated sizes.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub disk_usage: Option<u64>,
+    /// Number of times the resource has been viewed.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub hit_count: Option<u64>,
+    /// Title, when the instance maps one onto the resource row.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub title: Option<String>,
+    /// User currently holding an edit lock, if any.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub lock_user: Option<u32>,
+    /// Whether an integrity check has failed for the file.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub integrity_fail: bool,
+    /// Whether the file is currently being transcoded.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub is_transcoding: bool,
+    /// Latitude, when geolocated.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub geo_lat: Option<f64>,
+    /// Longitude, when geolocated.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub geo_long: Option<f64>,
+    /// Everything else on the resource row, including the per-field
+    /// `fieldN` metadata columns.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// One metadata field of a resource, with its value, from
+/// [`ResourceApi::get_resource_field_data`].
+///
+/// This is a field *definition* joined to the resource's value for it, so it
+/// repeats much of [`crate::api::metadata::ResourceTypeField`] — but with
+/// real JSON numbers rather than quoted strings, and with the extra
+/// `value`/`fref`/`frequired` columns. Configuration columns not named here
+/// are kept in [`Self::extra`].
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct ResourceFieldData {
+    /// The field's own ID.
+    #[serde(rename = "ref")]
+    pub field_id: u32,
+    /// Short name of the field.
+    pub name: String,
+    /// Display title.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub title: Option<String>,
+    /// The resource's value for this field, already translated.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub value: Option<String>,
+    /// Field type; see ResourceSpace's `FIELD_TYPE_*` constants.
+    pub r#type: u8,
+    /// Position within its tab.
+    pub order_by: u32,
+    /// Whether a value is required.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub required: bool,
+    /// Whether the field is in use.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub active: bool,
+    /// Whether the field is shown on the resource view page.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub display_field: bool,
+    /// Denormalised column on the resource row backing this field, if any.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub resource_column: Option<String>,
+    /// Resource types this field applies to, as a comma-separated list.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub resource_types: Option<String>,
+    /// Everything else ResourceSpace reports for the field.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// A resource type, from [`ResourceApi::get_resource_types`].
+///
+/// Unlike most of this sub-API, these values arrive quoted.
+#[serde_as]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct ResourceType {
+    /// The resource type's own ID.
+    #[serde(rename = "ref")]
+    #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
+    pub resource_type_id: u32,
+    /// Display name.
+    pub name: String,
+    /// Icon name used in the UI.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub icon: Option<String>,
+    /// IDs of the metadata fields belonging to this type.
+    #[serde_as(as = "Vec<PickFirst<(_, DisplayFromStr)>>")]
+    pub resource_type_fields: Vec<u32>,
+    /// Sort order.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub order_by: Option<u32>,
+    /// File extensions permitted for this type.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub allowed_extensions: Option<String>,
+    /// Everything else reported for the type.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// An alternative file attached to a resource, from
+/// [`ResourceApi::get_alternative_files`].
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct AlternativeFile {
+    /// The alternative file's own ID.
+    #[serde(rename = "ref")]
+    pub alternative_id: u32,
+    /// Display name.
+    pub name: String,
+    /// Free-text description.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub description: Option<String>,
+    /// Original file name.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_name: Option<String>,
+    /// File extension.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_extension: Option<String>,
+    /// Size in bytes; `0` when only a database record exists.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub file_size: Option<u64>,
+    /// Caller-defined category for the alternative.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub alt_type: Option<String>,
+    /// When the record was created.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub creation_date: Option<String>,
+}
+
+/// A collection a resource belongs to, from
+/// [`ResourceApi::get_resource_collections`].
+///
+/// Deliberately narrow — this endpoint reports only these three columns, not
+/// the full [`crate::api::collection::Collection`] row.
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct ResourceCollection {
+    /// The collection's own ID.
+    #[serde(rename = "ref")]
+    pub collection_id: u32,
+    /// Collection name.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub name: Option<String>,
+    /// Free-text description.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub description: Option<String>,
+}
+
+/// One entry from a resource's history, returned by both
+/// [`ResourceApi::get_resource_log`] and
+/// [`ResourceApi::resource_log_last_rows`].
+///
+/// The two endpoints report overlapping but different columns:
+/// `get_resource_log` joins the user's name and adds file-revert details,
+/// while `resource_log_last_rows` reports a bare [`Self::user`] ID instead.
+/// Fields only one of them provides are `Option`.
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct LogEntry {
+    /// The log entry's own ID.
+    #[serde(rename = "ref")]
+    pub log_id: u32,
+    /// Resource the entry refers to.
+    pub resource: u32,
+    /// When it happened, as `YYYY-MM-DD HH:MM:SS`.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub date: Option<String>,
+    /// Single-character log code, e.g. `"c"` created, `"u"` uploaded.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub r#type: Option<String>,
+    /// Free-text note.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub notes: Option<String>,
+    /// Metadata field this entry concerns, when it was a field edit.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub field: Option<u32>,
+    /// The value before the change.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub previous_value: Option<String>,
+    /// Rendered difference for a field edit.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub diff: Option<String>,
+    /// Acting user's ID. [`ResourceApi::resource_log_last_rows`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub user: Option<u32>,
+    /// Acting user's login name. [`ResourceApi::get_resource_log`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub username: Option<String>,
+    /// Acting user's display name. [`ResourceApi::get_resource_log`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub fullname: Option<String>,
+    /// Whether the logged file change can be reverted.
+    /// [`ResourceApi::get_resource_log`] only.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub revert_enabled: bool,
+    /// Everything else reported for the entry.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
+}
+
+/// One generated size of a resource's image, from
+/// [`ResourceApi::get_resource_all_image_sizes`].
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct ImageSize {
+    /// Size identifier, e.g. `"original"`, `"thm"`, `"scr"`.
+    pub size_code: String,
+    /// Direct download URL. Carries a temporary `access_key` when the
+    /// instance hides real file paths.
+    pub url: String,
+    /// Width in pixels.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub width: Option<u32>,
+    /// Height in pixels.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub height: Option<u32>,
+    /// File extension for this size.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub extension: Option<String>,
+    /// Human-readable size. Contains an HTML non-breaking space, as
+    /// ResourceSpace formats it for display rather than reporting bytes.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub filesize: Option<String>,
 }
 
 /// Sub-API for resource endpoints.
@@ -26,15 +339,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The ID of the new alternative file, or false on failure.
+    /// The ID of the new alternative file.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the caller lacks edit access to the
+    /// resource and the `A` permission, or if the file extension is banned.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::AddAlternativeFileRequest;
+    /// let alt_id = client.resource()
+    ///     .add_alternative_file(AddAlternativeFileRequest::new(1234, "Print master"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn add_alternative_file(
         &self,
         request: AddAlternativeFileRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<u32, Error> {
         self.client
             .send_request("add_alternative_file", HttpMethod::Post, request)
             .await
@@ -48,15 +374,26 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The ID of the newly created resource, or false if the operation failed.
+    /// The ID of the newly created resource. Files are not copied — this is a
+    /// metadata and property copy only.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn copy_resource(
-        &self,
-        request: CopyResourceRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// Returns [`Error::OperationFailed`] if the source resource does not exist
+    /// or the caller cannot create resources.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::CopyResourceRequest;
+    /// let new_id = client.resource()
+    ///     .copy_resource(CopyResourceRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn copy_resource(&self, request: CopyResourceRequest) -> Result<u32, Error> {
         self.client
             .send_request("copy_resource", HttpMethod::Post, request)
             .await
@@ -71,7 +408,12 @@ impl<'a> ResourceApi<'a> {
     ///
     /// The ID of the newly created resource.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the caller holds neither the
+    /// `c` nor `d` permission, is barred from this resource type, requested
+    /// an archive state they may not set, or supplied a `url` that
+    /// [`Self::validate_upload_url`] would reject.
     ///
     /// ## Examples
     ///
@@ -93,10 +435,7 @@ impl<'a> ResourceApi<'a> {
     /// ).await?;
     /// # Ok(()) }
     /// ```
-    pub async fn create_resource(
-        &self,
-        request: CreateResourceRequest,
-    ) -> Result<serde_json::Value, Error> {
+    pub async fn create_resource(&self, request: CreateResourceRequest) -> Result<u32, Error> {
         self.client
             .send_request("create_resource", HttpMethod::Post, request)
             .await
@@ -109,15 +448,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The success of the operation (true/false).
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the caller lacks edit access to the
+    /// resource and the `A` permission.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::DeleteAlternativeFile;
+    /// client.resource()
+    ///     .delete_alternative_file(DeleteAlternativeFile::new(1234, 7))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn delete_alternative_file(
         &self,
         request: DeleteAlternativeFile,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("delete_alternative_file", HttpMethod::Post, request)
             .await
@@ -150,10 +502,7 @@ impl<'a> ResourceApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn delete_comment(
-        &self,
-        request: DeleteCommentRequest,
-    ) -> Result<serde_json::Value, Error> {
+    pub async fn delete_comment(&self, request: DeleteCommentRequest) -> Result<bool, Error> {
         self.client
             .send_request("delete_comment", HttpMethod::Post, request)
             .await
@@ -166,15 +515,25 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn delete_resource(
-        &self,
-        request: DeleteResourceRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// Returns [`Error::OperationFailed`] if the resource does not exist or the
+    /// caller lacks permission to delete it.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::DeleteResourceRequest;
+    /// client.resource()
+    ///     .delete_resource(DeleteResourceRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn delete_resource(&self, request: DeleteResourceRequest) -> Result<bool, Error> {
         self.client
             .send_request("delete_resource", HttpMethod::Post, request)
             .await
@@ -187,15 +546,29 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// A list of alternative files.
+    /// Every alternative file on the resource, or an empty list when it has none.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the resource ID is invalid, or if
+    /// the caller's access to it is restricted and
+    /// `$alt_files_visible_when_restricted` is off.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetAlternativeFilesRequest;
+    /// let files = client.resource()
+    ///     .get_alternative_files(GetAlternativeFilesRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_alternative_files(
         &self,
         request: GetAlternativeFilesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<AlternativeFile>, Error> {
         self.client
             .send_request("get_alternative_files", HttpMethod::Get, request)
             .await
@@ -208,15 +581,29 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True if the user has edit access, false otherwise.
+    /// `true` when the caller may edit the resource.
     ///
-    /// ## TODO: Errors
+    /// **A negative answer is not currently representable.** RS returns bare
+    /// `false` for "no", which becomes [`Error::OperationFailed`] before it
+    /// reaches here, so `Ok` is always `true`.
     ///
-    /// ## TODO: Examples
-    pub async fn get_edit_access(
-        &self,
-        request: GetEditAccessRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// ## Errors
+    ///
+    /// Treat [`Error::OperationFailed`] as "no edit access" — see above.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetEditAccessRequest;
+    /// let can_edit = client.resource()
+    ///     .get_edit_access(GetEditAccessRequest::new(1234))
+    ///     .await
+    ///     .unwrap_or(false);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_edit_access(&self, request: GetEditAccessRequest) -> Result<bool, Error> {
         self.client
             .send_request("get_edit_access", HttpMethod::Get, request)
             .await
@@ -227,13 +614,31 @@ impl<'a> ResourceApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetRelatedResourcesRequest`]
     ///
-    /// ## TODO: Errors
+    /// ## Returns
     ///
-    /// ## TODO: Examples
+    /// IDs of the resources related to this one.
+    ///
+    /// ## Errors
+    ///
+    /// Returns an empty list, not an error, when the resource ID is invalid,
+    /// when related resources are disabled system-wide, or when the caller's
+    /// access to the resource is confidential.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetRelatedResourcesRequest;
+    /// let related = client.resource()
+    ///     .get_related_resources(GetRelatedResourcesRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_related_resources(
         &self,
         request: GetRelatedResourcesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<u32>, Error> {
         self.client
             .send_request("get_related_resources", HttpMethod::Get, request)
             .await
@@ -246,13 +651,29 @@ impl<'a> ResourceApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetResourceAccessRequest`]
     ///
-    /// ## TODO: Errors
+    /// ## Returns
     ///
-    /// ## TODO: Examples
+    /// `0` open, `1` restricted, `2` confidential, `99` not found.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the resource ID is not numeric.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceAccessRequest;
+    /// let access = client.resource()
+    ///     .get_resource_access(GetResourceAccessRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_access(
         &self,
         request: GetResourceAccessRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<u8, Error> {
         self.client
             .send_request("get_resource_access", HttpMethod::Get, request)
             .await
@@ -267,15 +688,29 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// JSON containing the resource's available sizes.
+    /// One entry per generated size, including `original`. URLs carry a
+    /// temporary `access_key` when the instance hides real file paths.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::Deserialize`] if the response does not match
+    /// [`ImageSize`].
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceAllImageSizesRequest;
+    /// let sizes = client.resource()
+    ///     .get_resource_all_image_sizes(GetResourceAllImageSizesRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_all_image_sizes(
         &self,
         request: GetResourceAllImageSizesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<ImageSize>, Error> {
         self.client
             .send_request("get_resource_all_image_sizes", HttpMethod::Get, request)
             .await
@@ -290,30 +725,20 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Array of comments in tree view by default, or flat list if requested. Returns an empty
-    /// array if the user lacks permission or commenting is disabled.
+    /// The resource's comments, threaded by default. Left as
+    /// [`serde_json::Value`]: commenting is disabled on the instance this was
+    /// verified against, so only the empty shape could be observed and the
+    /// populated one would be a guess.
     ///
     /// ## Errors
     ///
-    /// Returns an empty array rather than an error when resource commenting is
+    /// Returns an empty list rather than an error when resource commenting is
     /// disabled system-wide (`$comments_resource_enable`).
     ///
-    /// ## Examples
-    /// ```no_run
-    /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::resource::GetResourceCommentsRequest;
-    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// let comments = client
-    ///     .resource()
-    ///     .get_resource_comments(GetResourceCommentsRequest::new(1234).flat_view(true))
-    ///     .await?;
-    /// # Ok(())
-    /// # }
-    /// ```
     pub async fn get_resource_comments(
         &self,
         request: GetResourceCommentsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<serde_json::Value>, Error> {
         self.client
             .send_request("get_resource_comments", HttpMethod::Get, request)
             .await
@@ -328,15 +753,31 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The resource properties. Actual values depend on system configuration.
+    /// The resource row. Which columns exist beyond those named on
+    /// [`Resource`] depends on the instance's field configuration; they are
+    /// available via [`Resource::extra`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the resource does not exist or the
+    /// caller's access to it is confidential.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceDataRequest;
+    /// let resource = client.resource()
+    ///     .get_resource_data(GetResourceDataRequest::new(1234))
+    ///     .await?;
+    /// println!("{:?}", resource.file_extension);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_data(
         &self,
         request: GetResourceDataRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Resource, Error> {
         self.client
             .send_request("get_resource_data", HttpMethod::Get, request)
             .await
@@ -349,15 +790,31 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// JSON containing the resource metadata.
+    /// Every metadata field visible to the caller, each with the resource's
+    /// value for it.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::Deserialize`] if the response does not match
+    /// [`ResourceFieldData`].
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceFieldDataRequest;
+    /// for field in client.resource()
+    ///     .get_resource_field_data(GetResourceFieldDataRequest::new(1234))
+    ///     .await? {
+    ///     println!("{} = {:?}", field.name, field.value);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_field_data(
         &self,
         request: GetResourceFieldDataRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<ResourceFieldData>, Error> {
         self.client
             .send_request("get_resource_field_data", HttpMethod::Get, request)
             .await
@@ -370,15 +827,27 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The resource log entries.
+    /// The resource's history, newest first.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns an empty list rather than an error when the resource has no log.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceLogRequest;
+    /// let log = client.resource()
+    ///     .get_resource_log(GetResourceLogRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_log(
         &self,
         request: GetResourceLogRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<LogEntry>, Error> {
         self.client
             .send_request("get_resource_log", HttpMethod::Get, request)
             .await
@@ -393,15 +862,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// A temporary URL for the requested resource file, or false on failure.
+    /// A download URL for the requested size. Carries a temporary `access_key`
+    /// when the instance hides real file paths, so treat it as a secret.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the resource does not exist.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourcePathRequest;
+    /// let url = client.resource()
+    ///     .get_resource_path(GetResourcePathRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_path(
         &self,
         request: GetResourcePathRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<String, Error> {
         self.client
             .send_request("get_resource_path", HttpMethod::Get, request)
             .await
@@ -411,10 +893,24 @@ impl<'a> ResourceApi<'a> {
     ///
     /// From RS v10.2, the associated resource type field IDs are also returned.
     ///
-    /// ## TODO: Errors
+    /// ## Returns
     ///
-    /// ## TODO: Examples
-    pub async fn get_resource_types(&self) -> Result<serde_json::Value, Error> {
+    /// Every resource type, each with the IDs of its metadata fields.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::Deserialize`] if the response does not match
+    /// [`ResourceType`].
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let types = client.resource().get_resource_types().await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_resource_types(&self) -> Result<Vec<ResourceType>, Error> {
         self.client
             .send_request("get_resource_types", HttpMethod::Get, ())
             .await
@@ -428,13 +924,31 @@ impl<'a> ResourceApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`PutResourceDataRequest`]
     ///
-    /// ## TODO: Errors
+    /// ## Returns
     ///
-    /// ## TODO: Examples
-    pub async fn put_resource_data(
-        &self,
-        request: PutResourceDataRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the resource does not exist or the
+    /// caller cannot edit it.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::PutResourceDataRequest;
+    /// use std::collections::HashMap;
+    /// client.resource()
+    ///     .put_resource_data(PutResourceDataRequest::new(
+    ///         1234,
+    ///         HashMap::from([("archive".to_string(), "0".to_string())]),
+    ///     ))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn put_resource_data(&self, request: PutResourceDataRequest) -> Result<bool, Error> {
         self.client
             .send_request("put_resource_data", HttpMethod::Post, request)
             .await
@@ -447,15 +961,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] when related resources are disabled
+    /// system-wide.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::RelateAllResourcesRequest;
+    /// client.resource()
+    ///     .relate_all_resources(RelateAllResourcesRequest::new([1234, 1235]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn relate_all_resources(
         &self,
         request: RelateAllResourcesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("relate_all_resources", HttpMethod::Post, request)
             .await
@@ -471,11 +998,35 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// A JSON encoded array with `Status` (SUCCESS/FAILED) and `Message`.
+    /// An object with `Status` (`SUCCESS`/`FAILED`) and `Message`. Left as
+    /// [`serde_json::Value`]: replacing a file needs a path on the server or
+    /// a whitelisted URL, neither of which was reachable from the dev
+    /// instance, so only the documented shape is known and typing it would
+    /// be a guess.
     ///
-    /// ## TODO: Errors
+    /// Note this reports failure *inside* a 200 response, so a `FAILED`
+    /// status does not produce an [`Error`].
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the caller cannot edit the
+    /// resource; a rejected file is reported in the returned value instead.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::resource::ReplaceResourceFileRequest;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let result = client
+    ///     .resource()
+    ///     .replace_resource_file(ReplaceResourceFileRequest::new(
+    ///         1234,
+    ///         "https://example.com/replacement.jpg",
+    ///     ))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn replace_resource_file(
         &self,
         request: ReplaceResourceFileRequest,
@@ -494,18 +1045,35 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// A 200 HTTP status will be returned with a payload detailing if successful or a 400 status otherwise.
+    /// Whether the resource's file is read-only, unwrapped from the
+    /// `{"status": ..., "data": {"readonly": ...}}` envelope this endpoint
+    /// returns.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::Http`] with status 400 if the resource ID is not a
+    /// positive integer; the envelope in `body` carries the message.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::ResourceFileReadonlyRequest;
+    /// let readonly = client.resource()
+    ///     .resource_file_readonly(ResourceFileReadonlyRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn resource_file_readonly(
         &self,
         request: ResourceFileReadonlyRequest,
-    ) -> Result<serde_json::Value, Error> {
-        self.client
+    ) -> Result<bool, Error> {
+        let envelope: AjaxEnvelope<ReadonlyData> = self
+            .client
             .send_request("resource_file_readonly", HttpMethod::Get, request)
-            .await
+            .await?;
+        Ok(envelope.data.readonly)
     }
 
     /// Retrieve recent entries from the resource log
@@ -515,15 +1083,29 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Log entries in JSON format, including date, ref, resource, type (type of log entry), resource_type_field, user ID, notes, diff and usageoption value
+    /// Recent log entries across all resources. Reports [`LogEntry::user`]
+    /// rather than the joined username that [`Self::get_resource_log`] gives.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::Deserialize`] if the response does not match
+    /// [`LogEntry`].
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::ResourceLogLastRowsRequest;
+    /// let rows = client.resource()
+    ///     .resource_log_last_rows(ResourceLogLastRowsRequest::new().days(1))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn resource_log_last_rows(
         &self,
         request: ResourceLogLastRowsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<LogEntry>, Error> {
         self.client
             .send_request("resource_log_last_rows", HttpMethod::Get, request)
             .await
@@ -539,15 +1121,26 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// The resource ID the file was attached to.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn upload_file(
-        &self,
-        request: UploadFileRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// Returns [`Error::OperationFailed`] if the caller is over quota, cannot
+    /// edit the resource, or the path is not under a permitted upload
+    /// directory.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::UploadFileRequest;
+    /// client.resource()
+    ///     .upload_file(UploadFileRequest::new(1234).file_path("/var/tmp/a.jpg"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn upload_file(&self, request: UploadFileRequest) -> Result<u32, Error> {
         self.client
             .send_request("upload_file", HttpMethod::Post, request)
             .await
@@ -563,15 +1156,25 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// The resource ID the file was attached to.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn upload_file_by_url(
-        &self,
-        request: UploadFileByUrlRequest,
-    ) -> Result<serde_json::Value, Error> {
+    /// Returns [`Error::OperationFailed`] if the URL is not permitted — see
+    /// [`Self::validate_upload_url`] — or the caller cannot edit the resource.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::UploadFileByUrlRequest;
+    /// client.resource()
+    ///     .upload_file_by_url(UploadFileByUrlRequest::new(1234).url("https://example.com/a.jpg"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn upload_file_by_url(&self, request: UploadFileByUrlRequest) -> Result<u32, Error> {
         self.client
             .send_request("upload_file_by_url", HttpMethod::Post, request)
             .await
@@ -585,16 +1188,35 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// 204 if succesful other status codes (413, 400, 500) if not
+    /// Nothing. A successful upload is an HTTP 204 with no body, so there is
+    /// no value to return.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::Http`] for any non-204 response — 413 when the file
+    /// exceeds the server limit, 400 for a malformed request, 500 for a
+    /// server-side failure. The response body is carried in `body`.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::resource::{UploadMultipartRequest, UploadSource};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .resource()
+    ///     .upload_multipart(
+    ///         UploadMultipartRequest::new(1234, false, false),
+    ///         UploadSource::from_file("photo.jpg"),
+    ///     )
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn upload_multipart(
         &self,
         request: UploadMultipartRequest,
         source: impl Into<UploadSource>,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<(), Error> {
         self.client
             .send_multipart_request("upload_multipart", request, source.into())
             .await
@@ -607,15 +1229,30 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] when related resources are disabled
+    /// system-wide.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::UpdateRelatedResourceRequest;
+    /// client.resource()
+    ///     .update_related_resource(
+    ///         UpdateRelatedResourceRequest::new(1234, [1235]).add(true),
+    ///     )
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn update_related_resource(
         &self,
         request: UpdateRelatedResourceRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("update_related_resource", HttpMethod::Post, request)
             .await
@@ -628,15 +1265,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// True or false depending on operation success.
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the resource does not exist or the
+    /// caller cannot edit it.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::UpdateResourceTypeRequest;
+    /// client.resource()
+    ///     .update_resource_type(UpdateResourceTypeRequest::new(1234, 2))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn update_resource_type(
         &self,
         request: UpdateResourceTypeRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("update_resource_type", HttpMethod::Post, request)
             .await
@@ -649,15 +1299,28 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Array of collections with the collection ID, name and description. False on failure.
+    /// The collections the resource belongs to, with only ID, name and
+    /// description — not the full collection row.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the resource ID is not numeric.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::GetResourceCollectionsRequest;
+    /// let collections = client.resource()
+    ///     .get_resource_collections(GetResourceCollectionsRequest::new(1234))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_collections(
         &self,
         request: GetResourceCollectionsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<ResourceCollection>, Error> {
         self.client
             .send_request("get_resource_collections", HttpMethod::Get, request)
             .await
@@ -673,15 +1336,34 @@ impl<'a> ResourceApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Returns true if a valid URL is found, false otherwise.
+    /// `true` when the URL may be used for an upload.
     ///
-    /// ## TODO: Errors
+    /// **A negative answer is not currently representable.** RS returns bare
+    /// `false` for a URL that is not permitted, and that becomes
+    /// [`Error::OperationFailed`] before it reaches here.
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Treat [`Error::OperationFailed`] as "not permitted". A URL is permitted
+    /// only if its host appears in the instance's `$api_upload_urls`, or if
+    /// that setting is absent entirely.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// use resourcespace_client::api::resource::ValidateUploadUrlRequest;
+    /// let allowed = client.resource()
+    ///     .validate_upload_url(ValidateUploadUrlRequest::new("https://example.com/a.jpg"))
+    ///     .await
+    ///     .unwrap_or(false);
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn validate_upload_url(
         &self,
         request: ValidateUploadUrlRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("validate_upload_url", HttpMethod::Get, request)
             .await
@@ -797,6 +1479,12 @@ pub struct CreateResourceRequest {
         skip_serializing_if = "Option::is_none"
     )]
     pub no_exif: Option<bool>,
+    /// If true, reverts to the original file rather than the processed one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
     /// If true, automatically rotates the image based on EXIF orientation.
     #[serde(
         serialize_with = "opt_bool_as_u8",
@@ -823,6 +1511,7 @@ impl CreateResourceRequest {
             archive: None,
             url: None,
             no_exif: None,
+            revert: None,
             autorotate: None,
             metadata: None,
         }
@@ -840,6 +1529,11 @@ impl CreateResourceRequest {
 
     pub fn no_exif(mut self, no_exif: bool) -> Self {
         self.no_exif = Some(no_exif);
+        self
+    }
+
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert);
         self
     }
 
@@ -893,6 +1587,7 @@ pub struct GetAlternativeFilesRequest {
     /// The ID of the resource whose alternative files should be returned.
     pub resource: u32,
     /// Field name to order the alternative files by.
+    #[serde(rename = "order_by")]
     pub orderby: Option<String>,
     /// Sort direction for the results.
     pub sort: Option<SortOrder>,
@@ -1185,6 +1880,7 @@ impl RelateAllResourcesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ReplaceResourceFileRequest {
     /// The ID of the resource whose file should be replaced.
+    #[serde(rename = "ref")]
     pub resource: u32,
     /// Local server path or publicly accessible URL of the replacement file.
     pub file_location: String,
@@ -1483,6 +2179,12 @@ pub struct UploadMultipartRequest {
     pub previewonly: Option<bool>,
     /// ID of an alternative file slot to upload into instead of the primary file.
     pub alternative: Option<u32>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
 }
 
 impl UploadMultipartRequest {
@@ -1500,6 +2202,7 @@ impl UploadMultipartRequest {
             revert,
             previewonly: None,
             alternative: None,
+            autorotate: None,
         }
     }
     pub fn previewonly(mut self, previewonly: bool) -> Self {
@@ -1509,6 +2212,11 @@ impl UploadMultipartRequest {
 
     pub fn alternative(mut self, alternative: u32) -> Self {
         self.alternative = Some(alternative);
+        self
+    }
+
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
         self
     }
 }
@@ -1552,6 +2260,7 @@ pub struct UpdateResourceTypeRequest {
     /// The ID of the resource to update.
     pub resource: u32,
     /// The new resource type ID to assign to the resource.
+    #[serde(rename = "type")]
     pub resourcetype: u32,
 }
 
