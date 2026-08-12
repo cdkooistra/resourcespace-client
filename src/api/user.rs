@@ -1,15 +1,86 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_with::json::JsonString;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{DisplayFromStr, PickFirst, serde_as, skip_serializing_none};
 
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{List, opt_bool_as_u8};
+use super::{List, empty_as_none, flexible_bool, opt_bool_as_u8};
 
 #[derive(Debug)]
 pub struct UserApi<'a> {
     client: &'a Client,
+}
+
+/// A user record, as returned by [`UserApi::get_users`] and
+/// [`UserApi::get_users_by_permission`].
+///
+/// The two endpoints return overlapping but different column sets, so fields
+/// only one of them provides are `Option` and default to `None`:
+/// `account_expires`, `groupname`, `last_active`, `last_ip`, `origin`,
+/// `profile_image` and `profile_text` come from `get_users_by_permission`
+/// only.
+///
+/// They also disagree on JSON types for the *same* columns —
+/// `get_users` quotes its numbers (`"ref": "1"`) while
+/// `get_users_by_permission` does not (`"ref": 1`) — so the numeric fields
+/// accept either form.
+#[serde_as]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct User {
+    /// The user's own ID.
+    #[serde(rename = "ref")]
+    #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
+    pub user_id: u32,
+    /// Username used to log in.
+    pub username: String,
+    /// Full display name, if set.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub fullname: Option<String>,
+    /// Email address, if set.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub email: Option<String>,
+    /// ID of the group the user belongs to.
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    pub usergroup: Option<u32>,
+    /// Whether the account has been approved.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub approved: bool,
+    /// Administrative notes about the user.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub comments: Option<String>,
+    /// When the account was created, as `YYYY-MM-DD HH:MM:SS`.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub created: Option<String>,
+    /// Name of the user's group. [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub groupname: Option<String>,
+    /// When the account expires, if set.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub account_expires: Option<String>,
+    /// When the user was last active.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub last_active: Option<String>,
+    /// IP address the user was last seen from.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub last_ip: Option<String>,
+    /// How the account was created.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub origin: Option<String>,
+    /// Profile image reference.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub profile_image: Option<String>,
+    /// Profile biography text.
+    /// [`UserApi::get_users_by_permission`] only.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub profile_text: Option<String>,
 }
 
 /// Sub-API for user endpoints.
@@ -25,12 +96,30 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// TRUE if the user has the permission, FALSE if they don't.
+    /// `true` if the user holds the permission.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn checkperm(&self, request: CheckpermRequest) -> Result<serde_json::Value, Error> {
+    /// **This cannot currently report a negative answer.** ResourceSpace
+    /// returns bare `false` when the user does not hold the permission, and
+    /// [`Client::send_request`](crate::Client) turns any bare `false` into
+    /// [`Error::OperationFailed`] before it reaches here — so "no" is
+    /// indistinguishable from a transport failure, and `Ok` is always
+    /// `true`. Treat [`Error::OperationFailed`] from this call as "no".
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::CheckpermRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let is_admin = client
+    ///     .user()
+    ///     .checkperm(CheckpermRequest::new("a"))
+    ///     .await
+    ///     .unwrap_or(false);
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn checkperm(&self, request: CheckpermRequest) -> Result<bool, Error> {
         self.client
             .send_request("checkperm", HttpMethod::Get, request)
             .await
@@ -45,12 +134,26 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// An array of matching user records include ID ("ref"), username, full name and user group ID.
+    /// Matching users, with ID, username, email, full name and group ID.
+    /// The richer fields on [`User`] are not populated by this endpoint —
+    /// use [`Self::get_users_by_permission`] for those.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn get_users(&self, request: GetUsersRequest) -> Result<serde_json::Value, Error> {
+    /// Returns an empty list rather than an error for an anonymous session.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::GetUsersRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let users = client
+    ///     .user()
+    ///     .get_users(GetUsersRequest::new().find("admin"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_users(&self, request: GetUsersRequest) -> Result<Vec<User>, Error> {
         self.client
             .send_request("get_users", HttpMethod::Get, request)
             .await
@@ -65,15 +168,28 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// An array of matching user records with a subset of information from the user record
+    /// Users holding **all** of the given permissions. Returns more columns
+    /// than [`Self::get_users`] — group name, last activity, profile fields.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns an empty list rather than an error when nobody matches.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::GetUsersByPermissionRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let admins = client
+    ///     .user()
+    ///     .get_users_by_permission(GetUsersByPermissionRequest::new(["a"]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_users_by_permission(
         &self,
         request: GetUsersByPermissionRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<User>, Error> {
         self.client
             .send_request("get_users_by_permission", HttpMethod::Get, request)
             .await
@@ -88,15 +204,29 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Boolean - true if one or more users are found and mark as having invalid adresses, false otherwise.
+    /// Always `true`. ResourceSpace returns `false` when no user holds that
+    /// address, and that arrives as [`Error::OperationFailed`] instead.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
+    /// Returns [`Error::OperationFailed`] if the caller lacks the `a`
+    /// permission, or if no user has this email address.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::MarkEmailAsInvalidRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .user()
+    ///     .mark_email_as_invalid(MarkEmailAsInvalidRequest::new("bounced@example.com"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn mark_email_as_invalid(
         &self,
         request: MarkEmailAsInvalidRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("mark_email_as_invalid", HttpMethod::Post, request)
             .await
@@ -112,16 +242,39 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// Returns `Ok(())` on success (HTTP 200). Returns an error on HTTP 409 (e.g. missing
-    /// required fields) or HTTP 403 (permission denied).
+    /// Nothing. This endpoint wraps its reply in an
+    /// `{"status": ..., "data": ...}` envelope and returns
+    /// `{"status": "success", "data": null}` here, so there is no value to
+    /// hand back.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn save_user(&self, request: SaveUserRequest) -> Result<serde_json::Value, Error> {
-        self.client
+    /// Unlike most of this API, failures come back as real HTTP status
+    /// codes — 409 when the save is rejected (e.g. a missing required
+    /// field) and 403 for permission denial. Both surface as
+    /// [`Error::Http`], whose `body` holds the unparsed envelope with the
+    /// reason inside `data.message`.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::{SaveUserData, SaveUserRequest}};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .user()
+    ///     .save_user(SaveUserRequest::new(
+    ///         3,
+    ///         SaveUserData::new().fullname("Ada Lovelace").email("ada@example.com"),
+    ///     ))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn save_user(&self, request: SaveUserRequest) -> Result<(), Error> {
+        let _: AjaxEnvelope<serde_json::Value> = self
+            .client
             .send_request("save_user", HttpMethod::Post, request)
-            .await
+            .await?;
+        Ok(())
     }
 
     /// Create a new user record.
@@ -133,17 +286,74 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Returns
     ///
-    /// The new user ID in `data.ref` on success (HTTP 200).
-    /// HTTP 409 if the username already exists (`data.ref = false`) or the user limit has
-    /// been reached (`data.ref = -2`). HTTP 403 on permission failure.
+    /// The new user's ID, unwrapped from the
+    /// `{"status": ..., "data": {"ref": N}}` envelope this endpoint returns.
     ///
-    /// ## TODO: Errors
+    /// ## Errors
     ///
-    /// ## TODO: Examples
-    pub async fn new_user(&self, request: NewUserRequest) -> Result<serde_json::Value, Error> {
-        self.client
+    /// Unlike most of this API, failures come back as real HTTP status
+    /// codes, surfacing as [`Error::Http`]:
+    ///
+    /// * **409** — the username already exists (`data.ref` is `false`) or the
+    ///   licensed user limit is reached (`data.ref` is `-2`). The two are
+    ///   only distinguishable by reading `body`.
+    /// * **403** — the caller cannot manage users, or cannot assign the
+    ///   requested group.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::NewUserRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let user_id = client
+    ///     .user()
+    ///     .new_user(NewUserRequest::new("alovelace"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn new_user(&self, request: NewUserRequest) -> Result<u32, Error> {
+        let envelope: AjaxEnvelope<NewUserData> = self
+            .client
             .send_request("new_user", HttpMethod::Post, request)
-            .await
+            .await?;
+        Ok(envelope.data.user_id)
+    }
+
+    /// Get the URL of a user's profile image.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`GetProfileImageRequest`]
+    ///
+    /// ## Returns
+    ///
+    /// The URL of the profile image, or `None` when the user has not set
+    /// one — ResourceSpace returns a blank string in that case rather than
+    /// omitting the value.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::Deserialize`] if the response is not a string.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::user::GetProfileImageRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let url = client
+    ///     .user()
+    ///     .get_profile_image(GetProfileImageRequest::new(1))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_profile_image(
+        &self,
+        request: GetProfileImageRequest,
+    ) -> Result<Option<String>, Error> {
+        let url: String = self
+            .client
+            .send_request("get_profile_image", HttpMethod::Get, request)
+            .await?;
+        Ok(if url.is_empty() { None } else { Some(url) })
     }
 }
 
@@ -157,6 +367,49 @@ pub struct CheckpermRequest {
 impl CheckpermRequest {
     pub fn new(perm: impl Into<String>) -> Self {
         Self { perm: perm.into() }
+    }
+}
+
+/// ResourceSpace's `ajax_response_ok`/`ajax_response_fail` envelope.
+///
+/// A handful of endpoints — `new_user` and `save_user` here — wrap their
+/// reply in `{"status": "success"|"fail", "data": ...}` instead of returning
+/// the value directly, and signal failure with an HTTP status code rather
+/// than the usual bare `false`. Kept private: only the unwrapped value is
+/// exposed, and the failure path never reaches here because a non-2xx
+/// response becomes [`Error::Http`] first.
+#[derive(Debug, Deserialize)]
+struct AjaxEnvelope<T> {
+    #[allow(dead_code)]
+    status: String,
+    data: T,
+}
+
+/// The `data` payload of a successful `new_user` call.
+#[derive(Debug, Deserialize)]
+struct NewUserData {
+    #[serde(rename = "ref")]
+    user_id: u32,
+}
+
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetProfileImageRequest {
+    /// The ID of the user whose profile image URL is wanted.
+    ///
+    /// Sent positionally as `param1` rather than by its real name `user`.
+    /// On a GET the whole request is one query string that already carries
+    /// `user=<username>` for authentication, so a second `user` key wins the
+    /// `parse_str` and ResourceSpace looks up the API key for that ID
+    /// instead, failing with `401 Invalid signature`. ResourceSpace checks
+    /// `param1` before named parameters, so this sidesteps the clash.
+    #[serde(rename = "param1")]
+    pub user: u32,
+}
+
+impl GetProfileImageRequest {
+    pub fn new(user: u32) -> Self {
+        Self { user }
     }
 }
 
