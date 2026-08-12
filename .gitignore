@@ -12,5 +12,5 @@ devenv.local.yaml
 # Added by cargo
 
 /target
-
 .env
+/tests/fixtures/

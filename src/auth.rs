@@ -4,7 +4,7 @@ use serde::Serialize;
 use url::Url;
 
 use crate::client::{ApiRequest, build_query};
-use crate::error::Error;
+use crate::error::{self, Error};
 
 /// For a ResourceSpace external client we can only communicate with a
 /// userkey or a sessionkey. `native` authmode is only available for
@@ -44,10 +44,10 @@ pub(crate) async fn login(
         .get(url.as_str())
         .send()
         .await
-        .map_err(|e| Error::Transport(e.into()))? // transport/connectivity error
+        .map_err(error::transport)? // transport/connectivity error
         .text()
         .await
-        .map_err(|e| Error::Transport(e.into()))?; // body read error
+        .map_err(error::transport)?; // body read error
 
     if response.trim().to_lowercase() == "false" {
         return Err(Error::InvalidCredentials);

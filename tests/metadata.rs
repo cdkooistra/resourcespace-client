@@ -1,24 +1,10 @@
-use resourcespace_client::Client;
-
-async fn new_rs_client() -> Client {
-    let base_url = std::env::var("RS_BASE_URL").expect("RS_BASE_URL not set");
-    let user = std::env::var("RS_USER").expect("RS_USER not set");
-    let key = std::env::var("RS_KEY").expect("RS_KEY not set");
-    Client::builder()
-        .base_url(&base_url)
-        .user_key(&user, &key)
-        .build()
-        .await
-        .expect("failed to build client")
-}
+mod common;
 
 #[tokio::test]
-#[ignore = "requires live RS API with env vars set"]
 async fn test_update_field_text_with_comma() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::from_path("tests/.env").ok();
-    let client = new_rs_client().await;
+    let client = live_client_or_skip!();
 
-    let resource_id = 1;
+    let resource_id = common::seed(&client).await.resource;
     let field = "title";
 
     let result = client
@@ -37,13 +23,21 @@ async fn test_update_field_text_with_comma() -> Result<(), Box<dyn std::error::E
 }
 
 #[tokio::test]
-#[ignore = "requires live RS API with env vars set"]
 async fn test_update_field_keyword_with_comma() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::from_path("tests/.env").ok();
-    let client = new_rs_client().await;
+    let client = live_client_or_skip!();
 
-    let resource_id = 1226;
-    let field = "tags";
+    let resource_id = common::seed(&client).await.resource;
+
+    // Type 9 is a dynamic keywords list. Field refs and shortnames differ
+    // between installs, so ask the instance instead of hardcoding one.
+    let fields = client
+        .metadata()
+        .get_resource_type_fields(
+            resourcespace_client::api::metadata::GetResourceTypeFieldsRequest::new()
+                .field_type_ids([9]),
+        )
+        .await?;
+    let field = fields.first().expect("a keywords field").name.clone();
 
     let result = client
         .metadata()
@@ -61,10 +55,8 @@ async fn test_update_field_keyword_with_comma() -> Result<(), Box<dyn std::error
 }
 
 #[tokio::test]
-#[ignore = "requires live RS API with env vars set"]
 async fn test_create_resource_with_keyword_metadata() -> Result<(), Box<dyn std::error::Error>> {
-    dotenvy::from_path("tests/.env").ok();
-    let client = new_rs_client().await;
+    let client = live_client_or_skip!();
 
     let resource_type = 1;
     let text_field_id = 8;

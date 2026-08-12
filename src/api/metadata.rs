@@ -1,15 +1,187 @@
-use serde::{Serialize, Serializer};
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize, Serializer};
 use serde_with::json::JsonString;
-use serde_with::{serde_as, skip_serializing_none};
+use serde_with::{DisplayFromStr, PickFirst, serde_as, skip_serializing_none};
 
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-use super::{FieldValue, List};
+use super::{FieldValue, List, empty_as_none, flexible_bool};
 
 #[derive(Debug)]
 pub struct MetadataApi<'a> {
     client: &'a Client,
+}
+
+/// ResourceSpace's `ajax_response_ok`/`ajax_response_fail` envelope.
+///
+/// `create_resource_type_field` wraps its reply in
+/// `{"status": ..., "data": ...}` rather than returning the value directly.
+/// Kept private: only the unwrapped value is exposed.
+#[derive(Debug, Deserialize)]
+struct AjaxEnvelope<T> {
+    #[allow(dead_code)]
+    status: String,
+    data: T,
+}
+
+/// The `data` payload of a successful `create_resource_type_field` call.
+#[derive(Debug, Deserialize)]
+struct CreatedField {
+    #[serde(rename = "ref")]
+    field_id: u32,
+}
+
+/// A node — one selectable option of a fixed-list metadata field.
+///
+/// Returned by [`MetadataApi::get_nodes`] and, when
+/// [`GetFieldOptionsRequest::nodeinfo`] is set, by
+/// [`MetadataApi::get_field_options`]. The latter omits
+/// [`Self::resource_type_field`], since the caller already supplied it.
+///
+/// Unlike [`ResourceTypeField`], these values arrive as real JSON numbers.
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct Node {
+    /// The node's own ID.
+    #[serde(rename = "ref")]
+    pub node_id: u32,
+    /// The option's value as stored.
+    pub name: String,
+    /// The option's value in the active language, which may equal
+    /// [`Self::name`].
+    pub translated_name: Option<String>,
+    /// Parent node, for a category tree.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub parent: Option<u32>,
+    /// Position among its siblings.
+    pub order_by: u32,
+    /// Whether the option is selectable.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub active: bool,
+    /// The field this node belongs to. Absent from
+    /// [`MetadataApi::get_field_options`].
+    #[serde(deserialize_with = "empty_as_none")]
+    pub resource_type_field: Option<u32>,
+}
+
+/// The options of a fixed-list field, from
+/// [`MetadataApi::get_field_options`].
+///
+/// Which variant you get is decided by the request:
+/// [`GetFieldOptionsRequest::nodeinfo`] returns [`Self::Nodes`], and omitting
+/// it returns just the option text.
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Deserialize)]
+#[serde(untagged)]
+pub enum FieldOptions {
+    /// Full node records, when `nodeinfo` was set.
+    Nodes(Vec<Node>),
+    /// Option text only.
+    Names(Vec<String>),
+}
+
+/// A metadata field definition, from
+/// [`MetadataApi::get_resource_type_fields`].
+///
+/// **The JSON types depend on the request.** Called without a filter this
+/// endpoint quotes every value (`"ref": "1"`); called with
+/// [`GetResourceTypeFieldsRequest::find`] it returns real numbers
+/// (`"ref": 93`) for the same columns. Every numeric and boolean field below
+/// therefore accepts either form. The long tail of
+/// integration and macro columns — `exiftool_field`, `onchange_macro`,
+/// `display_condition`, `regexp_filter` and similar — is kept in
+/// [`Self::extra`] rather than enumerated.
+#[serde_as]
+#[non_exhaustive]
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct ResourceTypeField {
+    /// The field's own ID.
+    #[serde(rename = "ref")]
+    #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
+    pub field_id: u32,
+    /// Short name, used wherever a field can be named instead of numbered.
+    pub name: String,
+    /// Display title.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub title: Option<String>,
+    /// Field type; see ResourceSpace's `FIELD_TYPE_*` constants. `9` is a
+    /// dynamic keywords list, `3` a dropdown, `0` a single-line text box.
+    #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
+    pub r#type: u8,
+    /// Resource types this field applies to, or `None` when it is global.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub resource_types: Option<String>,
+    /// Whether the field applies to every resource type.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub global: bool,
+    /// Position within its tab.
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    pub order_by: Option<u32>,
+    /// Whether the field is in use.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub active: bool,
+    /// Whether a value must be supplied.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub required: bool,
+    /// Whether the field is shown on the resource view page.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub display_field: bool,
+    /// Whether the field appears in advanced search.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub advanced_search: bool,
+    /// Whether the field appears in simple search.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub simple_search: bool,
+    /// Whether the field's values feed the keyword index.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub keywords_index: bool,
+    /// Whether the field cannot be edited.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub read_only: bool,
+    /// Whether a fixed list renders as a dropdown.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub display_as_dropdown: bool,
+    /// Whether the field spans the full width of the form.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub full_width: bool,
+    /// Whether external (non-logged-in) users can see the field.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub external_user_access: bool,
+    /// Whether the field is hidden from restricted-access users.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub hide_when_restricted: bool,
+    /// Whether the field is hidden on the upload form.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub hide_when_uploading: bool,
+    /// Whether the field is included in CSV exports.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub include_in_csv_export: bool,
+    /// Whether the field is skipped when copying a resource.
+    #[serde(deserialize_with = "flexible_bool")]
+    pub omit_when_copying: bool,
+    /// Tab this field is grouped under.
+    #[serde_as(as = "Option<PickFirst<(_, DisplayFromStr)>>")]
+    pub tab: Option<u32>,
+    /// Name of that tab.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub tab_name: Option<String>,
+    /// Help text shown alongside the field.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub help_text: Option<String>,
+    /// Tooltip shown on hover.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub tooltip_text: Option<String>,
+    /// Denormalised column on the resource table backing this field, if any.
+    #[serde(deserialize_with = "empty_as_none")]
+    pub resource_column: Option<String>,
+    /// Everything else ResourceSpace reports for the field — integration and
+    /// macro configuration, mostly `null` on a stock instance.
+    #[serde(flatten)]
+    pub extra: HashMap<String, serde_json::Value>,
 }
 
 /// Sub-API for metadata endpoints.
@@ -23,15 +195,32 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetFieldOptionsRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// [`FieldOptions::Nodes`] when [`GetFieldOptionsRequest::nodeinfo`] is
+    /// set, otherwise [`FieldOptions::Names`]. The node records here omit
+    /// `resource_type_field`, unlike [`Self::get_nodes`].
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the caller cannot view the
+    /// field.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::GetFieldOptionsRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let options = client
+    ///     .metadata()
+    ///     .get_field_options(GetFieldOptionsRequest::new("keywords").nodeinfo(true))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_field_options(
         &self,
         request: GetFieldOptionsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<FieldOptions, Error> {
         self.client
             .send_request("get_field_options", HttpMethod::Get, request)
             .await
@@ -42,12 +231,27 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetNodeIdRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// The node's ID.
     ///
-    /// ## TODO: Examples
-    pub async fn get_node_id(&self, request: GetNodeIdRequest) -> Result<serde_json::Value, Error> {
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the caller cannot view the
+    /// field, or if no node with that name exists on it.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::GetNodeIdRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let node_id = client
+    ///     .metadata()
+    ///     .get_node_id(GetNodeIdRequest::new("Landscape", 12))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_node_id(&self, request: GetNodeIdRequest) -> Result<u32, Error> {
         self.client
             .send_request("get_node_id", HttpMethod::Get, request)
             .await
@@ -58,12 +262,27 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetNodesRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Every node on the field, or only the children of
+    /// [`GetNodesRequest::parent`] when that is set.
     ///
-    /// ## TODO: Examples
-    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<serde_json::Value, Error> {
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the caller cannot view the
+    /// field.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::GetNodesRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// for node in client.metadata().get_nodes(GetNodesRequest::new(12)).await? {
+    ///     println!("{} = {}", node.node_id, node.name);
+    /// }
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<Vec<Node>, Error> {
         self.client
             .send_request("get_nodes", HttpMethod::Get, request)
             .await
@@ -74,15 +293,31 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`AddResourceNodesRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] unless the caller holds the `a`
+    /// permission — this endpoint is super-admin only — or if any node ID
+    /// does not exist.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::AddResourceNodesRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .metadata()
+    ///     .add_resource_nodes(AddResourceNodesRequest::new(1234, [87, 88]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn add_resource_nodes(
         &self,
         request: AddResourceNodesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("add_resource_nodes", HttpMethod::Post, request)
             .await
@@ -93,15 +328,30 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`AddResourceNodesMultiRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] unless the caller holds the `a`
+    /// permission — this endpoint is super-admin only.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::AddResourceNodesMultiRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// client
+    ///     .metadata()
+    ///     .add_resource_nodes_multi(AddResourceNodesMultiRequest::new([1234, 1235], [87]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn add_resource_nodes_multi(
         &self,
         request: AddResourceNodesMultiRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<bool, Error> {
         self.client
             .send_request("add_resource_nodes_multi", HttpMethod::Post, request)
             .await
@@ -112,12 +362,38 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`SetNodeRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// The node's ID — the new one when creating, or the existing one when
+    /// updating. ResourceSpace deduplicates by name on non-tree fields, so
+    /// creating a node that already exists returns the original's ID rather
+    /// than making a second one.
     ///
-    /// ## TODO: Examples
-    pub async fn set_node(&self, request: SetNodeRequest) -> Result<serde_json::Value, Error> {
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the field is not a fixed-list
+    /// type, or if the caller holds neither `a` nor `k` (nor, for a dynamic
+    /// keywords field, the per-field permission).
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::SetNodeRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// // Create
+    /// let node_id = client
+    ///     .metadata()
+    ///     .set_node(SetNodeRequest::new(None, 12, "Landscape"))
+    ///     .await?;
+    ///
+    /// // Rename that node
+    /// client
+    ///     .metadata()
+    ///     .set_node(SetNodeRequest::new(node_id, 12, "Landscapes"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn set_node(&self, request: SetNodeRequest) -> Result<u32, Error> {
         self.client
             .send_request("set_node", HttpMethod::Post, request)
             .await
@@ -130,15 +406,31 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`GetResourceTypeFieldsRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Matching field definitions, ordered by ID.
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns an empty list, with HTTP 403 suppressed, when the caller
+    /// lacks the `a` permission.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::GetResourceTypeFieldsRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// // Every fixed-list (type 9) field
+    /// let fields = client
+    ///     .metadata()
+    ///     .get_resource_type_fields(GetResourceTypeFieldsRequest::new().field_type_ids([9]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn get_resource_type_fields(
         &self,
         request: GetResourceTypeFieldsRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<Vec<ResourceTypeField>, Error> {
         self.client
             .send_request("get_resource_type_fields", HttpMethod::Get, request)
             .await
@@ -151,18 +443,39 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`CreateResourceTypeFieldRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// The new field's ID, unwrapped from the
+    /// `{"status": ..., "data": {"ref": N}}` envelope this endpoint returns.
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::Deserialize`] when the save is rejected — the
+    /// failure envelope carries a message rather than a `ref`, so there is
+    /// no ID to return. Callers lacking the `a` permission get HTTP 403 and
+    /// so [`Error::Http`].
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::CreateResourceTypeFieldRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// // Type 3 is a dropdown list; pass 0 as the resource type for a global field.
+    /// let field_id = client
+    ///     .metadata()
+    ///     .create_resource_type_field(CreateResourceTypeFieldRequest::new("Region", [0], "3"))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn create_resource_type_field(
         &self,
         request: CreateResourceTypeFieldRequest,
-    ) -> Result<serde_json::Value, Error> {
-        self.client
+    ) -> Result<u32, Error> {
+        let envelope: AjaxEnvelope<CreatedField> = self
+            .client
             .send_request("create_resource_type_field", HttpMethod::Post, request)
-            .await
+            .await?;
+        Ok(envelope.data.field_id)
     }
 
     /// Toggle nodes' active state.
@@ -172,15 +485,31 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`ToggleActiveStatesForNodesRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Each node ID mapped to its *new* active state, `1` active and `0`
+    /// inactive. Nodes that could not be toggled are absent from the map.
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns an empty map, with HTTP 403 suppressed, when the caller lacks
+    /// the `k` permission.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::{Client, api::metadata::ToggleActiveStatesForNodesRequest};
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// let states = client
+    ///     .metadata()
+    ///     .toggle_active_state_for_nodes(ToggleActiveStatesForNodesRequest::new([87]))
+    ///     .await?;
+    /// # Ok(())
+    /// # }
+    /// ```
     pub async fn toggle_active_state_for_nodes(
         &self,
         request: ToggleActiveStatesForNodesRequest,
-    ) -> Result<serde_json::Value, Error> {
+    ) -> Result<HashMap<u32, u8>, Error> {
         self.client
             .send_request("toggle_active_state_for_nodes", HttpMethod::Post, request)
             .await
@@ -194,11 +523,17 @@ impl<'a> MetadataApi<'a> {
     /// ## Arguments
     /// * `request` - Parameters built via [`UpdateFieldRequest`]
     ///
-    /// ## TODO: Returns
+    /// ## Returns
     ///
-    /// ## TODO: Errors
+    /// Always `true`; a failure arrives as [`Error::OperationFailed`].
     ///
-    /// ## TODO: Examples
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the resource does not exist,
+    /// the caller lacks edit access to it, the field does not exist, or the
+    /// caller lacks edit access to that field.
+    ///
+    /// ## Examples
     ///
     /// ```no_run
     /// # use resourcespace_client::Client;
@@ -224,10 +559,7 @@ impl<'a> MetadataApi<'a> {
     /// ).await?;
     /// # Ok(()) }
     /// ```
-    pub async fn update_field(
-        &self,
-        request: UpdateFieldRequest,
-    ) -> Result<serde_json::Value, Error> {
+    pub async fn update_field(&self, request: UpdateFieldRequest) -> Result<bool, Error> {
         self.client
             .send_request("update_field", HttpMethod::Post, request)
             .await
@@ -415,10 +747,14 @@ impl AddResourceNodesRequest {
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
-    #[serde(rename = "resourceid")]
+    ///
+    /// Sent as `resources`; ResourceSpace silently substitutes an empty
+    /// string for any parameter it cannot match by name, so a wrong name
+    /// here fails quietly rather than erroring.
+    #[serde(rename = "resources")]
     pub resource_id: List<u32>,
     /// Comma-separated list of node IDs to add to each resource.
-    #[serde(rename = "nodes")]
+    #[serde(rename = "nodestring")]
     pub node_ids: List<u32>,
 }
 
@@ -435,9 +771,13 @@ impl AddResourceNodesMultiRequest {
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SetNodeRequest {
-    /// The ID of an existing node to update, or 0 to create a new one.
-    #[serde(rename = "ref")]
-    pub node_id: u32,
+    /// The ID of an existing node to update, or `None` to create a new one.
+    ///
+    /// Serialized as the literal string `NULL` when `None`, which is what the
+    /// API expects for a create; ResourceSpace converts that back to a real
+    /// null before inserting, which also lets it pick the next `order_by`.
+    #[serde(rename = "ref", serialize_with = "node_id_or_null")]
+    pub node_id: Option<u32>,
     /// The ID of the resource type field this node belongs to.
     pub resource_type_field: u32,
     /// The name of the node.
@@ -450,10 +790,26 @@ pub struct SetNodeRequest {
     pub returnexisting: Option<bool>,
 }
 
+/// Serializes a node ID as the literal `NULL` when absent.
+///
+/// `api_set_node` matches on the uppercase string `NULL` to decide between
+/// creating and updating, so an omitted or numeric value will not do.
+fn node_id_or_null<S: Serializer>(id: &Option<u32>, s: S) -> Result<S::Ok, S::Error> {
+    match id {
+        Some(id) => s.serialize_str(&id.to_string()),
+        None => s.serialize_str("NULL"),
+    }
+}
+
 impl SetNodeRequest {
-    pub fn new(node_id: u32, resource_type_field: u32, name: impl Into<String>) -> Self {
+    /// Pass `None` as `node_id` to create a node, or `Some(id)` to update one.
+    pub fn new(
+        node_id: impl Into<Option<u32>>,
+        resource_type_field: u32,
+        name: impl Into<String>,
+    ) -> Self {
         Self {
-            node_id,
+            node_id: node_id.into(),
             resource_type_field,
             name: name.into(),
             parent: None,

@@ -27,7 +27,9 @@ serde_qs = "1.1.1"
 
 # utils
 thiserror = "2.0.18"
-dotenvy = "0.15"
 url = "2.5.8"
 validator = { version = "0.20.0", features = ["derive"] }
 secrecy = "0.10.3"
+
+[dev-dependencies]
+dotenvy = "0.15"

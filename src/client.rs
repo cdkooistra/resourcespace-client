@@ -1,15 +1,16 @@
 use secrecy::{ExposeSecret, SecretString};
 use serde::Serialize;
+use serde::de::DeserializeOwned;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
 use url::Url;
 
 use crate::APP_USER_AGENT;
 use crate::auth::{Auth, login};
-use crate::error::Error;
+use crate::error::{self, Error};
 
 // Typestates
-mod private {
+mod state {
     use secrecy::SecretString;
 
     pub struct NoUrl;
@@ -72,10 +73,10 @@ pub struct Client {
 
 impl Client {
     #[must_use]
-    pub fn builder() -> ClientBuilder<private::NoUrl, private::NoAuth> {
+    pub fn builder() -> ClientBuilder<state::NoUrl, state::NoAuth> {
         ClientBuilder {
-            base_url: private::NoUrl,
-            auth: private::NoAuth,
+            base_url: state::NoUrl,
+            auth: state::NoAuth,
             timeout: None,
             connect_timeout: None,
             user_agent: None,
@@ -107,7 +108,33 @@ impl Client {
         })
     }
 
-    pub(crate) async fn send_request<P>(
+    /// Send a request and deserialize the response into `T`.
+    ///
+    /// ResourceSpace does not reliably use HTTP status codes to signal success/failure,
+    /// and the shape of a successful response body varies per-endpoint (a bare integer,
+    /// a bare boolean-like string, a JSON array, a JSON object, ...). Callers pick the
+    /// `T` that matches the documented/observed shape for the endpoint they're calling
+    /// (e.g. `bool`, `u32`, a concrete struct, or `serde_json::Value` as an escape hatch
+    /// for endpoints that aren't typed yet), and this method fails with
+    /// [`Error::Deserialize`] if the response doesn't match.
+    pub(crate) async fn send_request<P, T>(
+        &self,
+        function: &str,
+        method: HttpMethod,
+        params: P,
+    ) -> Result<T, Error>
+    where
+        P: Serialize,
+        T: DeserializeOwned,
+    {
+        let json = self.send_request_raw(function, method, params).await?;
+        serde_json::from_value(json).map_err(|e| Error::Deserialize {
+            function: function.to_string(),
+            source: e.into(),
+        })
+    }
+
+    async fn send_request_raw<P>(
         &self,
         function: &str,
         method: HttpMethod,
@@ -139,7 +166,7 @@ impl Client {
                     .await
             }
         }
-        .map_err(|e| Error::Transport(e.into()))?;
+        .map_err(error::transport)?;
 
         // 1. check HTTP status before touching the body
         if !response.status().is_success() {
@@ -149,10 +176,7 @@ impl Client {
             });
         }
 
-        let text = response
-            .text()
-            .await
-            .map_err(|e| Error::Transport(e.into()))?;
+        let text = response.text().await.map_err(error::transport)?;
         let trimmed = text.trim();
 
         // 1.5 RS returns invalid signature
@@ -183,14 +207,15 @@ impl Client {
         Ok(json)
     }
 
-    pub(crate) async fn send_multipart_request<P>(
+    pub(crate) async fn send_multipart_request<P, T>(
         &self,
         function: &str,
         params: P,
         source: crate::api::resource::UploadSource,
-    ) -> Result<serde_json::Value, Error>
+    ) -> Result<T, Error>
     where
         P: Serialize,
+        T: DeserializeOwned,
     {
         let request = self.prepare_request(function, params)?;
         let file_part = match source {
@@ -215,7 +240,7 @@ impl Client {
             )
             .send()
             .await
-            .map_err(|e| Error::Transport(e.into()))?;
+            .map_err(error::transport)?;
 
         if response.status() != reqwest::StatusCode::NO_CONTENT {
             return Err(Error::Http {
@@ -224,7 +249,12 @@ impl Client {
             });
         }
 
-        Ok(serde_json::Value::String("".to_string()))
+        serde_json::from_value(serde_json::Value::String("".to_string())).map_err(|e| {
+            Error::Deserialize {
+                function: function.to_string(),
+                source: e.into(),
+            }
+        })
     }
 
     // Sub-APIs
@@ -251,7 +281,7 @@ impl Client {
     }
 }
 
-pub struct ClientBuilder<U = private::NoUrl, A = private::NoAuth> {
+pub struct ClientBuilder<U = state::NoUrl, A = state::NoAuth> {
     base_url: U,
     auth: A,
     timeout: Option<Duration>,
@@ -296,10 +326,10 @@ impl<U, A> ClientBuilder<U, A> {
     }
 }
 
-impl<A> ClientBuilder<private::NoUrl, A> {
-    pub fn base_url(self, url: impl Into<String>) -> ClientBuilder<private::WithUrl, A> {
+impl<A> ClientBuilder<state::NoUrl, A> {
+    pub fn base_url(self, url: impl Into<String>) -> ClientBuilder<state::WithUrl, A> {
         ClientBuilder {
-            base_url: private::WithUrl(url.into()),
+            base_url: state::WithUrl(url.into()),
             auth: self.auth,
             timeout: self.timeout,
             connect_timeout: self.connect_timeout,
@@ -308,15 +338,15 @@ impl<A> ClientBuilder<private::NoUrl, A> {
     }
 }
 
-impl<U> ClientBuilder<U, private::NoAuth> {
+impl<U> ClientBuilder<U, state::NoAuth> {
     pub fn user_key(
         self,
         user: impl Into<String>,
         key: impl Into<String>,
-    ) -> ClientBuilder<U, private::WithUserKey> {
+    ) -> ClientBuilder<U, state::WithUserKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithUserKey {
+            auth: state::WithUserKey {
                 user: user.into(),
                 key: SecretString::from(key.into()),
             },
@@ -330,10 +360,10 @@ impl<U> ClientBuilder<U, private::NoAuth> {
         self,
         user: impl Into<String>,
         password: impl Into<String>,
-    ) -> ClientBuilder<U, private::WithSessionKey> {
+    ) -> ClientBuilder<U, state::WithSessionKey> {
         ClientBuilder {
             base_url: self.base_url,
-            auth: private::WithSessionKey {
+            auth: state::WithSessionKey {
                 user: user.into(),
                 password: SecretString::from(password.into()),
             },
@@ -344,7 +374,7 @@ impl<U> ClientBuilder<U, private::NoAuth> {
     }
 }
 
-impl<A> ClientBuilder<private::WithUrl, A> {
+impl<A> ClientBuilder<state::WithUrl, A> {
     fn parse_url(&self) -> Result<Url, Error> {
         let base_url = Url::parse(&self.base_url.0).map_err(|e| Error::Url(e.into()))?;
         let api_url = base_url.join("api/").map_err(|e| Error::Url(e.into()))?;
@@ -353,7 +383,7 @@ impl<A> ClientBuilder<private::WithUrl, A> {
     }
 }
 
-impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
+impl ClientBuilder<state::WithUrl, state::WithSessionKey> {
     pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
@@ -377,7 +407,7 @@ impl ClientBuilder<private::WithUrl, private::WithSessionKey> {
     }
 }
 
-impl ClientBuilder<private::WithUrl, private::WithUserKey> {
+impl ClientBuilder<state::WithUrl, state::WithUserKey> {
     pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
