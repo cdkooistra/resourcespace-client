@@ -279,6 +279,9 @@ impl Client {
     pub fn resource(&self) -> crate::api::resource::ResourceApi<'_> {
         crate::api::resource::ResourceApi::new(self)
     }
+    pub fn plugin(&self) -> crate::api::plugin::PluginApi<'_> {
+        crate::api::plugin::PluginApi::new(self)
+    }
 }
 
 pub struct ClientBuilder<U = state::NoUrl, A = state::NoAuth> {
