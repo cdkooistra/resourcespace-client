@@ -124,7 +124,7 @@ impl Client {
         params: P,
     ) -> Result<T, Error>
     where
-        P: Serialize,
+        P: Serialize + Clone,
         T: DeserializeOwned,
     {
         let json = self.send_request_raw(function, method, params).await?;
@@ -141,9 +141,9 @@ impl Client {
         params: P,
     ) -> Result<serde_json::Value, Error>
     where
-        P: Serialize,
+        P: Serialize + Clone,
     {
-        let request = self.prepare_request(function, params)?;
+        let request = self.prepare_request(function, params.clone())?;
         let response = match method {
             HttpMethod::Get => {
                 let mut url = self.api_url.clone();
@@ -188,6 +188,12 @@ impl Client {
         if trimmed.eq_ignore_ascii_case("false") {
             return Err(Error::OperationFailed {
                 function: function.to_string(),
+                params: serde_json::to_value(&params).unwrap_or_else(|_| {
+                    serde_json::Value::String(
+                        "Failed to serialize params, this should never happen contact maintainers"
+                            .to_string(),
+                    )
+                }),
             });
         }
 

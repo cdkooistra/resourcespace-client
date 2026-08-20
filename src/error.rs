@@ -19,8 +19,11 @@ pub enum Error {
     #[error("ResourceSpace returned: invalid signature")]
     InvalidSignature,
 
-    #[error("ResourceSpace returned false for `{function}`")]
-    OperationFailed { function: String },
+    #[error("ResourceSpace returned false for `{function}` with params: {params}")]
+    OperationFailed {
+        function: String,
+        params: serde_json::Value,
+    },
 
     #[error("Failed to deserialize response for `{function}`: {source}")]
     Deserialize {
