@@ -207,15 +207,14 @@ impl Client {
         Ok(json)
     }
 
-    pub(crate) async fn send_multipart_request<P, T>(
+    pub(crate) async fn send_multipart_request<P>(
         &self,
         function: &str,
         params: P,
         source: crate::api::resource::UploadSource,
-    ) -> Result<T, Error>
+    ) -> Result<(), Error>
     where
         P: Serialize,
-        T: DeserializeOwned,
     {
         let request = self.prepare_request(function, params)?;
         let file_part = match source {
@@ -249,12 +248,7 @@ impl Client {
             });
         }
 
-        serde_json::from_value(serde_json::Value::String("".to_string())).map_err(|e| {
-            Error::Deserialize {
-                function: function.to_string(),
-                source: e.into(),
-            }
-        })
+        Ok(())
     }
 
     // Sub-APIs
