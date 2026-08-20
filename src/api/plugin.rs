@@ -80,6 +80,67 @@ impl<'a> PluginApi<'a> {
         Self { client }
     }
 
+    /// Run a custom plugin endpoint.
+    ///
+    /// Use this for plugin functions that are not yet modelled by this crate.
+    ///
+    /// ## Arguments
+    /// * `function` - ResourceSpace API function name.
+    /// * `method` - HTTP method to use.
+    /// * `request` - Serializable request parameters.
+    ///
+    /// ## Returns
+    ///
+    /// The raw JSON value returned by ResourceSpace.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::Client`] when the HTTP method is invalid,
+    /// [`Error::OperationFailed`] when ResourceSpace returns `false`,
+    /// or [`Error::Deserialize`] if the response cannot be converted
+    /// to JSON.
+    ///
+    /// ## Examples
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use serde::Serialize;
+    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
+    /// #[derive(Clone, Serialize)]
+    /// struct Params { resource: u32 }
+    /// let value = client.plugin().custom("my_plugin_function", "GET", Params { resource: 123 }).await?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    pub async fn custom<T>(
+        &self,
+        function: impl Into<String>,
+        method: &str,
+        request: T,
+    ) -> Result<serde_json::Value, Error>
+    where
+        T: Serialize + Clone,
+    {
+        let method = match method.to_ascii_uppercase().as_str() {
+            "GET" => HttpMethod::Get,
+            "POST" => HttpMethod::Post,
+            _ => {
+                return Err(Error::Client(
+                    std::io::Error::new(
+                        std::io::ErrorKind::InvalidInput,
+                        format!(
+                            "ResourceSpace only accepts GET and POST methods: {method} is invalid"
+                        ),
+                    )
+                    .into(),
+                ));
+            }
+        };
+
+        self.client
+            .send_request(function.into().as_str(), method, request)
+            .await
+    }
+
     /// Return all Consent manager consent data for a given resource.
     ///
     /// ## Arguments
