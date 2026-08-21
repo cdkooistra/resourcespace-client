@@ -429,7 +429,7 @@ impl ClientBuilder<state::WithUrl, state::WithUserKey> {
     /// `user_agent`).
     // allow unused_async here to have consistent interface
     // with state::WithSessionKey
-    #[allow(clippy::unused_async)]
+    #[allow(clippy::unused_async, clippy::unused_async_trait_impl)]
     pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
