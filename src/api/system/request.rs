@@ -13,7 +13,7 @@ use super::{SystemApi, SystemStatus};
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
 pub struct GetSystemStatusRequest {
-    /// If true, ResourceSpace checks database connectivity only and returns
+    /// If true, `ResourceSpace` checks database connectivity only and returns
     /// early — [`SystemStatus::results`] will be empty.
     #[serde(
         serialize_with = "opt_bool_as_u8",

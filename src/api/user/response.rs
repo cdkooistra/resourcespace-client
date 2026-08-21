@@ -24,6 +24,7 @@ use super::UserApi;
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
+#[allow(clippy::struct_field_names)]
 pub struct User {
     /// The user's own ID.
     #[serde(rename = "ref")]

@@ -11,13 +11,14 @@ use super::ResourceApi;
 
 /// A resource's own properties, from [`ResourceApi::get_resource_data`].
 ///
-/// The denormalised metadata columns ResourceSpace keeps on the resource row
+/// The denormalised metadata columns `ResourceSpace` keeps on the resource row
 /// — `field8`, `field12` and friends, one per field with a
 /// `resource_column` — land in [`Self::extra`], since which of them exist
 /// depends entirely on how the instance is configured.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct Resource {
     /// The resource's own ID.
     #[serde(rename = "ref")]
@@ -117,7 +118,7 @@ pub struct ResourceFieldData {
     /// The resource's value for this field, already translated.
     #[serde(deserialize_with = "empty_as_none")]
     pub value: Option<String>,
-    /// Field type; see ResourceSpace's `FIELD_TYPE_*` constants.
+    /// Field type; see `ResourceSpace`'s `FIELD_TYPE_*` constants.
     pub r#type: u8,
     /// Position within its tab.
     pub order_by: u32,
@@ -136,7 +137,7 @@ pub struct ResourceFieldData {
     /// Resource types this field applies to, as a comma-separated list.
     #[serde(deserialize_with = "empty_as_none")]
     pub resource_types: Option<String>,
-    /// Everything else ResourceSpace reports for the field.
+    /// Everything else `ResourceSpace` reports for the field.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
 }
@@ -297,7 +298,7 @@ pub struct ImageSize {
     #[serde(deserialize_with = "empty_as_none")]
     pub extension: Option<String>,
     /// Human-readable size. Contains an HTML non-breaking space, as
-    /// ResourceSpace formats it for display rather than reporting bytes.
+    /// `ResourceSpace` formats it for display rather than reporting bytes.
     #[serde(deserialize_with = "empty_as_none")]
     pub filesize: Option<String>,
 }

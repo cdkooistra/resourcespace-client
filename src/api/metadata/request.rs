@@ -205,7 +205,7 @@ impl AddResourceNodesRequest {
 pub struct AddResourceNodesMultiRequest {
     /// Comma-separated list of resource IDs to add nodes to.
     ///
-    /// Sent as `resources`; ResourceSpace silently substitutes an empty
+    /// Sent as `resources`; `ResourceSpace` silently substitutes an empty
     /// string for any parameter it cannot match by name, so a wrong name
     /// here fails quietly rather than erroring.
     #[serde(rename = "resources")]
@@ -232,7 +232,7 @@ pub struct SetNodeRequest {
     /// The ID of an existing node to update, or `None` to create a new one.
     ///
     /// Serialized as the literal string `NULL` when `None`, which is what the
-    /// API expects for a create; ResourceSpace converts that back to a real
+    /// API expects for a create; `ResourceSpace` converts that back to a real
     /// null before inserting, which also lets it pick the next `order_by`.
     #[serde(rename = "ref", serialize_with = "node_id_or_null")]
     pub node_id: Option<u32>,
@@ -332,7 +332,7 @@ pub struct CreateResourceTypeFieldRequest {
     /// Comma-separated list of resource type IDs this field should apply to.
     #[serde(rename = "resource_types")]
     pub resource_type_ids: List<u32>,
-    /// The field type, for values see the FIELD_TYPE_* constants.
+    /// The field type, for values see the `FIELD_TYPE`_* constants.
     pub r#type: String,
 }
 

@@ -31,8 +31,8 @@ pub struct GetProfileImageRequest {
     /// Sent positionally as `param1` rather than by its real name `user`.
     /// On a GET the whole request is one query string that already carries
     /// `user=<username>` for authentication, so a second `user` key wins the
-    /// `parse_str` and ResourceSpace looks up the API key for that ID
-    /// instead, failing with `401 Invalid signature`. ResourceSpace checks
+    /// `parse_str` and `ResourceSpace` looks up the API key for that ID
+    /// instead, failing with `401 Invalid signature`. `ResourceSpace` checks
     /// `param1` before named parameters, so this sidesteps the clash.
     #[serde(rename = "param1")]
     pub user: u32,

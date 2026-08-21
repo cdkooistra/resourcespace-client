@@ -65,7 +65,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`AddResourceToCollectionRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned.
     ///
     /// ## Errors
@@ -99,7 +99,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`RemoveResourceFromCollectionRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned.
     ///
     /// ## Errors
@@ -275,7 +275,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`SaveCollectionRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned.
     ///
     /// ## Errors
@@ -311,7 +311,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`ShowHideCollectionRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned.
     ///
     /// ## Errors
@@ -347,7 +347,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`SendCollectionToAdminRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned.
     ///
     /// ## Errors
@@ -375,7 +375,7 @@ impl<'a> CollectionApi<'a> {
             .await
     }
 
-    /// Get ResourceSpace featured collections (category).
+    /// Get `ResourceSpace` featured collections (category).
     ///
     /// ## Arguments
     /// * `request` - Parameters built via [`GetFeaturedCollectionsRequest`]
@@ -421,7 +421,7 @@ impl<'a> CollectionApi<'a> {
     /// * `request` - Parameters built via [`DeleteResourcesInCollectionRequest`]
     ///
     /// ## Returns
-    /// Always `true`. ResourceSpace's `false` is surfaced as
+    /// Always `true`. `ResourceSpace`'s `false` is surfaced as
     /// [`Error::OperationFailed`] instead of being returned. Note this
     /// succeeds on an empty collection.
     ///

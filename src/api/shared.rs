@@ -24,7 +24,7 @@ pub enum SortOrder {
 /// let _ = List::from(vec![1, 2, 3]);    // vec
 /// ```
 ///
-/// This type exists to satisfy ResourceSpace API parameters that expect
+/// This type exists to satisfy `ResourceSpace` API parameters that expect
 /// comma-separated values (e.g. `"1,2,3"`), while keeping call sites
 /// type-safe and free of manual string joining.
 #[serde_as]
@@ -78,7 +78,11 @@ impl From<Vec<String>> for List<String> {
 }
 impl From<Vec<&str>> for List<String> {
     fn from(vals: Vec<&str>) -> Self {
-        Self(vals.into_iter().map(|s| s.to_string()).collect())
+        Self(
+            vals.into_iter()
+                .map(std::string::ToString::to_string)
+                .collect(),
+        )
     }
 }
 impl<const N: usize> From<[String; N]> for List<String> {
@@ -88,7 +92,11 @@ impl<const N: usize> From<[String; N]> for List<String> {
 }
 impl<const N: usize> From<[&str; N]> for List<String> {
     fn from(arr: [&str; N]) -> Self {
-        Self(arr.into_iter().map(|s| s.to_string()).collect())
+        Self(
+            arr.into_iter()
+                .map(std::string::ToString::to_string)
+                .collect(),
+        )
     }
 }
 
@@ -107,7 +115,7 @@ impl<T: Display + Clone> From<&[T]> for List<T> {
 
 /// Deserializes `null`, `""` and a missing key into `None`.
 ///
-/// ResourceSpace is not consistent about how it represents an absent value:
+/// `ResourceSpace` is not consistent about how it represents an absent value:
 /// for the very same column, `get_collection` returns `null` where
 /// `search_public_collections` returns an empty string. Plain
 /// `Option<T>` handles only the first, and on a numeric field an empty string
@@ -125,7 +133,7 @@ where
     }
 }
 
-/// Deserializes ResourceSpace's `0`/`1` flags into a `bool`, whether they
+/// Deserializes `ResourceSpace`'s `0`/`1` flags into a `bool`, whether they
 /// arrive as a number or as a quoted string.
 ///
 /// [`serde_with::BoolFromInt`] is the right tool when an endpoint sends a
@@ -149,24 +157,29 @@ where
 
 /// Serializes a `bool` as an integer (`1` for `true`, `0` for `false`).
 ///
-/// ResourceSpace expects boolean values to be serialized as integers.
+/// `ResourceSpace` expects boolean values to be serialized as integers.
+///
+/// `serde`'s `serialize_with` calling convention requires `&T`, not `T`, so
+/// the by-reference parameter can't be changed even though `bool` is `Copy`.
+#[allow(clippy::trivially_copy_pass_by_ref)]
 pub(crate) fn bool_as_u8<S: Serializer>(b: &bool, s: S) -> Result<S::Ok, S::Error> {
-    s.serialize_u8(if *b { 1 } else { 0 })
+    s.serialize_u8(u8::from(*b))
 }
 
 /// Serializes an `Option<bool>` as an integer (`1` for `Some(true)`, `0` for `Some(false)` or `None`).
 ///
-/// ResourceSpace expects boolean values to be serialized as integers.
+/// `ResourceSpace` expects boolean values to be serialized as integers.
+///
+/// `serde`'s `serialize_with` calling convention requires `&Option<T>`, not
+/// `Option<T>` or `Option<&T>`, so the by-reference parameter can't be
+/// changed even though `Option<bool>` is `Copy`.
+#[allow(clippy::trivially_copy_pass_by_ref, clippy::ref_option)]
 pub(crate) fn opt_bool_as_u8<S: Serializer>(b: &Option<bool>, s: S) -> Result<S::Ok, S::Error> {
     s.serialize_u8(
         // In case a Request struct has an `Option<bool>` field that is `None`,
         // `skip_serializing_if` will omit it from the request body.
         // If that does not happen, we should panic to notify a bad Request struct.
-        if b.expect("opt_bool_as_u8 called on None; pair with skip_serializing_if") {
-            1
-        } else {
-            0
-        },
+        u8::from(b.expect("opt_bool_as_u8 called on None; pair with skip_serializing_if")),
     )
 }
 
@@ -212,7 +225,7 @@ impl FieldValue {
             Self::Nodes(ids) => ids
                 .as_slice()
                 .iter()
-                .map(|id| id.to_string())
+                .map(std::string::ToString::to_string)
                 .collect::<Vec<_>>()
                 .join(","),
         }

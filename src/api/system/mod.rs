@@ -34,7 +34,7 @@ impl<'a> SystemApi<'a> {
     /// [`SystemCheck`] per healthcheck performed. Which checks run is
     /// configuration dependent (e.g. `mysql_log_transactions`).
     ///
-    /// In [`GetSystemStatusRequest::basic`] mode ResourceSpace returns early
+    /// In [`GetSystemStatusRequest::basic`] mode `ResourceSpace` returns early
     /// after testing database connectivity only, so
     /// [`SystemStatus::results`] is empty — that is not the same as all
     /// checks having passed.
@@ -127,7 +127,7 @@ impl<'a> SystemApi<'a> {
     /// ## Returns
     ///
     /// The name and ID of each report. Reports that run against search results
-    /// are internal-only and are omitted by ResourceSpace.
+    /// are internal-only and are omitted by `ResourceSpace`.
     ///
     /// ## Errors
     ///
@@ -167,7 +167,7 @@ impl<'a> SystemApi<'a> {
     ///
     /// Returns [`Error::OperationFailed`] if the user lacks the `t`
     /// permission, or if either date is not exactly `YYYY-MM-DD` —
-    /// ResourceSpace validates the format itself and refuses anything else.
+    /// `ResourceSpace` validates the format itself and refuses anything else.
     ///
     /// ## Examples
     /// ```no_run

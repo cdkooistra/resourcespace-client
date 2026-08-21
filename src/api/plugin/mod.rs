@@ -32,18 +32,18 @@ impl<'a> PluginApi<'a> {
     /// Use this for plugin functions that are not (yet) modelled by this crate.
     ///
     /// ## Arguments
-    /// * `function` - ResourceSpace API function name.
+    /// * `function` - `ResourceSpace` API function name.
     /// * `method` - HTTP method to use.
     /// * `request` - Serializable request parameters.
     ///
     /// ## Returns
     ///
-    /// The raw JSON value returned by ResourceSpace.
+    /// The raw JSON value returned by `ResourceSpace`.
     ///
     /// ## Errors
     ///
     /// Returns [`Error::Client`] when the HTTP method is invalid,
-    /// [`Error::OperationFailed`] when ResourceSpace returns `false`,
+    /// [`Error::OperationFailed`] when `ResourceSpace` returns `false`,
     /// or [`Error::Deserialize`] if the response cannot be converted
     /// to JSON.
     ///
@@ -101,7 +101,7 @@ impl<'a> PluginApi<'a> {
     /// ## Errors
     ///
     /// Returns [`Error::OperationFailed`] when the Consent manager plugin is
-    /// unavailable or ResourceSpace rejects the request.
+    /// unavailable or `ResourceSpace` rejects the request.
     ///
     /// ## Examples
     /// ```no_run
@@ -135,7 +135,7 @@ impl<'a> PluginApi<'a> {
     /// ## Errors
     ///
     /// Returns [`Error::OperationFailed`] when the License manager plugin is
-    /// unavailable or ResourceSpace rejects the request.
+    /// unavailable or `ResourceSpace` rejects the request.
     ///
     /// ## Examples
     /// ```no_run
@@ -169,7 +169,7 @@ impl<'a> PluginApi<'a> {
     /// ## Errors
     ///
     /// Returns [`Error::OperationFailed`] if the consent does not exist, the
-    /// Consent manager plugin is unavailable, or ResourceSpace rejects the
+    /// Consent manager plugin is unavailable, or `ResourceSpace` rejects the
     /// request.
     ///
     /// ## Examples
@@ -345,7 +345,7 @@ impl<'a> PluginApi<'a> {
     /// ## Errors
     ///
     /// Returns [`Error::OperationFailed`] if the caller cannot manage consent
-    /// records, the Consent manager plugin is unavailable, or ResourceSpace
+    /// records, the Consent manager plugin is unavailable, or `ResourceSpace`
     /// rejects the submitted values.
     ///
     /// ## Examples
@@ -384,7 +384,7 @@ impl<'a> PluginApi<'a> {
     ///
     /// Returns [`Error::OperationFailed`] if the consent does not exist, the
     /// caller cannot manage consent records, the Consent manager plugin is
-    /// unavailable, or ResourceSpace rejects the submitted values.
+    /// unavailable, or `ResourceSpace` rejects the submitted values.
     ///
     /// ## Examples
     /// ```no_run
@@ -486,7 +486,7 @@ impl<'a> PluginApi<'a> {
 
     /// Add a file to a consent record or replace the existing one if present.
     ///
-    /// The ResourceSpace KB states `filedata` must be posted rather than placed
+    /// The `ResourceSpace` KB states `filedata` must be posted rather than placed
     /// in the URL query string. This is not multipart upload; `filedata` is
     /// sent as a regular signed API parameter.
     ///

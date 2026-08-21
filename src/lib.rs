@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
-#![warn(clippy::must_use_candidate)]
-#![warn(clippy::return_self_not_must_use)]
+#![warn(clippy::pedantic)]
+
 pub mod api;
 mod auth;
 pub mod client;

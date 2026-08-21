@@ -24,7 +24,7 @@ impl<'a> UserApi<'a> {
         Self { client }
     }
 
-    /// Find out if the current user has a particular permission. The permission strings are shown in the ResourceSpace UI when managing group permissions.
+    /// Find out if the current user has a particular permission. The permission strings are shown in the `ResourceSpace` UI when managing group permissions.
     ///
     /// ## Arguments
     /// * `request` - Parameters built via [`CheckpermRequest`]
@@ -35,7 +35,7 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Errors
     ///
-    /// **This cannot currently report a negative answer.** ResourceSpace
+    /// **This cannot currently report a negative answer.** `ResourceSpace`
     /// returns bare `false` when the user does not hold the permission, and
     /// [`Client::send_request`](crate::Client) turns any bare `false` into
     /// [`Error::OperationFailed`] before it reaches here — so "no" is
@@ -132,14 +132,14 @@ impl<'a> UserApi<'a> {
 
     /// Mark a specified email address as invalid.
     ///
-    /// Email addresses marked as invalid will be blocked before send_mail() tries to dispatch any emails, this will be applied to any users with this email address.
+    /// Email addresses marked as invalid will be blocked before `send_mail()` tries to dispatch any emails, this will be applied to any users with this email address.
     ///
     /// ## Arguments
     /// * `request` - Parameters built via [`GetUsersByPermissionRequest`]
     ///
     /// ## Returns
     ///
-    /// Always `true`. ResourceSpace returns `false` when no user holds that
+    /// Always `true`. `ResourceSpace` returns `false` when no user holds that
     /// address, and that arrives as [`Error::OperationFailed`] instead.
     ///
     /// ## Errors
@@ -214,7 +214,7 @@ impl<'a> UserApi<'a> {
 
     /// Create a new user record.
     ///
-    /// Create a user record. Use the returned ID to then call save_user() with the user details.
+    /// Create a user record. Use the returned ID to then call `save_user()` with the user details.
     ///
     /// ## Arguments
     /// * `request` - Parameters built via [`NewUserRequest`]
@@ -262,7 +262,7 @@ impl<'a> UserApi<'a> {
     /// ## Returns
     ///
     /// The URL of the profile image, or `None` when the user has not set
-    /// one — ResourceSpace returns a blank string in that case rather than
+    /// one — `ResourceSpace` returns a blank string in that case rather than
     /// omitting the value.
     ///
     /// ## Errors

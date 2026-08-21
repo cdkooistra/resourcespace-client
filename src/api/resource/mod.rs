@@ -1029,9 +1029,9 @@ impl<'a> ResourceApi<'a> {
             .await
     }
 
-    /// Validate a URL supplied in the create_resource or upload_file_by_url API calls.
+    /// Validate a URL supplied in the `create_resource` or `upload_file_by_url` API calls.
     ///
-    /// Requires the URL hostname to be added in the config option $api_upload_urls, for example:
+    /// Requires the URL hostname to be added in the config option $`api_upload_urls`, for example:
     /// `$api_upload_urls = array('resourcespace.com', 'localhost');`
     ///
     /// ## Arguments

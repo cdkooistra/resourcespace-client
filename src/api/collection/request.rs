@@ -247,7 +247,7 @@ pub struct SaveCollectionColdata {
     pub force_featured_collection_type: Option<bool>,
     /// 0 = no image, 1 = most popular image, 10 - most popular images, 100 - manually select image. Applies to Featured collections only.
     pub thumbnail_selection_method: Option<u32>,
-    /// Resource ID to use as thumbnail. Only if thumbnail_selection_method =100. Applies to Featured collections only.
+    /// Resource ID to use as thumbnail. Only if `thumbnail_selection_method` =100. Applies to Featured collections only.
     pub bg_img_resource_ref: Option<u32>,
 }
 

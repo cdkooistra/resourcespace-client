@@ -204,7 +204,7 @@ impl<'a> MetadataApi<'a> {
     /// ## Returns
     ///
     /// The node's ID — the new one when creating, or the existing one when
-    /// updating. ResourceSpace deduplicates by name on non-tree fields, so
+    /// updating. `ResourceSpace` deduplicates by name on non-tree fields, so
     /// creating a node that already exists returns the original's ID rather
     /// than making a second one.
     ///
@@ -356,7 +356,7 @@ impl<'a> MetadataApi<'a> {
 
     /// Set the value of a metadata field.
     ///
-    /// When constructing FieldValue from node IDs, the `nodevalues` parameter is
+    /// When constructing `FieldValue` from node IDs, the `nodevalues` parameter is
     /// automatically set to `true`.
     ///
     /// ## Arguments

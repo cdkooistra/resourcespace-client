@@ -6,7 +6,7 @@ use super::{FetchRows, SearchApi};
 
 /// The result of [`SearchApi::do_search`] or [`SearchApi::search_get_previews`].
 ///
-/// ResourceSpace returns one of two shapes depending on which
+/// `ResourceSpace` returns one of two shapes depending on which
 /// [`FetchRows`] mode the request used: [`FetchRows::page`] gets a
 /// structured [`Self::Paged`] response with a total count, anything else
 /// gets a bare array of results.

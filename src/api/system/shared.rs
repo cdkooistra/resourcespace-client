@@ -6,7 +6,7 @@ use super::SystemCheck;
 
 /// Deserializes a string or a bare number alike into `Option<String>`.
 ///
-/// `SystemCheck::info` is the only place this is needed: ResourceSpace sends
+/// `SystemCheck::info` is the only place this is needed: `ResourceSpace` sends
 /// it as a number for `recent_user_count` and a string everywhere else, and
 /// no `serde_with` combinator covers "any scalar to String".
 pub(super) fn scalar_as_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>

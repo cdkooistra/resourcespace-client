@@ -40,7 +40,7 @@ pub struct SystemCheck {
     pub status: String,
     /// Human-readable detail about the result.
     ///
-    /// ResourceSpace sends this as a bare number for some checks
+    /// `ResourceSpace` sends this as a bare number for some checks
     /// (`recent_user_count`) and a string for others, so numbers are
     /// stringified here rather than exposing the inconsistency.
     #[serde(deserialize_with = "scalar_as_string")]

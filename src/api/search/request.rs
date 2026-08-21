@@ -12,7 +12,7 @@ use super::SearchApi;
 /// Use [`FetchRows::limit`] to cap the number of results, or
 /// [`FetchRows::page`] to fetch a specific window with offset and limit.
 /// Note that these two modes return different response shapes from
-/// ResourceSpace — `page` returns a structured response with a `total`
+/// `ResourceSpace` — `page` returns a structured response with a `total`
 /// count alongside the results.
 ///
 /// ```no_run
@@ -45,7 +45,7 @@ impl Serialize for FetchRows {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Limit(n) => n.serialize(serializer),
-            Self::Page { offset, limit } => format!("{},{}", offset, limit).serialize(serializer),
+            Self::Page { offset, limit } => format!("{offset},{limit}").serialize(serializer),
         }
     }
 }

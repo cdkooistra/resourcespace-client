@@ -6,7 +6,7 @@ use crate::api::shared::empty_as_none;
 
 /// A consent record from the Consent manager plugin.
 ///
-/// ResourceSpace's Consent manager fields vary by version and configuration,
+/// `ResourceSpace`'s Consent manager fields vary by version and configuration,
 /// so commonly documented fields are typed and any additional fields are kept
 /// in [`Self::extra`].
 #[non_exhaustive]
@@ -34,7 +34,7 @@ pub struct Consent {
     /// Expiry date, when set.
     #[serde(deserialize_with = "empty_as_none")]
     pub expires: Option<String>,
-    /// Any other consent metadata ResourceSpace returns.
+    /// Any other consent metadata `ResourceSpace` returns.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
 }
@@ -61,7 +61,7 @@ pub struct License {
     /// Expiry date, when set.
     #[serde(deserialize_with = "empty_as_none")]
     pub expires: Option<String>,
-    /// Any other license metadata ResourceSpace returns.
+    /// Any other license metadata `ResourceSpace` returns.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
 }

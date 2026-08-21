@@ -74,6 +74,7 @@ pub enum FieldOptions {
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct ResourceTypeField {
     /// The field's own ID.
     #[serde(rename = "ref")]
@@ -84,7 +85,7 @@ pub struct ResourceTypeField {
     /// Display title.
     #[serde(deserialize_with = "empty_as_none")]
     pub title: Option<String>,
-    /// Field type; see ResourceSpace's `FIELD_TYPE_*` constants. `9` is a
+    /// Field type; see `ResourceSpace`'s `FIELD_TYPE_*` constants. `9` is a
     /// dynamic keywords list, `3` a dropdown, `0` a single-line text box.
     #[serde_as(as = "PickFirst<(_, DisplayFromStr)>")]
     pub r#type: u8,
@@ -154,7 +155,7 @@ pub struct ResourceTypeField {
     /// Denormalised column on the resource table backing this field, if any.
     #[serde(deserialize_with = "empty_as_none")]
     pub resource_column: Option<String>,
-    /// Everything else ResourceSpace reports for the field — integration and
+    /// Everything else `ResourceSpace` reports for the field — integration and
     /// macro configuration, mostly `null` on a stock instance.
     #[serde(flatten)]
     pub extra: HashMap<String, serde_json::Value>,
