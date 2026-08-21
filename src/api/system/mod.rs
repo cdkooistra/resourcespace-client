@@ -1,116 +1,21 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
-use serde_with::{DisplayFromStr, serde_as, skip_serializing_none};
 use validator::Validate;
 
-use super::{empty_as_none, opt_bool_as_u8};
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
+
+mod request;
+mod response;
+mod shared;
+
+pub use request::{DoReportRequest, GetDailyStatSummaryRequest, GetSystemStatusRequest};
+pub use response::{DailyStat, Report, SystemCheck, SystemStatus};
 
 /// Sub-API for system endpoints.
 #[derive(Debug)]
 pub struct SystemApi<'a> {
     client: &'a Client,
-}
-
-/// The outcome of [`SystemApi::get_system_status`].
-#[non_exhaustive]
-#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
-#[serde(default)]
-pub struct SystemStatus {
-    /// `"OK"` if every check passed, `"FAIL"` otherwise.
-    pub status: String,
-    /// One entry per healthcheck, keyed by check name. Empty in
-    /// [`GetSystemStatusRequest::basic`] mode, and when the database
-    /// connectivity check itself fails only `database_connection` is present.
-    pub results: HashMap<String, SystemCheck>,
-}
-
-/// A single healthcheck within [`SystemStatus::results`].
-///
-/// Only [`Self::status`] is common to every check. The rest of each check's
-/// payload varies by check and by plugin, so anything not named here is
-/// collected into [`Self::extra`] rather than being dropped — on a stock
-/// v11 instance that includes `total` (an integer for
-/// `download_bandwidth_last_30_days_gb`, an array of objects for
-/// `files_by_extension`), `active`, `non_ingested`, `total_approved` and
-/// `within_year`.
-#[non_exhaustive]
-#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
-#[serde(default)]
-pub struct SystemCheck {
-    /// `"OK"` or `"FAIL"`.
-    pub status: String,
-    /// Human-readable detail about the result.
-    ///
-    /// ResourceSpace sends this as a bare number for some checks
-    /// (`recent_user_count`) and a string for others, so numbers are
-    /// stringified here rather than exposing the inconsistency.
-    #[serde(deserialize_with = "scalar_as_string")]
-    pub info: Option<String>,
-    /// `0` critical, `1` warning, `2` notice. Absent for checks that pass and
-    /// for plugin checks that omit it.
-    #[serde(deserialize_with = "empty_as_none")]
-    pub severity: Option<u8>,
-    /// Localised text for [`Self::severity`].
-    pub severity_text: Option<String>,
-    /// Any other keys this particular check reported. See the type-level docs
-    /// for what a stock instance puts here.
-    #[serde(flatten)]
-    pub extra: HashMap<String, serde_json::Value>,
-}
-
-/// Deserializes a string or a bare number alike into `Option<String>`.
-///
-/// `SystemCheck::info` is the only place this is needed: ResourceSpace sends
-/// it as a number for `recent_user_count` and a string everywhere else, and
-/// no `serde_with` combinator covers "any scalar to String".
-fn scalar_as_string<'de, D>(deserializer: D) -> Result<Option<String>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    Ok(
-        match Option::<serde_json::Value>::deserialize(deserializer)? {
-            Some(serde_json::Value::String(s)) => Some(s),
-            Some(serde_json::Value::Number(n)) => Some(n.to_string()),
-            Some(serde_json::Value::Bool(b)) => Some(b.to_string()),
-            _ => None,
-        },
-    )
-}
-
-/// One report available to the current user, from
-/// [`SystemApi::get_reports`].
-#[serde_as]
-#[non_exhaustive]
-#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
-#[serde(default)]
-pub struct Report {
-    /// The report's ID, for [`DoReportRequest::new`].
-    ///
-    /// Arrives as a quoted string over the wire and is parsed here.
-    #[serde(rename = "ref")]
-    #[serde_as(as = "DisplayFromStr")]
-    pub report_id: u32,
-    /// Display name of the report.
-    pub name: String,
-}
-
-/// One day's activity total, from
-/// [`SystemApi::get_daily_stat_summary`].
-#[serde_as]
-#[non_exhaustive]
-#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
-#[serde(default)]
-pub struct DailyStat {
-    /// The kind of activity counted, e.g. `"Create resource"`.
-    pub activity_type: String,
-    /// How many times it occurred over the requested window.
-    ///
-    /// Arrives as a quoted string over the wire and is parsed here.
-    #[serde_as(as = "DisplayFromStr")]
-    pub count: u64,
 }
 
 impl<'a> SystemApi<'a> {
@@ -283,83 +188,5 @@ impl<'a> SystemApi<'a> {
         self.client
             .send_request("do_report", HttpMethod::Get, request)
             .await
-    }
-}
-
-#[non_exhaustive]
-#[skip_serializing_none]
-#[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct GetSystemStatusRequest {
-    /// If true, ResourceSpace checks database connectivity only and returns
-    /// early — [`SystemStatus::results`] will be empty.
-    #[serde(
-        serialize_with = "opt_bool_as_u8",
-        skip_serializing_if = "Option::is_none"
-    )]
-    pub basic: Option<bool>,
-}
-
-impl GetSystemStatusRequest {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn basic(mut self, basic: bool) -> Self {
-        self.basic = Some(basic);
-        self
-    }
-}
-
-#[non_exhaustive]
-#[skip_serializing_none]
-#[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DoReportRequest {
-    /// The ID of the report to run, as returned by
-    /// [`SystemApi::get_reports`].
-    pub report_ref: u32,
-    /// Start of the range, as `YYYY-MM-DD`. Defaults to seven days ago when
-    /// omitted.
-    pub from_date: Option<String>,
-    /// End of the range, as `YYYY-MM-DD`. Defaults to today when omitted.
-    pub to_date: Option<String>,
-}
-
-impl DoReportRequest {
-    pub fn new(report_ref: u32) -> Self {
-        Self {
-            report_ref,
-            from_date: None,
-            to_date: None,
-        }
-    }
-
-    pub fn from_date(mut self, from_date: impl Into<String>) -> Self {
-        self.from_date = Some(from_date.into());
-        self
-    }
-
-    pub fn to_date(mut self, to_date: impl Into<String>) -> Self {
-        self.to_date = Some(to_date.into());
-        self
-    }
-}
-
-#[non_exhaustive]
-#[skip_serializing_none]
-#[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
-pub struct GetDailyStatSummaryRequest {
-    /// Number of past days to include in the summary (1–365). Defaults to 30 when omitted.
-    #[validate(range(min = 1, max = 365))]
-    pub days: Option<u16>,
-}
-
-impl GetDailyStatSummaryRequest {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn days(mut self, days: u16) -> Self {
-        self.days = Some(days);
-        self
     }
 }

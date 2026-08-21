@@ -1,7 +1,9 @@
-use serde::Serialize;
-
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
+
+mod request;
+
+pub use request::GetUserMessageRequest;
 
 /// Sub-API for message endpoints.
 #[derive(Debug)]
@@ -90,19 +92,5 @@ impl<'a> MessageApi<'a> {
         self.client
             .send_request("get_processing_message", HttpMethod::Get, ())
             .await
-    }
-}
-
-#[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetUserMessageRequest {
-    /// The ID of the message to retrieve.
-    #[serde(rename = "ref")]
-    pub message_id: u32,
-}
-
-impl GetUserMessageRequest {
-    pub fn new(message_id: u32) -> Self {
-        Self { message_id }
     }
 }
