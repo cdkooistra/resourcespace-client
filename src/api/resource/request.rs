@@ -48,31 +48,37 @@ impl AddAlternativeFileRequest {
         }
     }
 
+    #[must_use]
     pub fn description(mut self, description: impl Into<String>) -> Self {
         self.description = Some(description.into());
         self
     }
 
+    #[must_use]
     pub fn file_name(mut self, file_name: impl Into<String>) -> Self {
         self.file_name = Some(file_name.into());
         self
     }
 
+    #[must_use]
     pub fn file_extension(mut self, file_extension: impl Into<String>) -> Self {
         self.file_extension = Some(file_extension.into());
         self
     }
 
+    #[must_use]
     pub fn file_size(mut self, file_size: u64) -> Self {
         self.file_size = Some(file_size);
         self
     }
 
+    #[must_use]
     pub fn alt_type(mut self, alt_type: impl Into<String>) -> Self {
         self.alt_type = Some(alt_type.into());
         self
     }
 
+    #[must_use]
     pub fn file(mut self, file: impl Into<String>) -> Self {
         self.file = Some(file.into());
         self
@@ -92,6 +98,7 @@ pub struct CopyResourceRequest {
 }
 
 impl CopyResourceRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
             resource_id,
@@ -99,6 +106,7 @@ impl CopyResourceRequest {
         }
     }
 
+    #[must_use]
     pub fn resource_type(mut self, resource_type: u32) -> Self {
         self.resource_type = Some(resource_type);
         self
@@ -140,6 +148,7 @@ pub struct CreateResourceRequest {
     pub metadata: Option<HashMap<u32, FieldValue>>,
 }
 impl CreateResourceRequest {
+    #[must_use]
     pub fn new(resource_type: u32) -> Self {
         Self {
             resource_type,
@@ -152,31 +161,37 @@ impl CreateResourceRequest {
         }
     }
 
+    #[must_use]
     pub fn archive(mut self, archive: i16) -> Self {
         self.archive = Some(archive);
         self
     }
 
+    #[must_use]
     pub fn url(mut self, url: impl Into<String>) -> Self {
         self.url = Some(url.into());
         self
     }
 
+    #[must_use]
     pub fn no_exif(mut self, no_exif: bool) -> Self {
         self.no_exif = Some(no_exif);
         self
     }
 
+    #[must_use]
     pub fn revert(mut self, revert: bool) -> Self {
         self.revert = Some(revert);
         self
     }
 
+    #[must_use]
     pub fn autorotate(mut self, autorotate: bool) -> Self {
         self.autorotate = Some(autorotate);
         self
     }
 
+    #[must_use]
     pub fn metadata(mut self, metadata: HashMap<u32, FieldValue>) -> Self {
         self.metadata = Some(metadata);
         self
@@ -195,6 +210,7 @@ pub struct DeleteAlternativeFile {
 }
 
 impl DeleteAlternativeFile {
+    #[must_use]
     pub fn new(resource: u32, alternative_file_id: u32) -> Self {
         Self {
             resource,
@@ -212,6 +228,7 @@ pub struct DeleteResourceRequest {
 }
 
 impl DeleteResourceRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -234,6 +251,7 @@ pub struct GetAlternativeFilesRequest {
 }
 
 impl GetAlternativeFilesRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self {
             resource,
@@ -243,16 +261,19 @@ impl GetAlternativeFilesRequest {
         }
     }
 
+    #[must_use]
     pub fn orderby(mut self, orderby: impl Into<String>) -> Self {
         self.orderby = Some(orderby.into());
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn r#type(mut self, r#type: impl Into<String>) -> Self {
         self.r#type = Some(r#type.into());
         self
@@ -268,6 +289,7 @@ pub struct GetEditAccessRequest {
 }
 
 impl GetEditAccessRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -283,6 +305,7 @@ pub struct GetRelatedResourcesRequest {
 }
 
 impl GetRelatedResourcesRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
     }
@@ -297,6 +320,7 @@ pub struct GetResourceAccessRequest {
 }
 
 impl GetResourceAccessRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -311,6 +335,7 @@ pub struct GetResourceAllImageSizesRequest {
 }
 
 impl GetResourceAllImageSizesRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -325,6 +350,7 @@ pub struct DeleteCommentRequest {
 }
 
 impl DeleteCommentRequest {
+    #[must_use]
     pub fn new(comment_ref: u32) -> Self {
         Self { comment_ref }
     }
@@ -343,6 +369,7 @@ pub struct GetResourceCommentsRequest {
 }
 
 impl GetResourceCommentsRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
             resource_id,
@@ -350,6 +377,7 @@ impl GetResourceCommentsRequest {
         }
     }
 
+    #[must_use]
     pub fn flat_view(mut self, flat_view: bool) -> Self {
         self.flat_view = Some(flat_view);
         self
@@ -365,6 +393,7 @@ pub struct GetResourceDataRequest {
 }
 
 impl GetResourceDataRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -379,6 +408,7 @@ pub struct GetResourceFieldDataRequest {
 }
 
 impl GetResourceFieldDataRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -396,6 +426,7 @@ pub struct GetResourceLogRequest {
 }
 
 impl GetResourceLogRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self {
             resource,
@@ -403,6 +434,7 @@ impl GetResourceLogRequest {
         }
     }
 
+    #[must_use]
     pub fn fetchrows(mut self, fetchrows: u32) -> Self {
         self.fetchrows = Some(fetchrows);
         self
@@ -442,6 +474,7 @@ pub struct GetResourcePathRequest {
 }
 
 impl GetResourcePathRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
             resource_id,
@@ -455,36 +488,43 @@ impl GetResourcePathRequest {
         }
     }
 
+    #[must_use]
     pub fn size(mut self, size: impl Into<String>) -> Self {
         self.size = Some(size.into());
         self
     }
 
+    #[must_use]
     pub fn generate(mut self, generate: bool) -> Self {
         self.generate = Some(generate);
         self
     }
 
+    #[must_use]
     pub fn extension(mut self, extension: impl Into<String>) -> Self {
         self.extension = Some(extension.into());
         self
     }
 
+    #[must_use]
     pub fn page(mut self, page: u32) -> Self {
         self.page = Some(page);
         self
     }
 
+    #[must_use]
     pub fn watermarked(mut self, watermarked: bool) -> Self {
         self.watermarked = Some(watermarked);
         self
     }
 
+    #[must_use]
     pub fn alternative(mut self, alternative: i32) -> Self {
         self.alternative = Some(alternative);
         self
     }
 
+    #[must_use]
     pub fn write_metadata(mut self, write_metadata: bool) -> Self {
         self.write_metadata = Some(write_metadata);
         self
@@ -504,6 +544,7 @@ pub struct PutResourceDataRequest {
 }
 
 impl PutResourceDataRequest {
+    #[must_use]
     pub fn new(resource: u32, data: HashMap<String, String>) -> Self {
         Self { resource, data }
     }
@@ -566,16 +607,19 @@ impl ReplaceResourceFileRequest {
         }
     }
 
+    #[must_use]
     pub fn no_exif(mut self, no_exif: bool) -> Self {
         self.no_exif = Some(no_exif);
         self
     }
 
+    #[must_use]
     pub fn autorotate(mut self, autorotate: bool) -> Self {
         self.autorotate = Some(autorotate);
         self
     }
 
+    #[must_use]
     pub fn keep_original(mut self, keep_original: bool) -> Self {
         self.keep_original = Some(keep_original);
         self
@@ -592,6 +636,7 @@ pub struct ResourceFileReadonlyRequest {
 }
 
 impl ResourceFileReadonlyRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
     }
@@ -616,30 +661,36 @@ pub struct ResourceLogLastRowsRequest {
 }
 
 impl ResourceLogLastRowsRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn minref(mut self, minref: u32) -> Self {
         self.minref = Some(minref);
         self
     }
 
+    #[must_use]
     pub fn days(mut self, days: u32) -> Self {
         self.days = Some(days);
         self
     }
 
+    #[must_use]
     pub fn maxrecords(mut self, maxrecords: u32) -> Self {
         self.maxrecords = Some(maxrecords);
         self
     }
 
+    #[must_use]
     pub fn field_ids(mut self, field_ids: impl Into<List<u32>>) -> Self {
         self.field_ids = Some(field_ids.into());
         self
     }
 
+    #[must_use]
     pub fn log_code(mut self, log_code: impl Into<List<String>>) -> Self {
         self.log_code = Some(log_code.into());
         self
@@ -677,6 +728,7 @@ pub struct UploadFileRequest {
 }
 
 impl UploadFileRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
             resource_id,
@@ -687,21 +739,25 @@ impl UploadFileRequest {
         }
     }
 
+    #[must_use]
     pub fn no_exif(mut self, no_exif: bool) -> Self {
         self.no_exif = Some(no_exif);
         self
     }
 
+    #[must_use]
     pub fn revert(mut self, revert: bool) -> Self {
         self.revert = Some(revert);
         self
     }
 
+    #[must_use]
     pub fn autorotate(mut self, autorotate: bool) -> Self {
         self.autorotate = Some(autorotate);
         self
     }
 
+    #[must_use]
     pub fn file_path(mut self, file_path: impl Into<String>) -> Self {
         self.file_path = Some(file_path.into());
         self
@@ -739,6 +795,7 @@ pub struct UploadFileByUrlRequest {
 }
 
 impl UploadFileByUrlRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
             resource_id,
@@ -749,21 +806,25 @@ impl UploadFileByUrlRequest {
         }
     }
 
+    #[must_use]
     pub fn no_exif(mut self, no_exif: bool) -> Self {
         self.no_exif = Some(no_exif);
         self
     }
 
+    #[must_use]
     pub fn revert(mut self, revert: bool) -> Self {
         self.revert = Some(revert);
         self
     }
 
+    #[must_use]
     pub fn autorotate(mut self, autorotate: bool) -> Self {
         self.autorotate = Some(autorotate);
         self
     }
 
+    #[must_use]
     pub fn url(mut self, url: impl Into<String>) -> Self {
         self.url = Some(url.into());
         self
@@ -846,6 +907,7 @@ pub struct UploadMultipartRequest {
 }
 
 impl UploadMultipartRequest {
+    #[must_use]
     pub fn new(resource_id: u32, no_exif: bool, revert: bool) -> Self {
         Self {
             resource_id,
@@ -856,16 +918,19 @@ impl UploadMultipartRequest {
             autorotate: None,
         }
     }
+    #[must_use]
     pub fn previewonly(mut self, previewonly: bool) -> Self {
         self.previewonly = Some(previewonly);
         self
     }
 
+    #[must_use]
     pub fn alternative(mut self, alternative: u32) -> Self {
         self.alternative = Some(alternative);
         self
     }
 
+    #[must_use]
     pub fn autorotate(mut self, autorotate: bool) -> Self {
         self.autorotate = Some(autorotate);
         self
@@ -900,6 +965,7 @@ impl UpdateRelatedResourceRequest {
     }
 
     #[allow(clippy::should_implement_trait)]
+    #[must_use]
     pub fn add(mut self, add: bool) -> Self {
         self.add = Some(add);
         self
@@ -918,6 +984,7 @@ pub struct UpdateResourceTypeRequest {
 }
 
 impl UpdateResourceTypeRequest {
+    #[must_use]
     pub fn new(resource: u32, resourcetype: u32) -> Self {
         Self {
             resource,
@@ -936,6 +1003,7 @@ pub struct GetResourceCollectionsRequest {
 }
 
 impl GetResourceCollectionsRequest {
+    #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
     }

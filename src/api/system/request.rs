@@ -23,10 +23,12 @@ pub struct GetSystemStatusRequest {
 }
 
 impl GetSystemStatusRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn basic(mut self, basic: bool) -> Self {
         self.basic = Some(basic);
         self
@@ -49,6 +51,7 @@ pub struct DoReportRequest {
 }
 
 impl DoReportRequest {
+    #[must_use]
     pub fn new(report_ref: u32) -> Self {
         Self {
             report_ref,
@@ -57,11 +60,13 @@ impl DoReportRequest {
         }
     }
 
+    #[must_use]
     pub fn from_date(mut self, from_date: impl Into<String>) -> Self {
         self.from_date = Some(from_date.into());
         self
     }
 
+    #[must_use]
     pub fn to_date(mut self, to_date: impl Into<String>) -> Self {
         self.to_date = Some(to_date.into());
         self
@@ -79,10 +84,12 @@ pub struct GetDailyStatSummaryRequest {
 }
 
 impl GetDailyStatSummaryRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn days(mut self, days: u16) -> Self {
         self.days = Some(days);
         self

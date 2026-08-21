@@ -72,6 +72,7 @@ impl GetFieldOptionsRequest {
         }
     }
 
+    #[must_use]
     pub fn nodeinfo(mut self, nodeinfo: bool) -> Self {
         self.nodeinfo = Some(nodeinfo);
         self
@@ -122,6 +123,7 @@ pub struct GetNodesRequest {
 }
 
 impl GetNodesRequest {
+    #[must_use]
     pub fn new(field_id: u32) -> Self {
         Self {
             field_id,
@@ -135,36 +137,43 @@ impl GetNodesRequest {
         }
     }
 
+    #[must_use]
     pub fn parent(mut self, parent: u32) -> Self {
         self.parent = Some(parent);
         self
     }
 
+    #[must_use]
     pub fn recursive(mut self, recursive: bool) -> Self {
         self.recursive = Some(recursive);
         self
     }
 
+    #[must_use]
     pub fn offset(mut self, offset: u32) -> Self {
         self.offset = Some(offset);
         self
     }
 
+    #[must_use]
     pub fn rows(mut self, rows: u32) -> Self {
         self.rows = Some(rows);
         self
     }
 
+    #[must_use]
     pub fn name(mut self, name: impl Into<String>) -> Self {
         self.name = Some(name.into());
         self
     }
 
+    #[must_use]
     pub fn use_count(mut self, use_count: bool) -> Self {
         self.use_count = Some(use_count);
         self
     }
 
+    #[must_use]
     pub fn order_by_translated_name(mut self, order_by_translated_name: bool) -> Self {
         self.order_by_translated_name = Some(order_by_translated_name);
         self
@@ -255,16 +264,19 @@ impl SetNodeRequest {
             returnexisting: None,
         }
     }
+    #[must_use]
     pub fn parent(mut self, parent: impl Into<String>) -> Self {
         self.parent = Some(parent.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: u32) -> Self {
         self.order_by = Some(order_by);
         self
     }
 
+    #[must_use]
     pub fn returnexisting(mut self, returnexisting: bool) -> Self {
         self.returnexisting = Some(returnexisting);
         self
@@ -287,20 +299,24 @@ pub struct GetResourceTypeFieldsRequest {
 }
 
 impl GetResourceTypeFieldsRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn resource_type_ids(mut self, resource_type_ids: impl Into<List<u32>>) -> Self {
         self.resource_type_ids = Some(resource_type_ids.into());
         self
     }
 
+    #[must_use]
     pub fn find(mut self, find: impl Into<String>) -> Self {
         self.find = Some(find.into());
         self
     }
 
+    #[must_use]
     pub fn field_type_ids(mut self, field_type_ids: impl Into<List<u32>>) -> Self {
         self.field_type_ids = Some(field_type_ids.into());
         self

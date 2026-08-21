@@ -14,6 +14,7 @@ pub struct GetUserMessageRequest {
 }
 
 impl GetUserMessageRequest {
+    #[must_use]
     pub fn new(message_id: u32) -> Self {
         Self { message_id }
     }

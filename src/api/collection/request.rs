@@ -24,6 +24,7 @@ pub struct AddResourceToCollectionRequest {
 }
 
 impl AddResourceToCollectionRequest {
+    #[must_use]
     pub fn new(resource: u32, collection: u32) -> Self {
         Self {
             resource,
@@ -32,6 +33,7 @@ impl AddResourceToCollectionRequest {
         }
     }
 
+    #[must_use]
     pub fn search(mut self, search: impl Into<String>) -> Self {
         self.search = Some(search.into());
         self
@@ -49,6 +51,7 @@ pub struct RemoveResourceFromCollectionRequest {
 }
 
 impl RemoveResourceFromCollectionRequest {
+    #[must_use]
     pub fn new(resource: u32, collection: u32) -> Self {
         Self {
             resource,
@@ -80,6 +83,7 @@ impl CreateCollectionRequest {
         }
     }
 
+    #[must_use]
     pub fn forupload(mut self, forupload: bool) -> Self {
         self.forupload = Some(forupload);
         self
@@ -100,6 +104,7 @@ pub struct DeleteCollectionRequest {
 }
 
 impl DeleteCollectionRequest {
+    #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
     }
@@ -133,30 +138,36 @@ pub struct SearchPublicCollectionsRequest {
 }
 
 impl SearchPublicCollectionsRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn search(mut self, search: impl Into<String>) -> Self {
         self.search = Some(search.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: impl Into<String>) -> Self {
         self.order_by = Some(order_by.into());
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn exclude_themes(mut self, exclude_themes: bool) -> Self {
         self.exclude_themes = Some(exclude_themes);
         self
     }
 
+    #[must_use]
     pub fn exclude_public(mut self, exclude_public: bool) -> Self {
         self.exclude_public = Some(exclude_public);
         self
@@ -173,6 +184,7 @@ pub struct GetCollectionRequest {
 }
 
 impl GetCollectionRequest {
+    #[must_use]
     pub fn new(collection_id: u32) -> Self {
         Self { collection_id }
     }
@@ -192,6 +204,7 @@ pub struct SaveCollectionRequest {
 }
 
 impl SaveCollectionRequest {
+    #[must_use]
     pub fn new(collection_id: u32, coldata: SaveCollectionColdata) -> Self {
         Self {
             collection_id,
@@ -239,55 +252,66 @@ pub struct SaveCollectionColdata {
 }
 
 impl SaveCollectionColdata {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn keywords(mut self, keywords: impl Into<List<String>>) -> Self {
         self.keywords = Some(keywords.into());
         self
     }
 
+    #[must_use]
     pub fn allow_changes(mut self, allow_changes: bool) -> Self {
         self.allow_changes = Some(allow_changes);
         self
     }
 
+    #[must_use]
     pub fn users(mut self, users: impl Into<List<String>>) -> Self {
         self.users = Some(users.into());
         self
     }
 
+    #[must_use]
     pub fn name(mut self, name: impl Into<String>) -> Self {
         self.name = Some(name.into());
         self
     }
 
+    #[must_use]
     pub fn public(mut self, public: bool) -> Self {
         self.public = Some(public);
         self
     }
 
+    #[must_use]
     pub fn r#type(mut self, r#type: u8) -> Self {
         self.r#type = Some(r#type);
         self
     }
 
+    #[must_use]
     pub fn parent(mut self, parent: u32) -> Self {
         self.parent = Some(parent);
         self
     }
 
+    #[must_use]
     pub fn force_featured_collection_type(mut self, force: bool) -> Self {
         self.force_featured_collection_type = Some(force);
         self
     }
 
+    #[must_use]
     pub fn thumbnail_selection_method(mut self, method: u32) -> Self {
         self.thumbnail_selection_method = Some(method);
         self
     }
 
+    #[must_use]
     pub fn bg_img_resource_ref(mut self, resource_ref: u32) -> Self {
         self.bg_img_resource_ref = Some(resource_ref);
         self
@@ -308,6 +332,7 @@ pub struct ShowHideCollectionRequest {
 }
 
 impl ShowHideCollectionRequest {
+    #[must_use]
     pub fn new(collection: u32, show: bool, user: u32) -> Self {
         Self {
             collection,
@@ -326,6 +351,7 @@ pub struct SendCollectionToAdminRequest {
 }
 
 impl SendCollectionToAdminRequest {
+    #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
     }
@@ -340,6 +366,7 @@ pub struct GetFeaturedCollectionsRequest {
 }
 
 impl GetFeaturedCollectionsRequest {
+    #[must_use]
     pub fn new(parent: u32) -> Self {
         Self { parent }
     }
@@ -354,6 +381,7 @@ pub struct DeleteResourcesInCollectionRequest {
 }
 
 impl DeleteResourcesInCollectionRequest {
+    #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
     }

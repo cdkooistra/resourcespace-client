@@ -29,11 +29,13 @@ pub enum FetchRows {
 
 impl FetchRows {
     /// Return up to N rows
+    #[must_use]
     pub fn limit(n: u32) -> Self {
         Self::Limit(n)
     }
 
     /// Return rows with explicit offset and limit, enables paginated response
+    #[must_use]
     pub fn page(offset: u32, limit: u32) -> Self {
         Self::Page { offset, limit }
     }
@@ -82,31 +84,37 @@ impl DoSearchRequest {
         }
     }
 
+    #[must_use]
     pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: impl Into<String>) -> Self {
         self.order_by = Some(order_by.into());
         self
     }
 
+    #[must_use]
     pub fn archive(mut self, archive: i8) -> Self {
         self.archive = Some(archive);
         self
     }
 
+    #[must_use]
     pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
         self.fetchrows = Some(fetchrows);
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn offset(mut self, offset: u32) -> Self {
         self.offset = Some(offset);
         self
@@ -153,41 +161,49 @@ impl SearchGetPreviewsRequest {
         }
     }
 
+    #[must_use]
     pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: impl Into<String>) -> Self {
         self.order_by = Some(order_by.into());
         self
     }
 
+    #[must_use]
     pub fn archive(mut self, archive: i8) -> Self {
         self.archive = Some(archive);
         self
     }
 
+    #[must_use]
     pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
         self.fetchrows = Some(fetchrows);
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn recent_search_daylimit(mut self, recent_search_daylimit: impl Into<String>) -> Self {
         self.recent_search_daylimit = Some(recent_search_daylimit.into());
         self
     }
 
+    #[must_use]
     pub fn getsizes(mut self, getsizes: impl Into<List<String>>) -> Self {
         self.getsizes = Some(getsizes.into());
         self
     }
 
+    #[must_use]
     pub fn previewext(mut self, previewext: impl Into<String>) -> Self {
         self.previewext = Some(previewext.into());
         self

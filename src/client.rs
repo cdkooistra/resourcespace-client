@@ -258,27 +258,35 @@ impl Client {
     }
 
     // Sub-APIs
+    #[must_use]
     pub fn search(&self) -> crate::api::search::SearchApi<'_> {
         crate::api::search::SearchApi::new(self)
     }
+    #[must_use]
     pub fn system(&self) -> crate::api::system::SystemApi<'_> {
         crate::api::system::SystemApi::new(self)
     }
+    #[must_use]
     pub fn message(&self) -> crate::api::message::MessageApi<'_> {
         crate::api::message::MessageApi::new(self)
     }
+    #[must_use]
     pub fn metadata(&self) -> crate::api::metadata::MetadataApi<'_> {
         crate::api::metadata::MetadataApi::new(self)
     }
+    #[must_use]
     pub fn user(&self) -> crate::api::user::UserApi<'_> {
         crate::api::user::UserApi::new(self)
     }
+    #[must_use]
     pub fn collection(&self) -> crate::api::collection::CollectionApi<'_> {
         crate::api::collection::CollectionApi::new(self)
     }
+    #[must_use]
     pub fn resource(&self) -> crate::api::resource::ResourceApi<'_> {
         crate::api::resource::ResourceApi::new(self)
     }
+    #[must_use]
     pub fn plugin(&self) -> crate::api::plugin::PluginApi<'_> {
         crate::api::plugin::PluginApi::new(self)
     }
@@ -293,18 +301,21 @@ pub struct ClientBuilder<U = state::NoUrl, A = state::NoAuth> {
 }
 
 impl<U, A> ClientBuilder<U, A> {
+    #[must_use]
     pub fn timeout(self, timeout: Duration) -> Self {
         Self {
             timeout: Some(timeout),
             ..self
         }
     }
+    #[must_use]
     pub fn connect_timeout(self, connect_timeout: Duration) -> Self {
         Self {
             connect_timeout: Some(connect_timeout),
             ..self
         }
     }
+    #[must_use]
     pub fn user_agent(self, user_agent: impl Into<String>) -> Self {
         Self {
             user_agent: Some(user_agent.into()),

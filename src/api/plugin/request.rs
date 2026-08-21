@@ -16,6 +16,7 @@ pub struct ConsentManagerGetConsentsRequest {
 }
 
 impl ConsentManagerGetConsentsRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -29,6 +30,7 @@ pub struct LicenseManagerGetLicensesRequest {
 }
 
 impl LicenseManagerGetLicensesRequest {
+    #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
     }
@@ -42,6 +44,7 @@ pub struct ConsentManagerGetConsentRequest {
 }
 
 impl ConsentManagerGetConsentRequest {
+    #[must_use]
     pub fn new(consent: u32) -> Self {
         Self { consent }
     }
@@ -56,6 +59,7 @@ pub struct ConsentManagerDeleteConsentRequest {
 }
 
 impl ConsentManagerDeleteConsentRequest {
+    #[must_use]
     pub fn new(consent: u32) -> Self {
         Self { consent }
     }
@@ -74,6 +78,7 @@ pub struct ConsentManagerBatchLinkUnlinkRequest {
 }
 
 impl ConsentManagerBatchLinkUnlinkRequest {
+    #[must_use]
     pub fn new(consent: u32, collection: u32, unlink: bool) -> Self {
         Self {
             consent,
@@ -93,6 +98,7 @@ pub struct ConsentManagerLinkConsentRequest {
 }
 
 impl ConsentManagerLinkConsentRequest {
+    #[must_use]
     pub fn new(consent: u32, resource: u32) -> Self {
         Self { consent, resource }
     }
@@ -108,6 +114,7 @@ pub struct ConsentManagerUnlinkConsentRequest {
 }
 
 impl ConsentManagerUnlinkConsentRequest {
+    #[must_use]
     pub fn new(consent: u32, resource: u32) -> Self {
         Self { consent, resource }
     }
@@ -148,11 +155,13 @@ impl ConsentManagerCreateConsentRequest {
         }
     }
 
+    #[must_use]
     pub fn notes(mut self, notes: impl Into<String>) -> Self {
         self.notes = Some(notes.into());
         self
     }
 
+    #[must_use]
     pub fn expires(mut self, expires: impl Into<String>) -> Self {
         self.expires = Some(expires.into());
         self
@@ -198,11 +207,13 @@ impl ConsentManagerUpdateConsentRequest {
         }
     }
 
+    #[must_use]
     pub fn notes(mut self, notes: impl Into<String>) -> Self {
         self.notes = Some(notes.into());
         self
     }
 
+    #[must_use]
     pub fn expires(mut self, expires: impl Into<String>) -> Self {
         self.expires = Some(expires.into());
         self
@@ -218,10 +229,12 @@ pub struct ConsentManagerGetAllConsentsRequest {
 }
 
 impl ConsentManagerGetAllConsentsRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn findtext(mut self, findtext: impl Into<String>) -> Self {
         self.findtext = Some(findtext.into());
         self
@@ -236,6 +249,7 @@ pub struct ConsentManagerGetAllConsentsByCollectionRequest {
 }
 
 impl ConsentManagerGetAllConsentsByCollectionRequest {
+    #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
     }
@@ -274,6 +288,7 @@ pub struct FacesSetNodeRequest {
 }
 
 impl FacesSetNodeRequest {
+    #[must_use]
     pub fn new(resource: u32, face: u32, node: u32) -> Self {
         Self {
             resource,

@@ -32,10 +32,12 @@ pub enum SortOrder {
 pub struct List<T: Display>(#[serde_as(as = "StringWithSeparator::<CommaSeparator, T>")] Vec<T>);
 
 impl<T: Display> List<T> {
+    #[must_use]
     pub fn into_inner(self) -> Vec<T> {
         self.0
     }
 
+    #[must_use]
     pub fn as_slice(&self) -> &[T] {
         &self.0
     }

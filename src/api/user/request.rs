@@ -39,6 +39,7 @@ pub struct GetProfileImageRequest {
 }
 
 impl GetProfileImageRequest {
+    #[must_use]
     pub fn new(user: u32) -> Self {
         Self { user }
     }
@@ -56,15 +57,18 @@ pub struct GetUsersRequest {
 }
 
 impl GetUsersRequest {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn find(mut self, find: impl Into<String>) -> Self {
         self.find = Some(find.into());
         self
     }
 
+    #[must_use]
     pub fn exact_username_match(mut self, exact_username_match: bool) -> Self {
         self.exact_username_match = Some(exact_username_match);
         self
@@ -122,6 +126,7 @@ impl NewUserRequest {
         }
     }
 
+    #[must_use]
     pub fn usergroup(mut self, usergroup: u32) -> Self {
         self.usergroup = Some(usergroup);
         self
@@ -142,6 +147,7 @@ pub struct SaveUserRequest {
 }
 
 impl SaveUserRequest {
+    #[must_use]
     pub fn new(user_id: u32, data: SaveUserData) -> Self {
         Self { user_id, data }
     }
@@ -183,60 +189,72 @@ pub struct SaveUserData {
 }
 
 impl SaveUserData {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    #[must_use]
     pub fn username(mut self, username: impl Into<String>) -> Self {
         self.username = Some(username.into());
         self
     }
 
+    #[must_use]
     pub fn password(mut self, password: impl Into<String>) -> Self {
         self.password = Some(password.into());
         self
     }
 
+    #[must_use]
     pub fn fullname(mut self, fullname: impl Into<String>) -> Self {
         self.fullname = Some(fullname.into());
         self
     }
 
+    #[must_use]
     pub fn email(mut self, email: impl Into<String>) -> Self {
         self.email = Some(email.into());
         self
     }
 
+    #[must_use]
     pub fn usergroup(mut self, usergroup: u32) -> Self {
         self.usergroup = Some(usergroup);
         self
     }
 
+    #[must_use]
     pub fn ip_restrict(mut self, ip_restrict: impl Into<String>) -> Self {
         self.ip_restrict = Some(ip_restrict.into());
         self
     }
 
+    #[must_use]
     pub fn comments(mut self, comments: impl Into<String>) -> Self {
         self.comments = Some(comments.into());
         self
     }
 
+    #[must_use]
     pub fn suggest(mut self, suggest: bool) -> Self {
         self.suggest = Some(suggest);
         self
     }
 
+    #[must_use]
     pub fn emailresetlink(mut self, emailresetlink: bool) -> Self {
         self.emailresetlink = Some(emailresetlink);
         self
     }
 
+    #[must_use]
     pub fn approved(mut self, approved: bool) -> Self {
         self.approved = Some(approved);
         self
     }
 
+    #[must_use]
     pub fn expires(mut self, expires: impl Into<String>) -> Self {
         self.expires = Some(expires.into());
         self
