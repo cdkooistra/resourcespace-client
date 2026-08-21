@@ -1,9 +1,9 @@
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-mod request;
+pub mod request;
 
-pub use request::GetUserMessageRequest;
+use request::GetUserMessage;
 
 /// Sub-API for message endpoints.
 #[derive(Debug)]
@@ -21,7 +21,7 @@ impl<'a> MessageApi<'a> {
     /// Permissions are always honoured so messages to other users will not be accessible.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetUserMessageRequest`]
+    /// * `request` - Parameters built via [`GetUserMessage`]
     ///
     /// ## Returns
     ///
@@ -34,11 +34,11 @@ impl<'a> MessageApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::message::GetUserMessageRequest};
+    /// # use resourcespace_client::{Client, api::message::request::GetUserMessage};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.message()
     ///     .get_user_message(
-    ///         GetUserMessageRequest::new(2)
+    ///         GetUserMessage::new(2)
     ///     )
     ///     .await?;
     /// # Ok(())
@@ -46,7 +46,7 @@ impl<'a> MessageApi<'a> {
     /// ```
     pub async fn get_user_message(
         &self,
-        request: GetUserMessageRequest,
+        request: GetUserMessage,
     ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("get_user_message", HttpMethod::Get, request)

@@ -11,12 +11,12 @@ use super::UserApi;
 /// Parameters for [`UserApi::checkperm`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CheckpermRequest {
+pub struct Checkperm {
     /// The permission string to check (e.g. `"a"` for admin, `"e"` for edit).
     pub perm: String,
 }
 
-impl CheckpermRequest {
+impl Checkperm {
     pub fn new(perm: impl Into<String>) -> Self {
         Self { perm: perm.into() }
     }
@@ -25,7 +25,7 @@ impl CheckpermRequest {
 /// Parameters for [`UserApi::get_profile_image`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetProfileImageRequest {
+pub struct GetProfileImage {
     /// The ID of the user whose profile image URL is wanted.
     ///
     /// Sent positionally as `param1` rather than by its real name `user`.
@@ -38,7 +38,7 @@ pub struct GetProfileImageRequest {
     pub user: u32,
 }
 
-impl GetProfileImageRequest {
+impl GetProfileImage {
     #[must_use]
     pub fn new(user: u32) -> Self {
         Self { user }
@@ -49,14 +49,14 @@ impl GetProfileImageRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct GetUsersRequest {
+pub struct GetUsers {
     /// Search string to filter users by name or username.
     pub find: Option<String>,
     /// If set, only returns users whose username exactly matches `find`.
     pub exact_username_match: Option<bool>,
 }
 
-impl GetUsersRequest {
+impl GetUsers {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -78,12 +78,12 @@ impl GetUsersRequest {
 /// Parameters for [`UserApi::get_users_by_permission`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetUsersByPermissionRequest {
+pub struct GetUsersByPermission {
     /// List of permission strings; only users holding all of these are returned.
     pub permissions: List<String>,
 }
 
-impl GetUsersByPermissionRequest {
+impl GetUsersByPermission {
     pub fn new(permissions: impl Into<List<String>>) -> Self {
         Self {
             permissions: permissions.into(),
@@ -94,12 +94,12 @@ impl GetUsersByPermissionRequest {
 /// Parameters for [`UserApi::mark_email_as_invalid`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct MarkEmailAsInvalidRequest {
+pub struct MarkEmailAsInvalid {
     /// The email address to mark as invalid.
     pub email: String,
 }
 
-impl MarkEmailAsInvalidRequest {
+impl MarkEmailAsInvalid {
     pub fn new(email: impl Into<String>) -> Self {
         Self {
             email: email.into(),
@@ -111,14 +111,14 @@ impl MarkEmailAsInvalidRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct NewUserRequest {
+pub struct NewUser {
     /// The username for the new user account.
     pub username: String,
     /// The ID of the user group to assign this user to.
     pub usergroup: Option<u32>,
 }
 
-impl NewUserRequest {
+impl NewUser {
     pub fn new(username: impl Into<String>) -> Self {
         Self {
             username: username.into(),
@@ -137,7 +137,7 @@ impl NewUserRequest {
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SaveUserRequest {
+pub struct SaveUser {
     /// The ID of the user to update.
     #[serde(rename = "ref")]
     pub user_id: u32,
@@ -146,14 +146,14 @@ pub struct SaveUserRequest {
     pub data: SaveUserData,
 }
 
-impl SaveUserRequest {
+impl SaveUser {
     #[must_use]
     pub fn new(user_id: u32, data: SaveUserData) -> Self {
         Self { user_id, data }
     }
 }
 
-/// Parameters for [`SaveUserRequest::new`].
+/// Parameters for [`SaveUser::new`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]

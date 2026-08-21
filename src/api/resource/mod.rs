@@ -4,22 +4,20 @@ use crate::error::Error;
 use super::shared::AjaxEnvelope;
 use response::ReadonlyData;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 mod shared;
 
-pub use request::{
-    AddAlternativeFileRequest, CopyResourceRequest, CreateResourceRequest, DeleteAlternativeFile,
-    DeleteCommentRequest, DeleteResourceRequest, GetAlternativeFilesRequest, GetEditAccessRequest,
-    GetRelatedResourcesRequest, GetResourceAccessRequest, GetResourceAllImageSizesRequest,
-    GetResourceCollectionsRequest, GetResourceCommentsRequest, GetResourceDataRequest,
-    GetResourceFieldDataRequest, GetResourceLogRequest, GetResourcePathRequest,
-    PutResourceDataRequest, RelateAllResourcesRequest, ReplaceResourceFileRequest,
-    ResourceFileReadonlyRequest, ResourceLogLastRowsRequest, UpdateRelatedResourceRequest,
-    UpdateResourceTypeRequest, UploadFileByUrlRequest, UploadFileRequest, UploadMultipartRequest,
-    UploadSource, ValidateUploadUrlRequest,
+use request::{
+    AddAlternativeFile, CopyResource, CreateResource, DeleteAlternativeFile, DeleteComment,
+    DeleteResource, GetAlternativeFiles, GetEditAccess, GetRelatedResources, GetResourceAccess,
+    GetResourceAllImageSizes, GetResourceCollections, GetResourceComments, GetResourceData,
+    GetResourceFieldData, GetResourceLog, GetResourcePath, PutResourceData, RelateAllResources,
+    ReplaceResourceFile, ResourceFileReadonly, ResourceLogLastRows, UpdateRelatedResource,
+    UpdateResourceType, UploadFile, UploadFileByUrl, UploadMultipart, UploadSource,
+    ValidateUploadUrl,
 };
-pub use response::{
+use response::{
     AlternativeFile, ImageSize, LogEntry, Resource, ResourceCollection, ResourceFieldData,
     ResourceType,
 };
@@ -38,7 +36,7 @@ impl<'a> ResourceApi<'a> {
     /// Add a new alternative file to a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`AddAlternativeFileRequest`]
+    /// * `request` - Parameters built via [`AddAlternativeFile`]
     ///
     /// ## Returns
     ///
@@ -53,17 +51,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::AddAlternativeFileRequest;
+    /// use resourcespace_client::api::resource::request::AddAlternativeFile;
     /// let alt_id = client.resource()
-    ///     .add_alternative_file(AddAlternativeFileRequest::new(1234, "Print master"))
+    ///     .add_alternative_file(AddAlternativeFile::new(1234, "Print master"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn add_alternative_file(
-        &self,
-        request: AddAlternativeFileRequest,
-    ) -> Result<u32, Error> {
+    pub async fn add_alternative_file(&self, request: AddAlternativeFile) -> Result<u32, Error> {
         self.client
             .send_request("add_alternative_file", HttpMethod::Post, request)
             .await
@@ -73,7 +68,7 @@ impl<'a> ResourceApi<'a> {
     /// and property copy only.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`CopyResourceRequest`]
+    /// * `request` - Parameters built via [`CopyResource`]
     ///
     /// ## Returns
     ///
@@ -89,14 +84,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::CopyResourceRequest;
+    /// use resourcespace_client::api::resource::request::CopyResource;
     /// let new_id = client.resource()
-    ///     .copy_resource(CopyResourceRequest::new(1234))
+    ///     .copy_resource(CopyResource::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn copy_resource(&self, request: CopyResourceRequest) -> Result<u32, Error> {
+    pub async fn copy_resource(&self, request: CopyResource) -> Result<u32, Error> {
         self.client
             .send_request("copy_resource", HttpMethod::Post, request)
             .await
@@ -105,7 +100,7 @@ impl<'a> ResourceApi<'a> {
     /// Create a new resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`CreateResourceRequest`]
+    /// * `request` - Parameters built via [`CreateResource`]
     ///
     /// ## Returns
     ///
@@ -126,10 +121,10 @@ impl<'a> ResourceApi<'a> {
     /// # #[tokio::main] async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let client = Client::builder().base_url("https://example.com").user_key("user", "key").build().await?;
     /// use resourcespace_client::api::FieldValue;
-    /// use resourcespace_client::api::resource::CreateResourceRequest;
+    /// use resourcespace_client::api::resource::request::CreateResource;
     ///
     /// client.resource().create_resource(
-    ///     CreateResourceRequest::new(1)
+    ///     CreateResource::new(1)
     ///         .metadata(HashMap::from([
     ///             (90u32, FieldValue::from("A plain text description")),       // Text field
     ///             (91u32, FieldValue::from(["Doe, John", "Smith, Jane"])),     // Keywords, auto-quoted
@@ -138,7 +133,7 @@ impl<'a> ResourceApi<'a> {
     /// ).await?;
     /// # Ok(()) }
     /// ```
-    pub async fn create_resource(&self, request: CreateResourceRequest) -> Result<u32, Error> {
+    pub async fn create_resource(&self, request: CreateResource) -> Result<u32, Error> {
         self.client
             .send_request("create_resource", HttpMethod::Post, request)
             .await
@@ -162,7 +157,7 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::DeleteAlternativeFile;
+    /// use resourcespace_client::api::resource::request::DeleteAlternativeFile;
     /// client.resource()
     ///     .delete_alternative_file(DeleteAlternativeFile::new(1234, 7))
     ///     .await?;
@@ -181,7 +176,7 @@ impl<'a> ResourceApi<'a> {
     /// Delete a comment.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DeleteCommentRequest`]
+    /// * `request` - Parameters built via [`DeleteComment`]
     ///
     /// ## Returns
     ///
@@ -196,16 +191,16 @@ impl<'a> ResourceApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::resource::DeleteCommentRequest;
+    /// # use resourcespace_client::api::resource::request::DeleteComment;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .resource()
-    ///     .delete_comment(DeleteCommentRequest::new(12))
+    ///     .delete_comment(DeleteComment::new(12))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn delete_comment(&self, request: DeleteCommentRequest) -> Result<bool, Error> {
+    pub async fn delete_comment(&self, request: DeleteComment) -> Result<bool, Error> {
         self.client
             .send_request("delete_comment", HttpMethod::Post, request)
             .await
@@ -214,7 +209,7 @@ impl<'a> ResourceApi<'a> {
     /// Delete a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DeleteResourceRequest`]
+    /// * `request` - Parameters built via [`DeleteResource`]
     ///
     /// ## Returns
     ///
@@ -229,14 +224,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::DeleteResourceRequest;
+    /// use resourcespace_client::api::resource::request::DeleteResource;
     /// client.resource()
-    ///     .delete_resource(DeleteResourceRequest::new(1234))
+    ///     .delete_resource(DeleteResource::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn delete_resource(&self, request: DeleteResourceRequest) -> Result<bool, Error> {
+    pub async fn delete_resource(&self, request: DeleteResource) -> Result<bool, Error> {
         self.client
             .send_request("delete_resource", HttpMethod::Post, request)
             .await
@@ -245,7 +240,7 @@ impl<'a> ResourceApi<'a> {
     /// Returns a list of alternative files for a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetAlternativeFilesRequest`]
+    /// * `request` - Parameters built via [`GetAlternativeFiles`]
     ///
     /// ## Returns
     ///
@@ -261,16 +256,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetAlternativeFilesRequest;
+    /// use resourcespace_client::api::resource::request::GetAlternativeFiles;
     /// let files = client.resource()
-    ///     .get_alternative_files(GetAlternativeFilesRequest::new(1234))
+    ///     .get_alternative_files(GetAlternativeFiles::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_alternative_files(
         &self,
-        request: GetAlternativeFilesRequest,
+        request: GetAlternativeFiles,
     ) -> Result<Vec<AlternativeFile>, Error> {
         self.client
             .send_request("get_alternative_files", HttpMethod::Get, request)
@@ -280,7 +275,7 @@ impl<'a> ResourceApi<'a> {
     /// Check if the current user has edit access to a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetEditAccessRequest`]
+    /// * `request` - Parameters built via [`GetEditAccess`]
     ///
     /// ## Returns
     ///
@@ -298,15 +293,15 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetEditAccessRequest;
+    /// use resourcespace_client::api::resource::request::GetEditAccess;
     /// let can_edit = client.resource()
-    ///     .get_edit_access(GetEditAccessRequest::new(1234))
+    ///     .get_edit_access(GetEditAccess::new(1234))
     ///     .await
     ///     .unwrap_or(false);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_edit_access(&self, request: GetEditAccessRequest) -> Result<bool, Error> {
+    pub async fn get_edit_access(&self, request: GetEditAccess) -> Result<bool, Error> {
         self.client
             .send_request("get_edit_access", HttpMethod::Get, request)
             .await
@@ -315,7 +310,7 @@ impl<'a> ResourceApi<'a> {
     /// Returns a list of resources related to a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetRelatedResourcesRequest`]
+    /// * `request` - Parameters built via [`GetRelatedResources`]
     ///
     /// ## Returns
     ///
@@ -331,16 +326,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetRelatedResourcesRequest;
+    /// use resourcespace_client::api::resource::request::GetRelatedResources;
     /// let related = client.resource()
-    ///     .get_related_resources(GetRelatedResourcesRequest::new(1234))
+    ///     .get_related_resources(GetRelatedResources::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_related_resources(
         &self,
-        request: GetRelatedResourcesRequest,
+        request: GetRelatedResources,
     ) -> Result<Vec<u32>, Error> {
         self.client
             .send_request("get_related_resources", HttpMethod::Get, request)
@@ -352,7 +347,7 @@ impl<'a> ResourceApi<'a> {
     /// Returns 0 (full), 1 (restricted), 2 (confidential), 99 (not found), or false (invalid ID).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceAccessRequest`]
+    /// * `request` - Parameters built via [`GetResourceAccess`]
     ///
     /// ## Returns
     ///
@@ -366,17 +361,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceAccessRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceAccess;
     /// let access = client.resource()
-    ///     .get_resource_access(GetResourceAccessRequest::new(1234))
+    ///     .get_resource_access(GetResourceAccess::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_resource_access(
-        &self,
-        request: GetResourceAccessRequest,
-    ) -> Result<u8, Error> {
+    pub async fn get_resource_access(&self, request: GetResourceAccess) -> Result<u8, Error> {
         self.client
             .send_request("get_resource_access", HttpMethod::Get, request)
             .await
@@ -387,7 +379,7 @@ impl<'a> ResourceApi<'a> {
     /// Multi-page resources will include each page size in the response.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceAllImageSizesRequest`]
+    /// * `request` - Parameters built via [`GetResourceAllImageSizes`]
     ///
     /// ## Returns
     ///
@@ -403,16 +395,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceAllImageSizesRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceAllImageSizes;
     /// let sizes = client.resource()
-    ///     .get_resource_all_image_sizes(GetResourceAllImageSizesRequest::new(1234))
+    ///     .get_resource_all_image_sizes(GetResourceAllImageSizes::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_resource_all_image_sizes(
         &self,
-        request: GetResourceAllImageSizesRequest,
+        request: GetResourceAllImageSizes,
     ) -> Result<Vec<ImageSize>, Error> {
         self.client
             .send_request("get_resource_all_image_sizes", HttpMethod::Get, request)
@@ -424,7 +416,7 @@ impl<'a> ResourceApi<'a> {
     /// Available from **RS 11.0+**.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceCommentsRequest`]
+    /// * `request` - Parameters built via [`GetResourceComments`]
     ///
     /// ## Returns
     ///
@@ -440,7 +432,7 @@ impl<'a> ResourceApi<'a> {
     ///
     pub async fn get_resource_comments(
         &self,
-        request: GetResourceCommentsRequest,
+        request: GetResourceComments,
     ) -> Result<Vec<serde_json::Value>, Error> {
         self.client
             .send_request("get_resource_comments", HttpMethod::Get, request)
@@ -452,7 +444,7 @@ impl<'a> ResourceApi<'a> {
     /// For full non-truncated metadata use [`get_resource_field_data`](Self::get_resource_field_data).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceDataRequest`]
+    /// * `request` - Parameters built via [`GetResourceData`]
     ///
     /// ## Returns
     ///
@@ -469,18 +461,15 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceDataRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceData;
     /// let resource = client.resource()
-    ///     .get_resource_data(GetResourceDataRequest::new(1234))
+    ///     .get_resource_data(GetResourceData::new(1234))
     ///     .await?;
     /// println!("{:?}", resource.file_extension);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_resource_data(
-        &self,
-        request: GetResourceDataRequest,
-    ) -> Result<Resource, Error> {
+    pub async fn get_resource_data(&self, request: GetResourceData) -> Result<Resource, Error> {
         self.client
             .send_request("get_resource_data", HttpMethod::Get, request)
             .await
@@ -489,7 +478,7 @@ impl<'a> ResourceApi<'a> {
     /// Return all field data for a given resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceFieldDataRequest`]
+    /// * `request` - Parameters built via [`GetResourceFieldData`]
     ///
     /// ## Returns
     ///
@@ -505,9 +494,9 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceFieldDataRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceFieldData;
     /// for field in client.resource()
-    ///     .get_resource_field_data(GetResourceFieldDataRequest::new(1234))
+    ///     .get_resource_field_data(GetResourceFieldData::new(1234))
     ///     .await? {
     ///     println!("{} = {:?}", field.name, field.value);
     /// }
@@ -516,7 +505,7 @@ impl<'a> ResourceApi<'a> {
     /// ```
     pub async fn get_resource_field_data(
         &self,
-        request: GetResourceFieldDataRequest,
+        request: GetResourceFieldData,
     ) -> Result<Vec<ResourceFieldData>, Error> {
         self.client
             .send_request("get_resource_field_data", HttpMethod::Get, request)
@@ -526,7 +515,7 @@ impl<'a> ResourceApi<'a> {
     /// Returns the full log for a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceLogRequest`]
+    /// * `request` - Parameters built via [`GetResourceLog`]
     ///
     /// ## Returns
     ///
@@ -540,17 +529,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceLogRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceLog;
     /// let log = client.resource()
-    ///     .get_resource_log(GetResourceLogRequest::new(1234))
+    ///     .get_resource_log(GetResourceLog::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_resource_log(
-        &self,
-        request: GetResourceLogRequest,
-    ) -> Result<Vec<LogEntry>, Error> {
+    pub async fn get_resource_log(&self, request: GetResourceLog) -> Result<Vec<LogEntry>, Error> {
         self.client
             .send_request("get_resource_log", HttpMethod::Get, request)
             .await
@@ -561,7 +547,7 @@ impl<'a> ResourceApi<'a> {
     /// The URL is valid for 24 hours by default (configurable via `$api_resource_path_expiry_hours`).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourcePathRequest`]
+    /// * `request` - Parameters built via [`GetResourcePath`]
     ///
     /// ## Returns
     ///
@@ -576,17 +562,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourcePathRequest;
+    /// use resourcespace_client::api::resource::request::GetResourcePath;
     /// let url = client.resource()
-    ///     .get_resource_path(GetResourcePathRequest::new(1234))
+    ///     .get_resource_path(GetResourcePath::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_resource_path(
-        &self,
-        request: GetResourcePathRequest,
-    ) -> Result<String, Error> {
+    pub async fn get_resource_path(&self, request: GetResourcePath) -> Result<String, Error> {
         self.client
             .send_request("get_resource_path", HttpMethod::Get, request)
             .await
@@ -625,7 +608,7 @@ impl<'a> ResourceApi<'a> {
     /// `access`, `created_by`, `mapzoom`, `modified`, `geo_lat`, `geo_long`.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`PutResourceDataRequest`]
+    /// * `request` - Parameters built via [`PutResourceData`]
     ///
     /// ## Returns
     ///
@@ -640,10 +623,10 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::PutResourceDataRequest;
+    /// use resourcespace_client::api::resource::request::PutResourceData;
     /// use std::collections::HashMap;
     /// client.resource()
-    ///     .put_resource_data(PutResourceDataRequest::new(
+    ///     .put_resource_data(PutResourceData::new(
     ///         1234,
     ///         HashMap::from([("archive".to_string(), "0".to_string())]),
     ///     ))
@@ -651,7 +634,7 @@ impl<'a> ResourceApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn put_resource_data(&self, request: PutResourceDataRequest) -> Result<bool, Error> {
+    pub async fn put_resource_data(&self, request: PutResourceData) -> Result<bool, Error> {
         self.client
             .send_request("put_resource_data", HttpMethod::Post, request)
             .await
@@ -660,7 +643,7 @@ impl<'a> ResourceApi<'a> {
     /// Relate all the provided resources with each other.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`RelateAllResourcesRequest`]
+    /// * `request` - Parameters built via [`RelateAllResources`]
     ///
     /// ## Returns
     ///
@@ -675,17 +658,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::RelateAllResourcesRequest;
+    /// use resourcespace_client::api::resource::request::RelateAllResources;
     /// client.resource()
-    ///     .relate_all_resources(RelateAllResourcesRequest::new([1234, 1235]))
+    ///     .relate_all_resources(RelateAllResources::new([1234, 1235]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn relate_all_resources(
-        &self,
-        request: RelateAllResourcesRequest,
-    ) -> Result<bool, Error> {
+    pub async fn relate_all_resources(&self, request: RelateAllResources) -> Result<bool, Error> {
         self.client
             .send_request("relate_all_resources", HttpMethod::Post, request)
             .await
@@ -697,7 +677,7 @@ impl<'a> ResourceApi<'a> {
     /// either a local path or a publicly accessible URL.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ReplaceResourceFileRequest`]
+    /// * `request` - Parameters built via [`ReplaceResourceFile`]
     ///
     /// ## Returns
     ///
@@ -718,11 +698,11 @@ impl<'a> ResourceApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::resource::ReplaceResourceFileRequest;
+    /// # use resourcespace_client::api::resource::request::ReplaceResourceFile;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let result = client
     ///     .resource()
-    ///     .replace_resource_file(ReplaceResourceFileRequest::new(
+    ///     .replace_resource_file(ReplaceResourceFile::new(
     ///         1234,
     ///         "https://example.com/replacement.jpg",
     ///     ))
@@ -732,7 +712,7 @@ impl<'a> ResourceApi<'a> {
     /// ```
     pub async fn replace_resource_file(
         &self,
-        request: ReplaceResourceFileRequest,
+        request: ReplaceResourceFile,
     ) -> Result<serde_json::Value, Error> {
         self.client
             .send_request("replace_resource_file", HttpMethod::Post, request)
@@ -744,7 +724,7 @@ impl<'a> ResourceApi<'a> {
     /// Available from **RS 10.5+**.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ResourceFileReadonlyRequest`]
+    /// * `request` - Parameters built via [`ResourceFileReadonly`]
     ///
     /// ## Returns
     ///
@@ -761,16 +741,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::ResourceFileReadonlyRequest;
+    /// use resourcespace_client::api::resource::request::ResourceFileReadonly;
     /// let readonly = client.resource()
-    ///     .resource_file_readonly(ResourceFileReadonlyRequest::new(1234))
+    ///     .resource_file_readonly(ResourceFileReadonly::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn resource_file_readonly(
         &self,
-        request: ResourceFileReadonlyRequest,
+        request: ResourceFileReadonly,
     ) -> Result<bool, Error> {
         let envelope: AjaxEnvelope<ReadonlyData> = self
             .client
@@ -782,7 +762,7 @@ impl<'a> ResourceApi<'a> {
     /// Retrieve recent entries from the resource log
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ResourceLogLastRowsRequest`]
+    /// * `request` - Parameters built via [`ResourceLogLastRows`]
     ///
     /// ## Returns
     ///
@@ -798,16 +778,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::ResourceLogLastRowsRequest;
+    /// use resourcespace_client::api::resource::request::ResourceLogLastRows;
     /// let rows = client.resource()
-    ///     .resource_log_last_rows(ResourceLogLastRowsRequest::new().days(1))
+    ///     .resource_log_last_rows(ResourceLogLastRows::new().days(1))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn resource_log_last_rows(
         &self,
-        request: ResourceLogLastRowsRequest,
+        request: ResourceLogLastRows,
     ) -> Result<Vec<LogEntry>, Error> {
         self.client
             .send_request("resource_log_last_rows", HttpMethod::Get, request)
@@ -820,7 +800,7 @@ impl<'a> ResourceApi<'a> {
     /// if using a custom upload path.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UploadFileRequest`]
+    /// * `request` - Parameters built via [`UploadFile`]
     ///
     /// ## Returns
     ///
@@ -836,14 +816,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::UploadFileRequest;
+    /// use resourcespace_client::api::resource::request::UploadFile;
     /// client.resource()
-    ///     .upload_file(UploadFileRequest::new(1234).file_path("/var/tmp/a.jpg"))
+    ///     .upload_file(UploadFile::new(1234).file_path("/var/tmp/a.jpg"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn upload_file(&self, request: UploadFileRequest) -> Result<u32, Error> {
+    pub async fn upload_file(&self, request: UploadFile) -> Result<u32, Error> {
         self.client
             .send_request("upload_file", HttpMethod::Post, request)
             .await
@@ -855,7 +835,7 @@ impl<'a> ResourceApi<'a> {
     /// `$api_upload_urls` in RS config.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UploadFileByUrlRequest`]
+    /// * `request` - Parameters built via [`UploadFileByUrl`]
     ///
     /// ## Returns
     ///
@@ -870,14 +850,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::UploadFileByUrlRequest;
+    /// use resourcespace_client::api::resource::request::UploadFileByUrl;
     /// client.resource()
-    ///     .upload_file_by_url(UploadFileByUrlRequest::new(1234).url("https://example.com/a.jpg"))
+    ///     .upload_file_by_url(UploadFileByUrl::new(1234).url("https://example.com/a.jpg"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn upload_file_by_url(&self, request: UploadFileByUrlRequest) -> Result<u32, Error> {
+    pub async fn upload_file_by_url(&self, request: UploadFileByUrl) -> Result<u32, Error> {
         self.client
             .send_request("upload_file_by_url", HttpMethod::Post, request)
             .await
@@ -886,7 +866,7 @@ impl<'a> ResourceApi<'a> {
     /// Uploads files using HTTP multipart to an existing resource, replacing any file that is already attached.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UploadMultipartRequest`]
+    /// * `request` - Parameters built via [`UploadMultipart`]
     /// * `source` - Source accepts a file path or a stream as per [`UploadSource`].
     ///
     /// ## Returns
@@ -903,12 +883,12 @@ impl<'a> ResourceApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::resource::{UploadMultipartRequest, UploadSource};
+    /// # use resourcespace_client::api::resource::request::{UploadMultipart, UploadSource};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .resource()
     ///     .upload_multipart(
-    ///         UploadMultipartRequest::new(1234, false, false),
+    ///         UploadMultipart::new(1234, false, false),
     ///         UploadSource::from_file("photo.jpg"),
     ///     )
     ///     .await?;
@@ -917,7 +897,7 @@ impl<'a> ResourceApi<'a> {
     /// ```
     pub async fn upload_multipart(
         &self,
-        request: UploadMultipartRequest,
+        request: UploadMultipart,
         source: impl Into<UploadSource>,
     ) -> Result<(), Error> {
         self.client
@@ -928,7 +908,7 @@ impl<'a> ResourceApi<'a> {
     /// Add or remove resource relationships.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UpdateRelatedResourceRequest`]
+    /// * `request` - Parameters built via [`UpdateRelatedResource`]
     ///
     /// ## Returns
     ///
@@ -943,10 +923,10 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::UpdateRelatedResourceRequest;
+    /// use resourcespace_client::api::resource::request::UpdateRelatedResource;
     /// client.resource()
     ///     .update_related_resource(
-    ///         UpdateRelatedResourceRequest::new(1234, [1235]).add(true),
+    ///         UpdateRelatedResource::new(1234, [1235]).add(true),
     ///     )
     ///     .await?;
     /// # Ok(())
@@ -954,7 +934,7 @@ impl<'a> ResourceApi<'a> {
     /// ```
     pub async fn update_related_resource(
         &self,
-        request: UpdateRelatedResourceRequest,
+        request: UpdateRelatedResource,
     ) -> Result<bool, Error> {
         self.client
             .send_request("update_related_resource", HttpMethod::Post, request)
@@ -964,7 +944,7 @@ impl<'a> ResourceApi<'a> {
     /// Change the resource type of a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UpdateResourceTypeRequest`]
+    /// * `request` - Parameters built via [`UpdateResourceType`]
     ///
     /// ## Returns
     ///
@@ -979,17 +959,14 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::UpdateResourceTypeRequest;
+    /// use resourcespace_client::api::resource::request::UpdateResourceType;
     /// client.resource()
-    ///     .update_resource_type(UpdateResourceTypeRequest::new(1234, 2))
+    ///     .update_resource_type(UpdateResourceType::new(1234, 2))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn update_resource_type(
-        &self,
-        request: UpdateResourceTypeRequest,
-    ) -> Result<bool, Error> {
+    pub async fn update_resource_type(&self, request: UpdateResourceType) -> Result<bool, Error> {
         self.client
             .send_request("update_resource_type", HttpMethod::Post, request)
             .await
@@ -998,7 +975,7 @@ impl<'a> ResourceApi<'a> {
     /// Retrieves a list of collections that a resource is used in for the specified resource reference.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceCollectionsRequest`]
+    /// * `request` - Parameters built via [`GetResourceCollections`]
     ///
     /// ## Returns
     ///
@@ -1013,16 +990,16 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::GetResourceCollectionsRequest;
+    /// use resourcespace_client::api::resource::request::GetResourceCollections;
     /// let collections = client.resource()
-    ///     .get_resource_collections(GetResourceCollectionsRequest::new(1234))
+    ///     .get_resource_collections(GetResourceCollections::new(1234))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_resource_collections(
         &self,
-        request: GetResourceCollectionsRequest,
+        request: GetResourceCollections,
     ) -> Result<Vec<ResourceCollection>, Error> {
         self.client
             .send_request("get_resource_collections", HttpMethod::Get, request)
@@ -1035,7 +1012,7 @@ impl<'a> ResourceApi<'a> {
     /// `$api_upload_urls = array('resourcespace.com', 'localhost');`
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ValidateUploadUrlRequest`]
+    /// * `request` - Parameters built via [`ValidateUploadUrl`]
     ///
     /// ## Returns
     ///
@@ -1055,18 +1032,15 @@ impl<'a> ResourceApi<'a> {
     /// ```no_run
     /// # use resourcespace_client::Client;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// use resourcespace_client::api::resource::ValidateUploadUrlRequest;
+    /// use resourcespace_client::api::resource::request::ValidateUploadUrl;
     /// let allowed = client.resource()
-    ///     .validate_upload_url(ValidateUploadUrlRequest::new("https://example.com/a.jpg"))
+    ///     .validate_upload_url(ValidateUploadUrl::new("https://example.com/a.jpg"))
     ///     .await
     ///     .unwrap_or(false);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn validate_upload_url(
-        &self,
-        request: ValidateUploadUrlRequest,
-    ) -> Result<bool, Error> {
+    pub async fn validate_upload_url(&self, request: ValidateUploadUrl) -> Result<bool, Error> {
         self.client
             .send_request("validate_upload_url", HttpMethod::Get, request)
             .await

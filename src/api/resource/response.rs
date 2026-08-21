@@ -99,7 +99,7 @@ pub struct Resource {
 /// [`ResourceApi::get_resource_field_data`].
 ///
 /// This is a field *definition* joined to the resource's value for it, so it
-/// repeats much of [`crate::api::metadata::ResourceTypeField`] — but with
+/// repeats much of [`crate::api::metadata::response::ResourceTypeField`] — but with
 /// real JSON numbers rather than quoted strings, and with the extra
 /// `value`/`fref`/`frequired` columns. Configuration columns not named here
 /// are kept in [`Self::extra`].
@@ -208,7 +208,7 @@ pub struct AlternativeFile {
 /// [`ResourceApi::get_resource_collections`].
 ///
 /// Deliberately narrow — this endpoint reports only these three columns, not
-/// the full [`crate::api::collection::Collection`] row.
+/// the full [`crate::api::collection::response::Collection`] row.
 #[non_exhaustive]
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]

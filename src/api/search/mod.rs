@@ -1,11 +1,11 @@
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 
-pub use request::{DoSearchRequest, FetchRows, SearchGetPreviewsRequest};
-pub use response::SearchResults;
+use request::{DoSearch, FetchRows, SearchGetPreviews};
+use response::SearchResults;
 
 /// Sub-API for search endpoints.
 #[derive(Debug)]
@@ -21,11 +21,11 @@ impl<'a> SearchApi<'a> {
     /// Performs a search and returns matching resources.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DoSearchRequest`]
+    /// * `request` - Parameters built via [`DoSearch`]
     ///
     /// ## Returns
     ///
-    /// [`SearchResults::Paged`] when [`DoSearchRequest::fetchrows`] is
+    /// [`SearchResults::Paged`] when [`DoSearch::fetchrows`] is
     /// [`FetchRows::page`], otherwise [`SearchResults::Flat`].
     ///
     /// ## Errors
@@ -36,16 +36,16 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest, FetchRows}};
+    /// # use resourcespace_client::{Client, api::search::request::{DoSearch, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
-    ///     .do_search(DoSearchRequest::new("cat").sort(SortOrder::Desc))
+    ///     .do_search(DoSearch::new("cat").sort(SortOrder::Desc))
     ///     .await?;
     ///
     /// let specific_results = client.search()
     ///     .do_search(
-    ///         DoSearchRequest::new("cat")
+    ///         DoSearch::new("cat")
     ///             .fetchrows(FetchRows::limit(100))
     ///             .offset(50)
     ///             .archive(0)
@@ -54,7 +54,7 @@ impl<'a> SearchApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<SearchResults, Error> {
+    pub async fn do_search(&self, request: DoSearch) -> Result<SearchResults, Error> {
         self.client
             .send_request("do_search", HttpMethod::Get, request)
             .await
@@ -63,14 +63,14 @@ impl<'a> SearchApi<'a> {
     /// Performs a search and returns matching resources including URLs for requested preview sizes.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SearchGetPreviewsRequest`]
+    /// * `request` - Parameters built via [`SearchGetPreviews`]
     ///
     /// ## Returns
     ///
-    /// [`SearchResults::Paged`] when [`SearchGetPreviewsRequest::fetchrows`]
+    /// [`SearchResults::Paged`] when [`SearchGetPreviews::fetchrows`]
     /// is [`FetchRows::page`], otherwise [`SearchResults::Flat`]. Each row
     /// has a `url_<size>` key per requested size in
-    /// [`SearchGetPreviewsRequest::getsizes`].
+    /// [`SearchGetPreviews::getsizes`].
     ///
     /// ## Errors
     ///
@@ -80,16 +80,16 @@ impl<'a> SearchApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{SearchGetPreviewsRequest, FetchRows}};
+    /// # use resourcespace_client::{Client, api::search::request::{SearchGetPreviews, FetchRows}};
     /// # use resourcespace_client::api::SortOrder;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let results = client.search()
-    ///     .search_get_previews(SearchGetPreviewsRequest::new("cat").getsizes("thm,scr"))
+    ///     .search_get_previews(SearchGetPreviews::new("cat").getsizes("thm,scr"))
     ///     .await?;
     ///
     /// let specific_results = client.search()
     ///     .search_get_previews(
-    ///         SearchGetPreviewsRequest::new("cat")
+    ///         SearchGetPreviews::new("cat")
     ///             .getsizes("thm,scr,pre")
     ///             .previewext("jpg")
     ///             .sort(SortOrder::Desc)
@@ -101,7 +101,7 @@ impl<'a> SearchApi<'a> {
     /// ```
     pub async fn search_get_previews(
         &self,
-        request: SearchGetPreviewsRequest,
+        request: SearchGetPreviews,
     ) -> Result<SearchResults, Error> {
         self.client
             .send_request("search_get_previews", HttpMethod::Get, request)

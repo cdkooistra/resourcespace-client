@@ -5,12 +5,12 @@ use validator::Validate;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 mod shared;
 
-pub use request::{DoReportRequest, GetDailyStatSummaryRequest, GetSystemStatusRequest};
-pub use response::{DailyStat, Report, SystemCheck, SystemStatus};
+use request::{DoReport, GetDailyStatSummary, GetSystemStatus};
+use response::{DailyStat, Report, SystemCheck, SystemStatus};
 
 /// Sub-API for system endpoints.
 #[derive(Debug)]
@@ -26,7 +26,7 @@ impl<'a> SystemApi<'a> {
     /// Get system status - healthcheck information.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetSystemStatusRequest`]
+    /// * `request` - Parameters built via [`GetSystemStatus`]
     ///
     /// ## Returns
     ///
@@ -34,7 +34,7 @@ impl<'a> SystemApi<'a> {
     /// [`SystemCheck`] per healthcheck performed. Which checks run is
     /// configuration dependent (e.g. `mysql_log_transactions`).
     ///
-    /// In [`GetSystemStatusRequest::basic`] mode `ResourceSpace` returns early
+    /// In [`GetSystemStatus::basic`] mode `ResourceSpace` returns early
     /// after testing database connectivity only, so
     /// [`SystemStatus::results`] is empty — that is not the same as all
     /// checks having passed.
@@ -47,11 +47,11 @@ impl<'a> SystemApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::system::GetSystemStatusRequest};
+    /// # use resourcespace_client::{Client, api::system::request::GetSystemStatus};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let status = client
     ///     .system()
-    ///     .get_system_status(GetSystemStatusRequest::new())
+    ///     .get_system_status(GetSystemStatus::new())
     ///     .await?;
     /// for (name, check) in &status.results {
     ///     println!("{name}: {}", check.status);
@@ -60,15 +60,12 @@ impl<'a> SystemApi<'a> {
     /// // Rapid database-connectivity check only.
     /// let basic = client
     ///     .system()
-    ///     .get_system_status(GetSystemStatusRequest::new().basic(true))
+    ///     .get_system_status(GetSystemStatus::new().basic(true))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_system_status(
-        &self,
-        request: GetSystemStatusRequest,
-    ) -> Result<SystemStatus, Error> {
+    pub async fn get_system_status(&self, request: GetSystemStatus) -> Result<SystemStatus, Error> {
         self.client
             .send_request("get_system_status", HttpMethod::Get, request)
             .await
@@ -79,7 +76,7 @@ impl<'a> SystemApi<'a> {
     /// Note max 365 days as only the current and previous year's data is accessed.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetDailyStatSummaryRequest`]
+    /// * `request` - Parameters built via [`GetDailyStatSummary`]
     ///
     /// ## Returns
     ///
@@ -93,23 +90,23 @@ impl<'a> SystemApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::system::GetDailyStatSummaryRequest};
+    /// # use resourcespace_client::{Client, api::system::request::GetDailyStatSummary};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Default — last 30 days
     /// let stats = client.system()
-    ///     .get_daily_stat_summary(GetDailyStatSummaryRequest::new())
+    ///     .get_daily_stat_summary(GetDailyStatSummary::new())
     ///     .await?;
     ///
     /// // Last 7 days
     /// let stats = client.system()
-    ///     .get_daily_stat_summary(GetDailyStatSummaryRequest::new().days(7))
+    ///     .get_daily_stat_summary(GetDailyStatSummary::new().days(7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_daily_stat_summary(
         &self,
-        request: GetDailyStatSummaryRequest,
+        request: GetDailyStatSummary,
     ) -> Result<Vec<DailyStat>, Error> {
         request
             .validate()
@@ -151,7 +148,7 @@ impl<'a> SystemApi<'a> {
     /// Run a report over a date range.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DoReportRequest`]
+    /// * `request` - Parameters built via [`DoReport`]
     ///
     /// ## Returns
     ///
@@ -172,18 +169,18 @@ impl<'a> SystemApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::system::DoReportRequest;
+    /// # use resourcespace_client::api::system::request::DoReport;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let rows = client
     ///     .system()
-    ///     .do_report(DoReportRequest::new(1).from_date("2026-01-01"))
+    ///     .do_report(DoReport::new(1).from_date("2026-01-01"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn do_report(
         &self,
-        request: DoReportRequest,
+        request: DoReport,
     ) -> Result<Vec<HashMap<String, Option<String>>>, Error> {
         self.client
             .send_request("do_report", HttpMethod::Get, request)

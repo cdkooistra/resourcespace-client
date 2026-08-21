@@ -6,17 +6,15 @@ use crate::error::Error;
 use super::shared::AjaxEnvelope;
 use response::CreatedField;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 mod shared;
 
-pub use request::{
-    AddResourceNodesMultiRequest, AddResourceNodesRequest, CreateResourceTypeFieldRequest,
-    FieldIdentifier, GetFieldOptionsRequest, GetNodeIdRequest, GetNodesRequest,
-    GetResourceTypeFieldsRequest, SetNodeRequest, ToggleActiveStatesForNodesRequest,
-    UpdateFieldRequest,
+use request::{
+    AddResourceNodes, AddResourceNodesMulti, CreateResourceTypeField, GetFieldOptions, GetNodeId,
+    GetNodes, GetResourceTypeFields, SetNode, ToggleActiveStatesForNodes, UpdateField,
 };
-pub use response::{FieldOptions, Node, ResourceTypeField};
+use response::{FieldOptions, Node, ResourceTypeField};
 
 #[derive(Debug)]
 pub struct MetadataApi<'a> {
@@ -32,11 +30,11 @@ impl<'a> MetadataApi<'a> {
     /// For a given field, return all the available tags (nodes) or selectable options.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetFieldOptionsRequest`]
+    /// * `request` - Parameters built via [`GetFieldOptions`]
     ///
     /// ## Returns
     ///
-    /// [`FieldOptions::Nodes`] when [`GetFieldOptionsRequest::nodeinfo`] is
+    /// [`FieldOptions::Nodes`] when [`GetFieldOptions::nodeinfo`] is
     /// set, otherwise [`FieldOptions::Names`]. The node records here omit
     /// `resource_type_field`, unlike [`Self::get_nodes`].
     ///
@@ -47,19 +45,16 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::GetFieldOptionsRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::GetFieldOptions};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let options = client
     ///     .metadata()
-    ///     .get_field_options(GetFieldOptionsRequest::new("keywords").nodeinfo(true))
+    ///     .get_field_options(GetFieldOptions::new("keywords").nodeinfo(true))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_field_options(
-        &self,
-        request: GetFieldOptionsRequest,
-    ) -> Result<FieldOptions, Error> {
+    pub async fn get_field_options(&self, request: GetFieldOptions) -> Result<FieldOptions, Error> {
         self.client
             .send_request("get_field_options", HttpMethod::Get, request)
             .await
@@ -68,7 +63,7 @@ impl<'a> MetadataApi<'a> {
     /// Find a node ID (entry in a fixed tag field) given the name of the node.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetNodeIdRequest`]
+    /// * `request` - Parameters built via [`GetNodeId`]
     ///
     /// ## Returns
     ///
@@ -81,16 +76,16 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::GetNodeIdRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::GetNodeId};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let node_id = client
     ///     .metadata()
-    ///     .get_node_id(GetNodeIdRequest::new("Landscape", 12))
+    ///     .get_node_id(GetNodeId::new("Landscape", 12))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_node_id(&self, request: GetNodeIdRequest) -> Result<u32, Error> {
+    pub async fn get_node_id(&self, request: GetNodeId) -> Result<u32, Error> {
         self.client
             .send_request("get_node_id", HttpMethod::Get, request)
             .await
@@ -99,12 +94,12 @@ impl<'a> MetadataApi<'a> {
     /// Get all nodes (fixed keywords) from database for a specific metadata field or parent.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetNodesRequest`]
+    /// * `request` - Parameters built via [`GetNodes`]
     ///
     /// ## Returns
     ///
     /// Every node on the field, or only the children of
-    /// [`GetNodesRequest::parent`] when that is set.
+    /// [`GetNodes::parent`] when that is set.
     ///
     /// ## Errors
     ///
@@ -113,15 +108,15 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::GetNodesRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::GetNodes};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// for node in client.metadata().get_nodes(GetNodesRequest::new(12)).await? {
+    /// for node in client.metadata().get_nodes(GetNodes::new(12)).await? {
     ///     println!("{} = {}", node.node_id, node.name);
     /// }
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_nodes(&self, request: GetNodesRequest) -> Result<Vec<Node>, Error> {
+    pub async fn get_nodes(&self, request: GetNodes) -> Result<Vec<Node>, Error> {
         self.client
             .send_request("get_nodes", HttpMethod::Get, request)
             .await
@@ -130,7 +125,7 @@ impl<'a> MetadataApi<'a> {
     /// Add all node IDs (field options) in the list to a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`AddResourceNodesRequest`]
+    /// * `request` - Parameters built via [`AddResourceNodes`]
     ///
     /// ## Returns
     ///
@@ -144,19 +139,16 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::AddResourceNodesRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::AddResourceNodes};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .metadata()
-    ///     .add_resource_nodes(AddResourceNodesRequest::new(1234, [87, 88]))
+    ///     .add_resource_nodes(AddResourceNodes::new(1234, [87, 88]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn add_resource_nodes(
-        &self,
-        request: AddResourceNodesRequest,
-    ) -> Result<bool, Error> {
+    pub async fn add_resource_nodes(&self, request: AddResourceNodes) -> Result<bool, Error> {
         self.client
             .send_request("add_resource_nodes", HttpMethod::Post, request)
             .await
@@ -165,7 +157,7 @@ impl<'a> MetadataApi<'a> {
     /// Add all node IDs (field options) in the list to the resources specified.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`AddResourceNodesMultiRequest`]
+    /// * `request` - Parameters built via [`AddResourceNodesMulti`]
     ///
     /// ## Returns
     ///
@@ -178,18 +170,18 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::AddResourceNodesMultiRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::AddResourceNodesMulti};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .metadata()
-    ///     .add_resource_nodes_multi(AddResourceNodesMultiRequest::new([1234, 1235], [87]))
+    ///     .add_resource_nodes_multi(AddResourceNodesMulti::new([1234, 1235], [87]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn add_resource_nodes_multi(
         &self,
-        request: AddResourceNodesMultiRequest,
+        request: AddResourceNodesMulti,
     ) -> Result<bool, Error> {
         self.client
             .send_request("add_resource_nodes_multi", HttpMethod::Post, request)
@@ -199,7 +191,7 @@ impl<'a> MetadataApi<'a> {
     /// Create a new node (option for a fixed list field).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SetNodeRequest`]
+    /// * `request` - Parameters built via [`SetNode`]
     ///
     /// ## Returns
     ///
@@ -216,23 +208,23 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::SetNodeRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::SetNode};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Create
     /// let node_id = client
     ///     .metadata()
-    ///     .set_node(SetNodeRequest::new(None, 12, "Landscape"))
+    ///     .set_node(SetNode::new(None, 12, "Landscape"))
     ///     .await?;
     ///
     /// // Rename that node
     /// client
     ///     .metadata()
-    ///     .set_node(SetNodeRequest::new(node_id, 12, "Landscapes"))
+    ///     .set_node(SetNode::new(node_id, 12, "Landscapes"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn set_node(&self, request: SetNodeRequest) -> Result<u32, Error> {
+    pub async fn set_node(&self, request: SetNode) -> Result<u32, Error> {
         self.client
             .send_request("set_node", HttpMethod::Post, request)
             .await
@@ -243,7 +235,7 @@ impl<'a> MetadataApi<'a> {
     /// Available from RS version 10.3+ and requires permission `a`.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetResourceTypeFieldsRequest`]
+    /// * `request` - Parameters built via [`GetResourceTypeFields`]
     ///
     /// ## Returns
     ///
@@ -256,19 +248,19 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::GetResourceTypeFieldsRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::GetResourceTypeFields};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Every fixed-list (type 9) field
     /// let fields = client
     ///     .metadata()
-    ///     .get_resource_type_fields(GetResourceTypeFieldsRequest::new().field_type_ids([9]))
+    ///     .get_resource_type_fields(GetResourceTypeFields::new().field_type_ids([9]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_resource_type_fields(
         &self,
-        request: GetResourceTypeFieldsRequest,
+        request: GetResourceTypeFields,
     ) -> Result<Vec<ResourceTypeField>, Error> {
         self.client
             .send_request("get_resource_type_fields", HttpMethod::Get, request)
@@ -280,7 +272,7 @@ impl<'a> MetadataApi<'a> {
     /// Available from RS version 10.3+ and requires permission `a`.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`CreateResourceTypeFieldRequest`]
+    /// * `request` - Parameters built via [`CreateResourceTypeField`]
     ///
     /// ## Returns
     ///
@@ -296,19 +288,19 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::CreateResourceTypeFieldRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::CreateResourceTypeField};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Type 3 is a dropdown list; pass 0 as the resource type for a global field.
     /// let field_id = client
     ///     .metadata()
-    ///     .create_resource_type_field(CreateResourceTypeFieldRequest::new("Region", [0], "3"))
+    ///     .create_resource_type_field(CreateResourceTypeField::new("Region", [0], "3"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn create_resource_type_field(
         &self,
-        request: CreateResourceTypeFieldRequest,
+        request: CreateResourceTypeField,
     ) -> Result<u32, Error> {
         let envelope: AjaxEnvelope<CreatedField> = self
             .client
@@ -322,7 +314,7 @@ impl<'a> MetadataApi<'a> {
     /// Available from RS version 10.4+ and requires permission `k`.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ToggleActiveStatesForNodesRequest`]
+    /// * `request` - Parameters built via [`ToggleActiveStatesForNodes`]
     ///
     /// ## Returns
     ///
@@ -336,18 +328,18 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::metadata::ToggleActiveStatesForNodesRequest};
+    /// # use resourcespace_client::{Client, api::metadata::request::ToggleActiveStatesForNodes};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let states = client
     ///     .metadata()
-    ///     .toggle_active_state_for_nodes(ToggleActiveStatesForNodesRequest::new([87]))
+    ///     .toggle_active_state_for_nodes(ToggleActiveStatesForNodes::new([87]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn toggle_active_state_for_nodes(
         &self,
-        request: ToggleActiveStatesForNodesRequest,
+        request: ToggleActiveStatesForNodes,
     ) -> Result<HashMap<u32, u8>, Error> {
         self.client
             .send_request("toggle_active_state_for_nodes", HttpMethod::Post, request)
@@ -360,7 +352,7 @@ impl<'a> MetadataApi<'a> {
     /// automatically set to `true`.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`UpdateFieldRequest`]
+    /// * `request` - Parameters built via [`UpdateField`]
     ///
     /// ## Returns
     ///
@@ -376,7 +368,7 @@ impl<'a> MetadataApi<'a> {
     ///
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::metadata::UpdateFieldRequest;
+    /// # use resourcespace_client::api::metadata::request::UpdateField;
     /// # use resourcespace_client::api::FieldValue;
     /// # #[tokio::main] async fn main() -> Result<(), Box<dyn std::error::Error>> {
     /// # let client = Client::builder().base_url("https://example.com").user_key("user", "key").build().await?;
@@ -384,21 +376,21 @@ impl<'a> MetadataApi<'a> {
     ///
     /// // single text value
     /// client.metadata().update_field(
-    ///     UpdateFieldRequest::new(rs_id, "name", FieldValue::from("Doe, John"))
+    ///     UpdateField::new(rs_id, "name", FieldValue::from("Doe, John"))
     /// ).await?;
     ///
     /// // node IDs
     /// client.metadata().update_field(
-    ///     UpdateFieldRequest::new(rs_id, "nodes", FieldValue::from([1u32, 2]))
+    ///     UpdateField::new(rs_id, "nodes", FieldValue::from([1u32, 2]))
     /// ).await?;
     ///
     /// // multiple keywords, auto-quoted if containing commas
     /// client.metadata().update_field(
-    ///     UpdateFieldRequest::new(rs_id, "name_keywords", FieldValue::from(["Doe, John", "Smith, Jane"]))
+    ///     UpdateField::new(rs_id, "name_keywords", FieldValue::from(["Doe, John", "Smith, Jane"]))
     /// ).await?;
     /// # Ok(()) }
     /// ```
-    pub async fn update_field(&self, request: UpdateFieldRequest) -> Result<bool, Error> {
+    pub async fn update_field(&self, request: UpdateField) -> Result<bool, Error> {
         self.client
             .send_request("update_field", HttpMethod::Post, request)
             .await

@@ -15,7 +15,7 @@ use super::MetadataApi;
 /// making it ergonomic to reference fields at call sites:
 ///
 /// ```no_run
-/// # use resourcespace_client::api::metadata::FieldIdentifier;
+/// # use resourcespace_client::api::metadata::request::FieldIdentifier;
 /// let _ = FieldIdentifier::from(72u32);       // numeric ID
 /// let _ = FieldIdentifier::from("title");     // shortname
 /// ```
@@ -56,7 +56,7 @@ impl Serialize for FieldIdentifier {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetFieldOptionsRequest {
+pub struct GetFieldOptions {
     /// The ID or shortname of the metadata field to retrieve options for.
     #[serde(rename = "ref")]
     pub field: FieldIdentifier,
@@ -64,7 +64,7 @@ pub struct GetFieldOptionsRequest {
     pub nodeinfo: Option<bool>,
 }
 
-impl GetFieldOptionsRequest {
+impl GetFieldOptions {
     pub fn new(field: impl Into<FieldIdentifier>) -> Self {
         Self {
             field: field.into(),
@@ -82,14 +82,14 @@ impl GetFieldOptionsRequest {
 /// Parameters for [`MetadataApi::get_node_id`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetNodeIdRequest {
+pub struct GetNodeId {
     /// The name of the node to look up.
     pub value: String,
     /// The ID of the resource type field the node belongs to.
     pub resource_type_field: u32,
 }
 
-impl GetNodeIdRequest {
+impl GetNodeId {
     pub fn new(value: impl Into<String>, resource_type_field: u32) -> Self {
         Self {
             value: value.into(),
@@ -102,7 +102,7 @@ impl GetNodeIdRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetNodesRequest {
+pub struct GetNodes {
     /// The ID of the metadata field to retrieve nodes from.
     #[serde(rename = "ref")]
     pub field_id: u32,
@@ -122,7 +122,7 @@ pub struct GetNodesRequest {
     pub order_by_translated_name: Option<bool>,
 }
 
-impl GetNodesRequest {
+impl GetNodes {
     #[must_use]
     pub fn new(field_id: u32) -> Self {
         Self {
@@ -183,14 +183,14 @@ impl GetNodesRequest {
 /// Parameters for [`MetadataApi::add_resource_nodes`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct AddResourceNodesRequest {
+pub struct AddResourceNodes {
     /// The ID of the resource to add nodes to.
     pub resource: u32,
     /// Comma-separated list of node IDs to add to the resource.
     pub nodestring: List<u32>,
 }
 
-impl AddResourceNodesRequest {
+impl AddResourceNodes {
     pub fn new(resource: u32, nodestring: impl Into<List<u32>>) -> Self {
         Self {
             resource,
@@ -202,7 +202,7 @@ impl AddResourceNodesRequest {
 /// Parameters for [`MetadataApi::add_resource_nodes_multi`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct AddResourceNodesMultiRequest {
+pub struct AddResourceNodesMulti {
     /// Comma-separated list of resource IDs to add nodes to.
     ///
     /// Sent as `resources`; `ResourceSpace` silently substitutes an empty
@@ -215,7 +215,7 @@ pub struct AddResourceNodesMultiRequest {
     pub node_ids: List<u32>,
 }
 
-impl AddResourceNodesMultiRequest {
+impl AddResourceNodesMulti {
     pub fn new(resource_id: impl Into<List<u32>>, node_ids: impl Into<List<u32>>) -> Self {
         Self {
             resource_id: resource_id.into(),
@@ -228,7 +228,7 @@ impl AddResourceNodesMultiRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SetNodeRequest {
+pub struct SetNode {
     /// The ID of an existing node to update, or `None` to create a new one.
     ///
     /// Serialized as the literal string `NULL` when `None`, which is what the
@@ -248,7 +248,7 @@ pub struct SetNodeRequest {
     pub returnexisting: Option<bool>,
 }
 
-impl SetNodeRequest {
+impl SetNode {
     /// Pass `None` as `node_id` to create a node, or `Some(id)` to update one.
     pub fn new(
         node_id: impl Into<Option<u32>>,
@@ -287,7 +287,7 @@ impl SetNodeRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct GetResourceTypeFieldsRequest {
+pub struct GetResourceTypeFields {
     /// Comma-separated list of resource type IDs to filter fields by.
     #[serde(rename = "by_resource_types")]
     pub resource_type_ids: Option<List<u32>>,
@@ -298,7 +298,7 @@ pub struct GetResourceTypeFieldsRequest {
     pub field_type_ids: Option<List<u32>>,
 }
 
-impl GetResourceTypeFieldsRequest {
+impl GetResourceTypeFields {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -326,7 +326,7 @@ impl GetResourceTypeFieldsRequest {
 /// Parameters for [`MetadataApi::create_resource_type_field`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CreateResourceTypeFieldRequest {
+pub struct CreateResourceTypeField {
     /// The name of the new metadata field.
     pub name: String,
     /// Comma-separated list of resource type IDs this field should apply to.
@@ -336,7 +336,7 @@ pub struct CreateResourceTypeFieldRequest {
     pub r#type: String,
 }
 
-impl CreateResourceTypeFieldRequest {
+impl CreateResourceTypeField {
     pub fn new(
         name: impl Into<String>,
         resource_type_ids: impl Into<List<u32>>,
@@ -354,14 +354,14 @@ impl CreateResourceTypeFieldRequest {
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ToggleActiveStatesForNodesRequest {
+pub struct ToggleActiveStatesForNodes {
     /// JSON-encoded array of node IDs whose active states should be toggled.
     #[serde_as(as = "JsonString")]
     #[serde(rename = "refs")]
     pub node_ids: Vec<u32>,
 }
 
-impl ToggleActiveStatesForNodesRequest {
+impl ToggleActiveStatesForNodes {
     pub fn new(node_ids: impl Into<List<u32>>) -> Self {
         Self {
             node_ids: node_ids.into().into_inner(),
@@ -372,7 +372,7 @@ impl ToggleActiveStatesForNodesRequest {
 /// Parameters for [`MetadataApi::update_field`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
-pub struct UpdateFieldRequest {
+pub struct UpdateField {
     /// The ID of the resource to update.
     pub resource: u32,
     /// The ID or shortname of the metadata field to set a value on.
@@ -383,7 +383,7 @@ pub struct UpdateFieldRequest {
 }
 
 // Serializes FieldValue::Nodes with an extra `nodevalues = true` entry.
-impl Serialize for UpdateFieldRequest {
+impl Serialize for UpdateField {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         use serde::ser::SerializeMap;
 
@@ -399,7 +399,7 @@ impl Serialize for UpdateFieldRequest {
     }
 }
 
-impl UpdateFieldRequest {
+impl UpdateField {
     pub fn new(
         resource: u32,
         field: impl Into<FieldIdentifier>,

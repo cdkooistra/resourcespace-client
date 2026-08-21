@@ -12,7 +12,7 @@ use super::{SystemApi, SystemStatus};
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct GetSystemStatusRequest {
+pub struct GetSystemStatus {
     /// If true, `ResourceSpace` checks database connectivity only and returns
     /// early — [`SystemStatus::results`] will be empty.
     #[serde(
@@ -22,7 +22,7 @@ pub struct GetSystemStatusRequest {
     pub basic: Option<bool>,
 }
 
-impl GetSystemStatusRequest {
+impl GetSystemStatus {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -39,7 +39,7 @@ impl GetSystemStatusRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DoReportRequest {
+pub struct DoReport {
     /// The ID of the report to run, as returned by
     /// [`SystemApi::get_reports`].
     pub report_ref: u32,
@@ -50,7 +50,7 @@ pub struct DoReportRequest {
     pub to_date: Option<String>,
 }
 
-impl DoReportRequest {
+impl DoReport {
     #[must_use]
     pub fn new(report_ref: u32) -> Self {
         Self {
@@ -77,13 +77,13 @@ impl DoReportRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]
-pub struct GetDailyStatSummaryRequest {
+pub struct GetDailyStatSummary {
     /// Number of past days to include in the summary (1–365). Defaults to 30 when omitted.
     #[validate(range(min = 1, max = 365))]
     pub days: Option<u16>,
 }
 
-impl GetDailyStatSummaryRequest {
+impl GetDailyStatSummary {
     #[must_use]
     pub fn new() -> Self {
         Self::default()

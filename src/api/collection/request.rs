@@ -13,7 +13,7 @@ use super::CollectionApi;
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct AddResourceToCollectionRequest {
+pub struct AddResourceToCollection {
     /// The ID of the resource to add.
     pub resource: u32,
     /// The ID of the collection to add the resource to.
@@ -23,7 +23,7 @@ pub struct AddResourceToCollectionRequest {
     pub search: Option<String>,
 }
 
-impl AddResourceToCollectionRequest {
+impl AddResourceToCollection {
     #[must_use]
     pub fn new(resource: u32, collection: u32) -> Self {
         Self {
@@ -43,14 +43,14 @@ impl AddResourceToCollectionRequest {
 /// Parameters for [`CollectionApi::remove_resource_from_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct RemoveResourceFromCollectionRequest {
+pub struct RemoveResourceFromCollection {
     /// The ID of the resource to remove.
     pub resource: u32,
     /// The ID of the collection to remove the resource from.
     pub collection: u32,
 }
 
-impl RemoveResourceFromCollectionRequest {
+impl RemoveResourceFromCollection {
     #[must_use]
     pub fn new(resource: u32, collection: u32) -> Self {
         Self {
@@ -64,7 +64,7 @@ impl RemoveResourceFromCollectionRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CreateCollectionRequest {
+pub struct CreateCollection {
     /// The name of the new collection.
     pub name: String,
     /// If true, marks this collection as an upload collection.
@@ -75,7 +75,7 @@ pub struct CreateCollectionRequest {
     pub forupload: Option<bool>,
 }
 
-impl CreateCollectionRequest {
+impl CreateCollection {
     pub fn new(name: impl Into<String>) -> Self {
         Self {
             name: name.into(),
@@ -93,7 +93,7 @@ impl CreateCollectionRequest {
 /// Parameters for [`CollectionApi::delete_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DeleteCollectionRequest {
+pub struct DeleteCollection {
     /// The ID of the collection to delete.
     ///
     /// Sent as `ref`, not `collection`. The knowledge base documents this
@@ -103,7 +103,7 @@ pub struct DeleteCollectionRequest {
     pub collection: u32,
 }
 
-impl DeleteCollectionRequest {
+impl DeleteCollection {
     #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
@@ -114,7 +114,7 @@ impl DeleteCollectionRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct SearchPublicCollectionsRequest {
+pub struct SearchPublicCollections {
     /// Optional search string to filter collections by name.
     pub search: Option<String>,
     /// Field name to order results by.
@@ -137,7 +137,7 @@ pub struct SearchPublicCollectionsRequest {
     pub exclude_public: Option<bool>,
 }
 
-impl SearchPublicCollectionsRequest {
+impl SearchPublicCollections {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -177,13 +177,13 @@ impl SearchPublicCollectionsRequest {
 /// Parameters for [`CollectionApi::get_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetCollectionRequest {
+pub struct GetCollection {
     /// The ID of the collection to retrieve.
     #[serde(rename = "ref")]
     pub collection_id: u32,
 }
 
-impl GetCollectionRequest {
+impl GetCollection {
     #[must_use]
     pub fn new(collection_id: u32) -> Self {
         Self { collection_id }
@@ -194,7 +194,7 @@ impl GetCollectionRequest {
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SaveCollectionRequest {
+pub struct SaveCollection {
     /// The ID of the collection to save.
     #[serde(rename = "ref")]
     pub collection_id: u32,
@@ -203,7 +203,7 @@ pub struct SaveCollectionRequest {
     pub coldata: SaveCollectionColdata,
 }
 
-impl SaveCollectionRequest {
+impl SaveCollection {
     #[must_use]
     pub fn new(collection_id: u32, coldata: SaveCollectionColdata) -> Self {
         Self {
@@ -321,7 +321,7 @@ impl SaveCollectionColdata {
 /// Parameters for [`CollectionApi::show_hide_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ShowHideCollectionRequest {
+pub struct ShowHideCollection {
     /// The ID of the collection to show or hide.
     pub collection: u32,
     /// If true, shows the collection in the drop-down list. Otherwise, hides it.
@@ -331,7 +331,7 @@ pub struct ShowHideCollectionRequest {
     pub user: u32,
 }
 
-impl ShowHideCollectionRequest {
+impl ShowHideCollection {
     #[must_use]
     pub fn new(collection: u32, show: bool, user: u32) -> Self {
         Self {
@@ -345,12 +345,12 @@ impl ShowHideCollectionRequest {
 /// Parameters for [`CollectionApi::send_collection_to_admin`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SendCollectionToAdminRequest {
+pub struct SendCollectionToAdmin {
     /// The ID of the collection to send to the administrator for review.
     pub collection: u32,
 }
 
-impl SendCollectionToAdminRequest {
+impl SendCollectionToAdmin {
     #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
@@ -360,12 +360,12 @@ impl SendCollectionToAdminRequest {
 /// Parameters for [`CollectionApi::get_featured_collections`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetFeaturedCollectionsRequest {
+pub struct GetFeaturedCollections {
     /// The ID of the parent featured collection (category) to retrieve children for. Use 0 for top-level.
     pub parent: u32,
 }
 
-impl GetFeaturedCollectionsRequest {
+impl GetFeaturedCollections {
     #[must_use]
     pub fn new(parent: u32) -> Self {
         Self { parent }
@@ -375,12 +375,12 @@ impl GetFeaturedCollectionsRequest {
 /// Parameters for [`CollectionApi::delete_resources_in_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DeleteResourcesInCollectionRequest {
+pub struct DeleteResourcesInCollection {
     /// The ID of the collection whose resources should all be deleted.
     pub collection: u32,
 }
 
-impl DeleteResourcesInCollectionRequest {
+impl DeleteResourcesInCollection {
     #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
@@ -390,13 +390,13 @@ impl DeleteResourcesInCollectionRequest {
 /// Parameters for [`CollectionApi::get_collections_resource_count`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetCollectionsResourceCountRequest {
+pub struct GetCollectionsResourceCount {
     /// Comma-separated list of collection IDs to retrieve resource counts for.
     #[serde(rename = "refs")]
     pub collection_ids: List<u32>,
 }
 
-impl GetCollectionsResourceCountRequest {
+impl GetCollectionsResourceCount {
     pub fn new(collection_ids: impl Into<List<u32>>) -> Self {
         Self {
             collection_ids: collection_ids.into(),

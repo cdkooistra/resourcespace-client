@@ -9,13 +9,13 @@ use super::PluginApi;
 
 /// Parameters for [`PluginApi::consentmanager_get_consents`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerGetConsentsRequest {
+pub struct ConsentManagerGetConsents {
     /// The resource ID.
     #[serde(rename = "ref")]
     pub resource: u32,
 }
 
-impl ConsentManagerGetConsentsRequest {
+impl ConsentManagerGetConsents {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -24,12 +24,12 @@ impl ConsentManagerGetConsentsRequest {
 
 /// Parameters for [`PluginApi::licensemanager_get_licenses`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct LicenseManagerGetLicensesRequest {
+pub struct LicenseManagerGetLicenses {
     /// The resource ID.
     pub resource: u32,
 }
 
-impl LicenseManagerGetLicensesRequest {
+impl LicenseManagerGetLicenses {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -38,12 +38,12 @@ impl LicenseManagerGetLicensesRequest {
 
 /// Parameters for [`PluginApi::consentmanager_get_consent`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerGetConsentRequest {
+pub struct ConsentManagerGetConsent {
     /// The consent record ID.
     pub consent: u32,
 }
 
-impl ConsentManagerGetConsentRequest {
+impl ConsentManagerGetConsent {
     #[must_use]
     pub fn new(consent: u32) -> Self {
         Self { consent }
@@ -52,13 +52,13 @@ impl ConsentManagerGetConsentRequest {
 
 /// Parameters for [`PluginApi::consentmanager_delete_consent`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerDeleteConsentRequest {
+pub struct ConsentManagerDeleteConsent {
     /// The consent record ID.
     #[serde(rename = "ref")]
     pub consent: u32,
 }
 
-impl ConsentManagerDeleteConsentRequest {
+impl ConsentManagerDeleteConsent {
     #[must_use]
     pub fn new(consent: u32) -> Self {
         Self { consent }
@@ -67,7 +67,7 @@ impl ConsentManagerDeleteConsentRequest {
 
 /// Parameters for [`PluginApi::consentmanager_batch_link_unlink`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerBatchLinkUnlinkRequest {
+pub struct ConsentManagerBatchLinkUnlink {
     /// The consent record ID to link or unlink.
     pub consent: u32,
     /// The collection containing resources to process.
@@ -77,7 +77,7 @@ pub struct ConsentManagerBatchLinkUnlinkRequest {
     pub unlink: bool,
 }
 
-impl ConsentManagerBatchLinkUnlinkRequest {
+impl ConsentManagerBatchLinkUnlink {
     #[must_use]
     pub fn new(consent: u32, collection: u32, unlink: bool) -> Self {
         Self {
@@ -90,14 +90,14 @@ impl ConsentManagerBatchLinkUnlinkRequest {
 
 /// Parameters for [`PluginApi::consentmanager_link_consent`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerLinkConsentRequest {
+pub struct ConsentManagerLinkConsent {
     /// The consent record ID.
     pub consent: u32,
     /// The resource ID.
     pub resource: u32,
 }
 
-impl ConsentManagerLinkConsentRequest {
+impl ConsentManagerLinkConsent {
     #[must_use]
     pub fn new(consent: u32, resource: u32) -> Self {
         Self { consent, resource }
@@ -106,14 +106,14 @@ impl ConsentManagerLinkConsentRequest {
 
 /// Parameters for [`PluginApi::consentmanager_unlink_consent`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerUnlinkConsentRequest {
+pub struct ConsentManagerUnlinkConsent {
     /// The consent record ID.
     pub consent: u32,
     /// The resource ID.
     pub resource: u32,
 }
 
-impl ConsentManagerUnlinkConsentRequest {
+impl ConsentManagerUnlinkConsent {
     #[must_use]
     pub fn new(consent: u32, resource: u32) -> Self {
         Self { consent, resource }
@@ -123,7 +123,7 @@ impl ConsentManagerUnlinkConsentRequest {
 /// Parameters for [`PluginApi::consentmanager_create_consent`].
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerCreateConsentRequest {
+pub struct ConsentManagerCreateConsent {
     /// The name of the individual giving consent.
     pub name: String,
     /// The email address of the individual.
@@ -138,7 +138,7 @@ pub struct ConsentManagerCreateConsentRequest {
     pub expires: Option<String>,
 }
 
-impl ConsentManagerCreateConsentRequest {
+impl ConsentManagerCreateConsent {
     pub fn new(
         name: impl Into<String>,
         email: impl Into<String>,
@@ -171,7 +171,7 @@ impl ConsentManagerCreateConsentRequest {
 /// Parameters for [`PluginApi::consentmanager_update_consent`].
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerUpdateConsentRequest {
+pub struct ConsentManagerUpdateConsent {
     /// The consent record ID.
     pub consent: u32,
     /// The name of the individual giving consent.
@@ -188,7 +188,7 @@ pub struct ConsentManagerUpdateConsentRequest {
     pub expires: Option<String>,
 }
 
-impl ConsentManagerUpdateConsentRequest {
+impl ConsentManagerUpdateConsent {
     pub fn new(
         consent: u32,
         name: impl Into<String>,
@@ -223,12 +223,12 @@ impl ConsentManagerUpdateConsentRequest {
 /// Parameters for [`PluginApi::consentmanager_get_all_consents`].
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerGetAllConsentsRequest {
+pub struct ConsentManagerGetAllConsents {
     /// Optional search text to filter by the name of the person giving consent.
     pub findtext: Option<String>,
 }
 
-impl ConsentManagerGetAllConsentsRequest {
+impl ConsentManagerGetAllConsents {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -243,12 +243,12 @@ impl ConsentManagerGetAllConsentsRequest {
 
 /// Parameters for [`PluginApi::consentmanager_get_all_consents_by_collection`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerGetAllConsentsByCollectionRequest {
+pub struct ConsentManagerGetAllConsentsByCollection {
     /// The collection ID.
     pub collection: u32,
 }
 
-impl ConsentManagerGetAllConsentsByCollectionRequest {
+impl ConsentManagerGetAllConsentsByCollection {
     #[must_use]
     pub fn new(collection: u32) -> Self {
         Self { collection }
@@ -257,7 +257,7 @@ impl ConsentManagerGetAllConsentsByCollectionRequest {
 
 /// Parameters for [`PluginApi::consentmanager_save_file`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct ConsentManagerSaveFileRequest {
+pub struct ConsentManagerSaveFile {
     /// The consent record ID.
     pub consent: u32,
     /// The filename of the file.
@@ -266,7 +266,7 @@ pub struct ConsentManagerSaveFileRequest {
     pub filedata: Vec<u8>,
 }
 
-impl ConsentManagerSaveFileRequest {
+impl ConsentManagerSaveFile {
     pub fn new(consent: u32, filename: impl Into<String>, filedata: impl Into<Vec<u8>>) -> Self {
         Self {
             consent,
@@ -278,7 +278,7 @@ impl ConsentManagerSaveFileRequest {
 
 /// Parameters for [`PluginApi::faces_set_node`].
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub struct FacesSetNodeRequest {
+pub struct FacesSetNode {
     /// The resource ID to update.
     pub resource: u32,
     /// The unique face reference ID from `resource_face.ref`.
@@ -287,7 +287,7 @@ pub struct FacesSetNodeRequest {
     pub node: u32,
 }
 
-impl FacesSetNodeRequest {
+impl FacesSetNode {
     #[must_use]
     pub fn new(resource: u32, face: u32, node: u32) -> Self {
         Self {

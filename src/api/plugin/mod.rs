@@ -3,18 +3,17 @@ use serde::Serialize;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 
-pub use request::{
-    ConsentManagerBatchLinkUnlinkRequest, ConsentManagerCreateConsentRequest,
-    ConsentManagerDeleteConsentRequest, ConsentManagerGetAllConsentsByCollectionRequest,
-    ConsentManagerGetAllConsentsRequest, ConsentManagerGetConsentRequest,
-    ConsentManagerGetConsentsRequest, ConsentManagerLinkConsentRequest,
-    ConsentManagerSaveFileRequest, ConsentManagerUnlinkConsentRequest,
-    ConsentManagerUpdateConsentRequest, FacesSetNodeRequest, LicenseManagerGetLicensesRequest,
+use request::{
+    ConsentManagerBatchLinkUnlink, ConsentManagerCreateConsent, ConsentManagerDeleteConsent,
+    ConsentManagerGetAllConsents, ConsentManagerGetAllConsentsByCollection,
+    ConsentManagerGetConsent, ConsentManagerGetConsents, ConsentManagerLinkConsent,
+    ConsentManagerSaveFile, ConsentManagerUnlinkConsent, ConsentManagerUpdateConsent, FacesSetNode,
+    LicenseManagerGetLicenses,
 };
-pub use response::{Consent, License};
+use response::{Consent, License};
 
 /// Sub-API for plugin endpoints.
 #[derive(Debug)]
@@ -92,7 +91,7 @@ impl<'a> PluginApi<'a> {
     /// Return all Consent manager consent data for a given resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerGetConsentsRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerGetConsents`]
     ///
     /// ## Returns
     ///
@@ -105,18 +104,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerGetConsentsRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerGetConsents};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let consents = client
     ///     .plugin()
-    ///     .consentmanager_get_consents(ConsentManagerGetConsentsRequest::new(123))
+    ///     .consentmanager_get_consents(ConsentManagerGetConsents::new(123))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_get_consents(
         &self,
-        request: ConsentManagerGetConsentsRequest,
+        request: ConsentManagerGetConsents,
     ) -> Result<Vec<Consent>, Error> {
         self.client
             .send_request("consentmanager_get_consents", HttpMethod::Get, request)
@@ -126,7 +125,7 @@ impl<'a> PluginApi<'a> {
     /// Return all License manager licenses held for a given resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`LicenseManagerGetLicensesRequest`]
+    /// * `request` - Parameters built via [`LicenseManagerGetLicenses`]
     ///
     /// ## Returns
     ///
@@ -139,18 +138,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::LicenseManagerGetLicensesRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::LicenseManagerGetLicenses};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let licenses = client
     ///     .plugin()
-    ///     .licensemanager_get_licenses(LicenseManagerGetLicensesRequest::new(123))
+    ///     .licensemanager_get_licenses(LicenseManagerGetLicenses::new(123))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn licensemanager_get_licenses(
         &self,
-        request: LicenseManagerGetLicensesRequest,
+        request: LicenseManagerGetLicenses,
     ) -> Result<Vec<License>, Error> {
         self.client
             .send_request("licensemanager_get_licenses", HttpMethod::Get, request)
@@ -160,7 +159,7 @@ impl<'a> PluginApi<'a> {
     /// Return all data for a given Consent manager consent record.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerGetConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerGetConsent`]
     ///
     /// ## Returns
     ///
@@ -174,18 +173,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerGetConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerGetConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let consent = client
     ///     .plugin()
-    ///     .consentmanager_get_consent(ConsentManagerGetConsentRequest::new(42))
+    ///     .consentmanager_get_consent(ConsentManagerGetConsent::new(42))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_get_consent(
         &self,
-        request: ConsentManagerGetConsentRequest,
+        request: ConsentManagerGetConsent,
     ) -> Result<Consent, Error> {
         self.client
             .send_request("consentmanager_get_consent", HttpMethod::Get, request)
@@ -195,7 +194,7 @@ impl<'a> PluginApi<'a> {
     /// Delete a Consent manager consent record.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerDeleteConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerDeleteConsent`]
     ///
     /// ## Returns
     ///
@@ -209,18 +208,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerDeleteConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerDeleteConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
-    ///     .consentmanager_delete_consent(ConsentManagerDeleteConsentRequest::new(42))
+    ///     .consentmanager_delete_consent(ConsentManagerDeleteConsent::new(42))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_delete_consent(
         &self,
-        request: ConsentManagerDeleteConsentRequest,
+        request: ConsentManagerDeleteConsent,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_delete_consent", HttpMethod::Get, request)
@@ -230,7 +229,7 @@ impl<'a> PluginApi<'a> {
     /// Link or unlink all resources in a collection with a consent record.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerBatchLinkUnlinkRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerBatchLinkUnlink`]
     ///
     /// ## Returns
     ///
@@ -244,19 +243,19 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerBatchLinkUnlinkRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerBatchLinkUnlink};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// // Link consent 42 to every resource in collection 10.
     /// client
     ///     .plugin()
-    ///     .consentmanager_batch_link_unlink(ConsentManagerBatchLinkUnlinkRequest::new(42, 10, false))
+    ///     .consentmanager_batch_link_unlink(ConsentManagerBatchLinkUnlink::new(42, 10, false))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_batch_link_unlink(
         &self,
-        request: ConsentManagerBatchLinkUnlinkRequest,
+        request: ConsentManagerBatchLinkUnlink,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_batch_link_unlink", HttpMethod::Get, request)
@@ -266,7 +265,7 @@ impl<'a> PluginApi<'a> {
     /// Link a consent record with a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerLinkConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerLinkConsent`]
     ///
     /// ## Returns
     ///
@@ -280,18 +279,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerLinkConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerLinkConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
-    ///     .consentmanager_link_consent(ConsentManagerLinkConsentRequest::new(42, 123))
+    ///     .consentmanager_link_consent(ConsentManagerLinkConsent::new(42, 123))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_link_consent(
         &self,
-        request: ConsentManagerLinkConsentRequest,
+        request: ConsentManagerLinkConsent,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_link_consent", HttpMethod::Get, request)
@@ -301,7 +300,7 @@ impl<'a> PluginApi<'a> {
     /// Unlink a consent record from a resource.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerUnlinkConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerUnlinkConsent`]
     ///
     /// ## Returns
     ///
@@ -315,18 +314,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerUnlinkConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerUnlinkConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
-    ///     .consentmanager_unlink_consent(ConsentManagerUnlinkConsentRequest::new(42, 123))
+    ///     .consentmanager_unlink_consent(ConsentManagerUnlinkConsent::new(42, 123))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_unlink_consent(
         &self,
-        request: ConsentManagerUnlinkConsentRequest,
+        request: ConsentManagerUnlinkConsent,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_unlink_consent", HttpMethod::Get, request)
@@ -336,7 +335,7 @@ impl<'a> PluginApi<'a> {
     /// Create a new consent record.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerCreateConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerCreateConsent`]
     ///
     /// ## Returns
     ///
@@ -350,12 +349,12 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerCreateConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerCreateConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let consent_id = client
     ///     .plugin()
     ///     .consentmanager_create_consent(
-    ///         ConsentManagerCreateConsentRequest::new("Joe Smith", "joe@example.com", "", "Website")
+    ///         ConsentManagerCreateConsent::new("Joe Smith", "joe@example.com", "", "Website")
     ///             .expires("2027-01-01"),
     ///     )
     ///     .await?;
@@ -364,7 +363,7 @@ impl<'a> PluginApi<'a> {
     /// ```
     pub async fn consentmanager_create_consent(
         &self,
-        request: ConsentManagerCreateConsentRequest,
+        request: ConsentManagerCreateConsent,
     ) -> Result<u32, Error> {
         self.client
             .send_request("consentmanager_create_consent", HttpMethod::Get, request)
@@ -374,7 +373,7 @@ impl<'a> PluginApi<'a> {
     /// Update a consent record.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerUpdateConsentRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerUpdateConsent`]
     ///
     /// ## Returns
     ///
@@ -388,12 +387,12 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerUpdateConsentRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerUpdateConsent};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
     ///     .consentmanager_update_consent(
-    ///         ConsentManagerUpdateConsentRequest::new(42, "Joe Smith", "joe@example.com", "", "Website")
+    ///         ConsentManagerUpdateConsent::new(42, "Joe Smith", "joe@example.com", "", "Website")
     ///             .notes("Updated by API"),
     ///     )
     ///     .await?;
@@ -402,7 +401,7 @@ impl<'a> PluginApi<'a> {
     /// ```
     pub async fn consentmanager_update_consent(
         &self,
-        request: ConsentManagerUpdateConsentRequest,
+        request: ConsentManagerUpdateConsent,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_update_consent", HttpMethod::Get, request)
@@ -412,7 +411,7 @@ impl<'a> PluginApi<'a> {
     /// Fetch all consent records, optionally filtered by search text.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerGetAllConsentsRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerGetAllConsents`]
     ///
     /// ## Returns
     ///
@@ -425,18 +424,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerGetAllConsentsRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerGetAllConsents};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let consents = client
     ///     .plugin()
-    ///     .consentmanager_get_all_consents(ConsentManagerGetAllConsentsRequest::new().findtext("Smith"))
+    ///     .consentmanager_get_all_consents(ConsentManagerGetAllConsents::new().findtext("Smith"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_get_all_consents(
         &self,
-        request: ConsentManagerGetAllConsentsRequest,
+        request: ConsentManagerGetAllConsents,
     ) -> Result<Vec<Consent>, Error> {
         self.client
             .send_request("consentmanager_get_all_consents", HttpMethod::Get, request)
@@ -446,7 +445,7 @@ impl<'a> PluginApi<'a> {
     /// Fetch all consent records linked to resources in a collection.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerGetAllConsentsByCollectionRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerGetAllConsentsByCollection`]
     ///
     /// ## Returns
     ///
@@ -460,12 +459,12 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerGetAllConsentsByCollectionRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerGetAllConsentsByCollection};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let consents = client
     ///     .plugin()
     ///     .consentmanager_get_all_consents_by_collection(
-    ///         ConsentManagerGetAllConsentsByCollectionRequest::new(10),
+    ///         ConsentManagerGetAllConsentsByCollection::new(10),
     ///     )
     ///     .await?;
     /// # Ok(())
@@ -473,7 +472,7 @@ impl<'a> PluginApi<'a> {
     /// ```
     pub async fn consentmanager_get_all_consents_by_collection(
         &self,
-        request: ConsentManagerGetAllConsentsByCollectionRequest,
+        request: ConsentManagerGetAllConsentsByCollection,
     ) -> Result<Vec<Consent>, Error> {
         self.client
             .send_request(
@@ -491,7 +490,7 @@ impl<'a> PluginApi<'a> {
     /// sent as a regular signed API parameter.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ConsentManagerSaveFileRequest`]
+    /// * `request` - Parameters built via [`ConsentManagerSaveFile`]
     ///
     /// ## Returns
     ///
@@ -505,18 +504,18 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::ConsentManagerSaveFileRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::ConsentManagerSaveFile};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
-    ///     .consentmanager_save_file(ConsentManagerSaveFileRequest::new(42, "consent.txt", b"signed".to_vec()))
+    ///     .consentmanager_save_file(ConsentManagerSaveFile::new(42, "consent.txt", b"signed".to_vec()))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn consentmanager_save_file(
         &self,
-        request: ConsentManagerSaveFileRequest,
+        request: ConsentManagerSaveFile,
     ) -> Result<bool, Error> {
         self.client
             .send_request("consentmanager_save_file", HttpMethod::Post, request)
@@ -526,7 +525,7 @@ impl<'a> PluginApi<'a> {
     /// Update the named-person tag for a detected face using a metadata node.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`FacesSetNodeRequest`]
+    /// * `request` - Parameters built via [`FacesSetNode`]
     ///
     /// ## Returns
     ///
@@ -540,16 +539,16 @@ impl<'a> PluginApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::plugin::FacesSetNodeRequest};
+    /// # use resourcespace_client::{Client, api::plugin::request::FacesSetNode};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .plugin()
-    ///     .faces_set_node(FacesSetNodeRequest::new(123, 5, 87))
+    ///     .faces_set_node(FacesSetNode::new(123, 5, 87))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn faces_set_node(&self, request: FacesSetNodeRequest) -> Result<bool, Error> {
+    pub async fn faces_set_node(&self, request: FacesSetNode) -> Result<bool, Error> {
         self.client
             .send_request("faces_set_node", HttpMethod::Get, request)
             .await

@@ -3,17 +3,19 @@ use std::collections::HashMap;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 
-pub use request::{
-    AddResourceToCollectionRequest, CreateCollectionRequest, DeleteCollectionRequest,
-    DeleteResourcesInCollectionRequest, GetCollectionRequest, GetCollectionsResourceCountRequest,
-    GetFeaturedCollectionsRequest, RemoveResourceFromCollectionRequest, SaveCollectionColdata,
-    SaveCollectionRequest, SearchPublicCollectionsRequest, SendCollectionToAdminRequest,
-    ShowHideCollectionRequest,
+// SaveCollectionColdata is referenced only from a doc link below; the import
+// keeps it resolvable.
+#[allow(unused_imports)]
+use request::{
+    AddResourceToCollection, CreateCollection, DeleteCollection, DeleteResourcesInCollection,
+    GetCollection, GetCollectionsResourceCount, GetFeaturedCollections,
+    RemoveResourceFromCollection, SaveCollection, SaveCollectionColdata, SearchPublicCollections,
+    SendCollectionToAdmin, ShowHideCollection,
 };
-pub use response::{Collection, FeaturedCollection};
+use response::{Collection, FeaturedCollection};
 
 /// Sub-API for collection endpoints.
 #[derive(Debug)]
@@ -62,7 +64,7 @@ impl<'a> CollectionApi<'a> {
     /// Add a resource to a collection.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`AddResourceToCollectionRequest`]
+    /// * `request` - Parameters built via [`AddResourceToCollection`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -75,18 +77,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::AddResourceToCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::AddResourceToCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .add_resource_to_collection(AddResourceToCollectionRequest::new(1234, 7))
+    ///     .add_resource_to_collection(AddResourceToCollection::new(1234, 7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn add_resource_to_collection(
         &self,
-        request: AddResourceToCollectionRequest,
+        request: AddResourceToCollection,
     ) -> Result<bool, Error> {
         self.client
             .send_request("add_resource_to_collection", HttpMethod::Post, request)
@@ -96,7 +98,7 @@ impl<'a> CollectionApi<'a> {
     /// Remove a resource from a collection.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`RemoveResourceFromCollectionRequest`]
+    /// * `request` - Parameters built via [`RemoveResourceFromCollection`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -109,18 +111,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::RemoveResourceFromCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::RemoveResourceFromCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .remove_resource_from_collection(RemoveResourceFromCollectionRequest::new(1234, 7))
+    ///     .remove_resource_from_collection(RemoveResourceFromCollection::new(1234, 7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn remove_resource_from_collection(
         &self,
-        request: RemoveResourceFromCollectionRequest,
+        request: RemoveResourceFromCollection,
     ) -> Result<bool, Error> {
         self.client
             .send_request("remove_resource_from_collection", HttpMethod::Post, request)
@@ -130,12 +132,12 @@ impl<'a> CollectionApi<'a> {
     /// Create a new collection for the user.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`CreateCollectionRequest`]
+    /// * `request` - Parameters built via [`CreateCollection`]
     ///
     /// ## Returns
     /// The ID of the newly created collection.
     ///
-    /// Note [`CreateCollectionRequest::forupload`] only has an effect when the
+    /// Note [`CreateCollection::forupload`] only has an effect when the
     /// name is blank, in which case RS generates a timestamped one; it does
     /// not otherwise mark the collection.
     ///
@@ -147,16 +149,16 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::CreateCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::CreateCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let collection_id = client
     ///     .collection()
-    ///     .create_collection(CreateCollectionRequest::new("Trees"))
+    ///     .create_collection(CreateCollection::new("Trees"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn create_collection(&self, request: CreateCollectionRequest) -> Result<u32, Error> {
+    pub async fn create_collection(&self, request: CreateCollection) -> Result<u32, Error> {
         self.client
             .send_request("create_collection", HttpMethod::Post, request)
             .await
@@ -165,7 +167,7 @@ impl<'a> CollectionApi<'a> {
     /// Deletes a collection. The user must have write access to this collection.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DeleteCollectionRequest`]
+    /// * `request` - Parameters built via [`DeleteCollection`]
     ///
     /// ## Returns
     /// Nothing. Unlike its siblings this endpoint returns `null` rather than
@@ -181,16 +183,16 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::DeleteCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::DeleteCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .delete_collection(DeleteCollectionRequest::new(7))
+    ///     .delete_collection(DeleteCollection::new(7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn delete_collection(&self, request: DeleteCollectionRequest) -> Result<(), Error> {
+    pub async fn delete_collection(&self, request: DeleteCollection) -> Result<(), Error> {
         self.client
             .send_request("delete_collection", HttpMethod::Post, request)
             .await
@@ -199,7 +201,7 @@ impl<'a> CollectionApi<'a> {
     /// Search public and featured collections.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SearchPublicCollectionsRequest`]
+    /// * `request` - Parameters built via [`SearchPublicCollections`]
     ///
     /// ## Returns
     /// Matching public and featured collections, or an empty list when none
@@ -213,18 +215,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::SearchPublicCollectionsRequest;
+    /// # use resourcespace_client::api::collection::request::SearchPublicCollections;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let found = client
     ///     .collection()
-    ///     .search_public_collections(SearchPublicCollectionsRequest::new().search("trees"))
+    ///     .search_public_collections(SearchPublicCollections::new().search("trees"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn search_public_collections(
         &self,
-        request: SearchPublicCollectionsRequest,
+        request: SearchPublicCollections,
     ) -> Result<Vec<Collection>, Error> {
         self.client
             .send_request("search_public_collections", HttpMethod::Get, request)
@@ -236,7 +238,7 @@ impl<'a> CollectionApi<'a> {
     /// This requires administrator access ("a" permission).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetCollectionRequest`]
+    /// * `request` - Parameters built via [`GetCollection`]
     ///
     /// ## Returns
     /// All available columns for the collection. This is the only endpoint
@@ -250,16 +252,16 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::GetCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::GetCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let collection = client
     ///     .collection()
-    ///     .get_collection(GetCollectionRequest::new(7))
+    ///     .get_collection(GetCollection::new(7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_collection(&self, request: GetCollectionRequest) -> Result<Collection, Error> {
+    pub async fn get_collection(&self, request: GetCollection) -> Result<Collection, Error> {
         self.client
             .send_request("get_collection", HttpMethod::Get, request)
             .await
@@ -272,7 +274,7 @@ impl<'a> CollectionApi<'a> {
     /// current values first and repeat the ones you intend to keep.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SaveCollectionRequest`]
+    /// * `request` - Parameters built via [`SaveCollection`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -287,11 +289,11 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::{SaveCollectionColdata, SaveCollectionRequest};
+    /// # use resourcespace_client::api::collection::request::{SaveCollectionColdata, SaveCollection};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .save_collection(SaveCollectionRequest::new(
+    ///     .save_collection(SaveCollection::new(
     ///         7,
     ///         SaveCollectionColdata::new().name("Trees").public(true),
     ///     ))
@@ -299,7 +301,7 @@ impl<'a> CollectionApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn save_collection(&self, request: SaveCollectionRequest) -> Result<bool, Error> {
+    pub async fn save_collection(&self, request: SaveCollection) -> Result<bool, Error> {
         self.client
             .send_request("save_collection", HttpMethod::Post, request)
             .await
@@ -308,7 +310,7 @@ impl<'a> CollectionApi<'a> {
     /// Shows or hides a collection from the user's drop-down list.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`ShowHideCollectionRequest`]
+    /// * `request` - Parameters built via [`ShowHideCollection`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -321,19 +323,16 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::ShowHideCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::ShowHideCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .show_hide_collection(ShowHideCollectionRequest::new(7, false, 1))
+    ///     .show_hide_collection(ShowHideCollection::new(7, false, 1))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn show_hide_collection(
-        &self,
-        request: ShowHideCollectionRequest,
-    ) -> Result<bool, Error> {
+    pub async fn show_hide_collection(&self, request: ShowHideCollection) -> Result<bool, Error> {
         self.client
             .send_request("show_hide_collection", HttpMethod::Post, request)
             .await
@@ -344,7 +343,7 @@ impl<'a> CollectionApi<'a> {
     /// Notifies the administrator, so this has an effect outside the instance.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SendCollectionToAdminRequest`]
+    /// * `request` - Parameters built via [`SendCollectionToAdmin`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -357,18 +356,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::SendCollectionToAdminRequest;
+    /// # use resourcespace_client::api::collection::request::SendCollectionToAdmin;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .send_collection_to_admin(SendCollectionToAdminRequest::new(7))
+    ///     .send_collection_to_admin(SendCollectionToAdmin::new(7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn send_collection_to_admin(
         &self,
-        request: SendCollectionToAdminRequest,
+        request: SendCollectionToAdmin,
     ) -> Result<bool, Error> {
         self.client
             .send_request("send_collection_to_admin", HttpMethod::Post, request)
@@ -378,7 +377,7 @@ impl<'a> CollectionApi<'a> {
     /// Get `ResourceSpace` featured collections (category).
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetFeaturedCollectionsRequest`]
+    /// * `request` - Parameters built via [`GetFeaturedCollections`]
     ///
     /// ## Returns
     /// The featured collections directly beneath the requested parent, or an
@@ -395,18 +394,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::GetFeaturedCollectionsRequest;
+    /// # use resourcespace_client::api::collection::request::GetFeaturedCollections;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let roots = client
     ///     .collection()
-    ///     .get_featured_collections(GetFeaturedCollectionsRequest::new(0))
+    ///     .get_featured_collections(GetFeaturedCollections::new(0))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_featured_collections(
         &self,
-        request: GetFeaturedCollectionsRequest,
+        request: GetFeaturedCollections,
     ) -> Result<Vec<FeaturedCollection>, Error> {
         self.client
             .send_request("get_featured_collections", HttpMethod::Get, request)
@@ -418,7 +417,7 @@ impl<'a> CollectionApi<'a> {
     /// The user must have edit access to the resources, permission to delete resources and the collection must be writable.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`DeleteResourcesInCollectionRequest`]
+    /// * `request` - Parameters built via [`DeleteResourcesInCollection`]
     ///
     /// ## Returns
     /// Always `true`. `ResourceSpace`'s `false` is surfaced as
@@ -432,18 +431,18 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::DeleteResourcesInCollectionRequest;
+    /// # use resourcespace_client::api::collection::request::DeleteResourcesInCollection;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .collection()
-    ///     .delete_resources_in_collection(DeleteResourcesInCollectionRequest::new(7))
+    ///     .delete_resources_in_collection(DeleteResourcesInCollection::new(7))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn delete_resources_in_collection(
         &self,
-        request: DeleteResourcesInCollectionRequest,
+        request: DeleteResourcesInCollection,
     ) -> Result<bool, Error> {
         self.client
             .send_request("delete_resources_in_collection", HttpMethod::Post, request)
@@ -460,7 +459,7 @@ impl<'a> CollectionApi<'a> {
     /// requiring `b`, which is backwards.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetCollectionsResourceCountRequest`]
+    /// * `request` - Parameters built via [`GetCollectionsResourceCount`]
     ///
     /// ## Returns
     /// A map of collection ID to resource count. IDs that fail validation are
@@ -474,11 +473,11 @@ impl<'a> CollectionApi<'a> {
     /// ## Examples
     /// ```no_run
     /// # use resourcespace_client::Client;
-    /// # use resourcespace_client::api::collection::GetCollectionsResourceCountRequest;
+    /// # use resourcespace_client::api::collection::request::GetCollectionsResourceCount;
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let counts = client
     ///     .collection()
-    ///     .get_collections_resource_count(GetCollectionsResourceCountRequest::new([7, 8]))
+    ///     .get_collections_resource_count(GetCollectionsResourceCount::new([7, 8]))
     ///     .await?;
     /// println!("{:?}", counts.get(&7));
     /// # Ok(())
@@ -486,7 +485,7 @@ impl<'a> CollectionApi<'a> {
     /// ```
     pub async fn get_collections_resource_count(
         &self,
-        request: GetCollectionsResourceCountRequest,
+        request: GetCollectionsResourceCount,
     ) -> Result<HashMap<u32, u32>, Error> {
         self.client
             .send_request("get_collections_resource_count", HttpMethod::Get, request)

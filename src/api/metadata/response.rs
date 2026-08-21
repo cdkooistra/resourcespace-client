@@ -7,12 +7,12 @@ use crate::api::shared::{empty_as_none, flexible_bool};
 
 // Referenced only from doc links below; the imports keep them resolvable.
 #[allow(unused_imports)]
-use super::{GetFieldOptionsRequest, GetResourceTypeFieldsRequest, MetadataApi};
+use super::{GetFieldOptions, GetResourceTypeFields, MetadataApi};
 
 /// A node — one selectable option of a fixed-list metadata field.
 ///
 /// Returned by [`MetadataApi::get_nodes`] and, when
-/// [`GetFieldOptionsRequest::nodeinfo`] is set, by
+/// [`GetFieldOptions::nodeinfo`] is set, by
 /// [`MetadataApi::get_field_options`]. The latter omits
 /// [`Self::resource_type_field`], since the caller already supplied it.
 ///
@@ -47,7 +47,7 @@ pub struct Node {
 /// [`MetadataApi::get_field_options`].
 ///
 /// Which variant you get is decided by the request:
-/// [`GetFieldOptionsRequest::nodeinfo`] returns [`Self::Nodes`], and omitting
+/// [`GetFieldOptions::nodeinfo`] returns [`Self::Nodes`], and omitting
 /// it returns just the option text.
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Deserialize)]
@@ -64,7 +64,7 @@ pub enum FieldOptions {
 ///
 /// **The JSON types depend on the request.** Called without a filter this
 /// endpoint quotes every value (`"ref": "1"`); called with
-/// [`GetResourceTypeFieldsRequest::find`] it returns real numbers
+/// [`GetResourceTypeFields::find`] it returns real numbers
 /// (`"ref": 93`) for the same columns. Every numeric and boolean field below
 /// therefore accepts either form. The long tail of
 /// integration and macro columns — `exiftool_field`, `onchange_macro`,

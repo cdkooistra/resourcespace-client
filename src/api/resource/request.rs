@@ -15,7 +15,7 @@ use super::ResourceApi;
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct AddAlternativeFileRequest {
+pub struct AddAlternativeFile {
     /// The ID of the resource to attach the alternative file to.
     pub resource: u32,
     /// Display name for the alternative file.
@@ -34,7 +34,7 @@ pub struct AddAlternativeFileRequest {
     pub file: Option<String>,
 }
 
-impl AddAlternativeFileRequest {
+impl AddAlternativeFile {
     pub fn new(resource: u32, name: impl Into<String>) -> Self {
         Self {
             resource,
@@ -89,7 +89,7 @@ impl AddAlternativeFileRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CopyResourceRequest {
+pub struct CopyResource {
     /// The ID of the resource to copy.
     #[serde(rename = "from")]
     pub resource_id: u32,
@@ -97,7 +97,7 @@ pub struct CopyResourceRequest {
     pub resource_type: Option<u32>,
 }
 
-impl CopyResourceRequest {
+impl CopyResource {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
@@ -118,7 +118,7 @@ impl CopyResourceRequest {
 #[serde_as]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct CreateResourceRequest {
+pub struct CreateResource {
     /// The resource type ID for the new resource.
     pub resource_type: u32,
     /// Initial archive state: 0 = live, 1 = archived, 2 = deleted.
@@ -147,7 +147,7 @@ pub struct CreateResourceRequest {
     #[serde_as(as = "Option<JsonString<HashMap<Same, FieldValueAsString>>>")]
     pub metadata: Option<HashMap<u32, FieldValue>>,
 }
-impl CreateResourceRequest {
+impl CreateResource {
     #[must_use]
     pub fn new(resource_type: u32) -> Self {
         Self {
@@ -222,12 +222,12 @@ impl DeleteAlternativeFile {
 /// Parameters for [`ResourceApi::delete_resource`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DeleteResourceRequest {
+pub struct DeleteResource {
     /// The ID of the resource to delete.
     pub resource: u32,
 }
 
-impl DeleteResourceRequest {
+impl DeleteResource {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -238,7 +238,7 @@ impl DeleteResourceRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetAlternativeFilesRequest {
+pub struct GetAlternativeFiles {
     /// The ID of the resource whose alternative files should be returned.
     pub resource: u32,
     /// Field name to order the alternative files by.
@@ -250,7 +250,7 @@ pub struct GetAlternativeFilesRequest {
     pub r#type: Option<String>,
 }
 
-impl GetAlternativeFilesRequest {
+impl GetAlternativeFiles {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self {
@@ -283,12 +283,12 @@ impl GetAlternativeFilesRequest {
 /// Parameters for [`ResourceApi::get_edit_access`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetEditAccessRequest {
+pub struct GetEditAccess {
     /// The ID of the resource to check edit access for.
     pub resource: u32,
 }
 
-impl GetEditAccessRequest {
+impl GetEditAccess {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -298,13 +298,13 @@ impl GetEditAccessRequest {
 /// Parameters for [`ResourceApi::get_related_resources`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetRelatedResourcesRequest {
+pub struct GetRelatedResources {
     /// The ID of the resource whose related resources should be returned.
     #[serde(rename = "ref")]
     pub resource_id: u32,
 }
 
-impl GetRelatedResourcesRequest {
+impl GetRelatedResources {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
@@ -314,12 +314,12 @@ impl GetRelatedResourcesRequest {
 /// Parameters for [`ResourceApi::get_resource_access`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceAccessRequest {
+pub struct GetResourceAccess {
     /// The ID of the resource to retrieve the access level for.
     pub resource: u32,
 }
 
-impl GetResourceAccessRequest {
+impl GetResourceAccess {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -329,12 +329,12 @@ impl GetResourceAccessRequest {
 /// Parameters for [`ResourceApi::get_resource_all_image_sizes`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceAllImageSizesRequest {
+pub struct GetResourceAllImageSizes {
     /// The ID of the resource to retrieve available preview sizes for.
     pub resource: u32,
 }
 
-impl GetResourceAllImageSizesRequest {
+impl GetResourceAllImageSizes {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -344,12 +344,12 @@ impl GetResourceAllImageSizesRequest {
 /// Parameters for [`ResourceApi::delete_comment`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DeleteCommentRequest {
+pub struct DeleteComment {
     /// The ID of the comment to delete.
     pub comment_ref: u32,
 }
 
-impl DeleteCommentRequest {
+impl DeleteComment {
     #[must_use]
     pub fn new(comment_ref: u32) -> Self {
         Self { comment_ref }
@@ -360,7 +360,7 @@ impl DeleteCommentRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceCommentsRequest {
+pub struct GetResourceComments {
     /// The ID of the resource to retrieve comments for.
     #[serde(rename = "resource_ref")]
     pub resource_id: u32,
@@ -368,7 +368,7 @@ pub struct GetResourceCommentsRequest {
     pub flat_view: Option<bool>,
 }
 
-impl GetResourceCommentsRequest {
+impl GetResourceComments {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
@@ -387,12 +387,12 @@ impl GetResourceCommentsRequest {
 /// Parameters for [`ResourceApi::get_resource_data`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceDataRequest {
+pub struct GetResourceData {
     /// The ID of the resource to retrieve top-level property data for.
     pub resource: u32,
 }
 
-impl GetResourceDataRequest {
+impl GetResourceData {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -402,12 +402,12 @@ impl GetResourceDataRequest {
 /// Parameters for [`ResourceApi::get_resource_field_data`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceFieldDataRequest {
+pub struct GetResourceFieldData {
     /// The ID of the resource to retrieve full metadata field data for.
     pub resource: u32,
 }
 
-impl GetResourceFieldDataRequest {
+impl GetResourceFieldData {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self { resource }
@@ -418,14 +418,14 @@ impl GetResourceFieldDataRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceLogRequest {
+pub struct GetResourceLog {
     /// The ID of the resource whose log entries should be returned.
     pub resource: u32,
     /// Maximum number of log rows to return.
     pub fetchrows: Option<u32>,
 }
 
-impl GetResourceLogRequest {
+impl GetResourceLog {
     #[must_use]
     pub fn new(resource: u32) -> Self {
         Self {
@@ -445,7 +445,7 @@ impl GetResourceLogRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourcePathRequest {
+pub struct GetResourcePath {
     /// The ID of the resource to generate a download URL for.
     #[serde(rename = "ref")]
     pub resource_id: u32,
@@ -473,7 +473,7 @@ pub struct GetResourcePathRequest {
     pub write_metadata: Option<bool>,
 }
 
-impl GetResourcePathRequest {
+impl GetResourcePath {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
@@ -535,7 +535,7 @@ impl GetResourcePathRequest {
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct PutResourceDataRequest {
+pub struct PutResourceData {
     /// The ID of the resource to update.
     pub resource: u32,
     /// JSON-encoded object mapping column names to new values. For valid columns/values view API docs.
@@ -543,7 +543,7 @@ pub struct PutResourceDataRequest {
     pub data: HashMap<String, String>,
 }
 
-impl PutResourceDataRequest {
+impl PutResourceData {
     #[must_use]
     pub fn new(resource: u32, data: HashMap<String, String>) -> Self {
         Self { resource, data }
@@ -553,12 +553,12 @@ impl PutResourceDataRequest {
 /// Parameters for [`ResourceApi::relate_all_resources`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct RelateAllResourcesRequest {
+pub struct RelateAllResources {
     /// Comma-separated list of resource IDs to relate with each other.
     pub related: List<u32>,
 }
 
-impl RelateAllResourcesRequest {
+impl RelateAllResources {
     pub fn new(related: impl Into<List<u32>>) -> Self {
         Self {
             related: related.into(),
@@ -570,7 +570,7 @@ impl RelateAllResourcesRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ReplaceResourceFileRequest {
+pub struct ReplaceResourceFile {
     /// The ID of the resource whose file should be replaced.
     #[serde(rename = "ref")]
     pub resource: u32,
@@ -596,7 +596,7 @@ pub struct ReplaceResourceFileRequest {
     pub keep_original: Option<bool>,
 }
 
-impl ReplaceResourceFileRequest {
+impl ReplaceResourceFile {
     pub fn new(resource: u32, file_location: impl Into<String>) -> Self {
         Self {
             resource,
@@ -629,13 +629,13 @@ impl ReplaceResourceFileRequest {
 /// Parameters for [`ResourceApi::resource_file_readonly`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ResourceFileReadonlyRequest {
+pub struct ResourceFileReadonly {
     /// The ID of the resource to check for read-only file status.
     #[serde(rename = "ref")]
     pub resource_id: u32,
 }
 
-impl ResourceFileReadonlyRequest {
+impl ResourceFileReadonly {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
@@ -646,7 +646,7 @@ impl ResourceFileReadonlyRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
-pub struct ResourceLogLastRowsRequest {
+pub struct ResourceLogLastRows {
     /// Only return log entries with a ref greater than this value.
     pub minref: Option<u32>,
     /// Only return log entries from the last N days.
@@ -660,7 +660,7 @@ pub struct ResourceLogLastRowsRequest {
     pub log_code: Option<List<String>>,
 }
 
-impl ResourceLogLastRowsRequest {
+impl ResourceLogLastRows {
     #[must_use]
     pub fn new() -> Self {
         Self::default()
@@ -701,7 +701,7 @@ impl ResourceLogLastRowsRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct UploadFileRequest {
+pub struct UploadFile {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
     pub resource_id: u32,
@@ -727,7 +727,7 @@ pub struct UploadFileRequest {
     pub file_path: Option<String>,
 }
 
-impl UploadFileRequest {
+impl UploadFile {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
@@ -768,7 +768,7 @@ impl UploadFileRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct UploadFileByUrlRequest {
+pub struct UploadFileByUrl {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
     pub resource_id: u32,
@@ -794,7 +794,7 @@ pub struct UploadFileByUrlRequest {
     pub url: Option<String>,
 }
 
-impl UploadFileByUrlRequest {
+impl UploadFileByUrl {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self {
@@ -884,7 +884,7 @@ impl From<&str> for UploadSource {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct UploadMultipartRequest {
+pub struct UploadMultipart {
     /// The ID of the resource to upload the file to.
     #[serde(rename = "ref")]
     pub resource_id: u32,
@@ -906,7 +906,7 @@ pub struct UploadMultipartRequest {
     pub autorotate: Option<bool>,
 }
 
-impl UploadMultipartRequest {
+impl UploadMultipart {
     #[must_use]
     pub fn new(resource_id: u32, no_exif: bool, revert: bool) -> Self {
         Self {
@@ -941,7 +941,7 @@ impl UploadMultipartRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct UpdateRelatedResourceRequest {
+pub struct UpdateRelatedResource {
     /// The ID of the resource to update relationships for.
     #[serde(rename = "ref")]
     pub resource_id: u32,
@@ -955,7 +955,7 @@ pub struct UpdateRelatedResourceRequest {
     pub add: Option<bool>,
 }
 
-impl UpdateRelatedResourceRequest {
+impl UpdateRelatedResource {
     pub fn new(resource_id: u32, related: impl Into<List<u32>>) -> Self {
         Self {
             resource_id,
@@ -975,7 +975,7 @@ impl UpdateRelatedResourceRequest {
 /// Parameters for [`ResourceApi::update_resource_type`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct UpdateResourceTypeRequest {
+pub struct UpdateResourceType {
     /// The ID of the resource to update.
     pub resource: u32,
     /// The new resource type ID to assign to the resource.
@@ -983,7 +983,7 @@ pub struct UpdateResourceTypeRequest {
     pub resourcetype: u32,
 }
 
-impl UpdateResourceTypeRequest {
+impl UpdateResourceType {
     #[must_use]
     pub fn new(resource: u32, resourcetype: u32) -> Self {
         Self {
@@ -996,13 +996,13 @@ impl UpdateResourceTypeRequest {
 /// Parameters for [`ResourceApi::get_resource_collections`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct GetResourceCollectionsRequest {
+pub struct GetResourceCollections {
     /// The ID of the resource to retrieve associated collections for.
     #[serde(rename = "ref")]
     pub resource_id: u32,
 }
 
-impl GetResourceCollectionsRequest {
+impl GetResourceCollections {
     #[must_use]
     pub fn new(resource_id: u32) -> Self {
         Self { resource_id }
@@ -1012,12 +1012,12 @@ impl GetResourceCollectionsRequest {
 /// Parameters for [`ResourceApi::validate_upload_url`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct ValidateUploadUrlRequest {
+pub struct ValidateUploadUrl {
     /// The URL to validate against the server's allowed `$api_upload_urls` list.
     pub url: String,
 }
 
-impl ValidateUploadUrlRequest {
+impl ValidateUploadUrl {
     pub fn new(url: impl Into<String>) -> Self {
         Self { url: url.into() }
     }

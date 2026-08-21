@@ -16,7 +16,7 @@ use super::SearchApi;
 /// count alongside the results.
 ///
 /// ```no_run
-/// # use resourcespace_client::api::search::FetchRows;
+/// # use resourcespace_client::api::search::request::FetchRows;
 /// let _ = FetchRows::limit(100);         // return up to 100 results
 /// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
@@ -54,7 +54,7 @@ impl Serialize for FetchRows {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DoSearchRequest {
+pub struct DoSearch {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
@@ -71,7 +71,7 @@ pub struct DoSearchRequest {
     pub offset: Option<u32>,
 }
 
-impl DoSearchRequest {
+impl DoSearch {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),
@@ -125,7 +125,7 @@ impl DoSearchRequest {
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SearchGetPreviewsRequest {
+pub struct SearchGetPreviews {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
@@ -146,7 +146,7 @@ pub struct SearchGetPreviewsRequest {
     pub previewext: Option<String>,
 }
 
-impl SearchGetPreviewsRequest {
+impl SearchGetPreviews {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),

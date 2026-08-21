@@ -4,14 +4,17 @@ use crate::error::Error;
 use super::shared::AjaxEnvelope;
 use response::NewUserData;
 
-mod request;
-mod response;
+pub mod request;
+pub mod response;
 
-pub use request::{
-    CheckpermRequest, GetProfileImageRequest, GetUsersByPermissionRequest, GetUsersRequest,
-    MarkEmailAsInvalidRequest, NewUserRequest, SaveUserData, SaveUserRequest,
+// SaveUserData is referenced only from a doc link below; the import keeps
+// it resolvable.
+#[allow(unused_imports)]
+use request::{
+    Checkperm, GetProfileImage, GetUsers, GetUsersByPermission, MarkEmailAsInvalid, NewUser,
+    SaveUser, SaveUserData,
 };
-pub use response::User;
+use response::User;
 
 #[derive(Debug)]
 pub struct UserApi<'a> {
@@ -27,7 +30,7 @@ impl<'a> UserApi<'a> {
     /// Find out if the current user has a particular permission. The permission strings are shown in the `ResourceSpace` UI when managing group permissions.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`CheckpermRequest`]
+    /// * `request` - Parameters built via [`Checkperm`]
     ///
     /// ## Returns
     ///
@@ -44,17 +47,17 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::CheckpermRequest};
+    /// # use resourcespace_client::{Client, api::user::request::Checkperm};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let is_admin = client
     ///     .user()
-    ///     .checkperm(CheckpermRequest::new("a"))
+    ///     .checkperm(Checkperm::new("a"))
     ///     .await
     ///     .unwrap_or(false);
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn checkperm(&self, request: CheckpermRequest) -> Result<bool, Error> {
+    pub async fn checkperm(&self, request: Checkperm) -> Result<bool, Error> {
         self.client
             .send_request("checkperm", HttpMethod::Get, request)
             .await
@@ -65,7 +68,7 @@ impl<'a> UserApi<'a> {
     /// Permissions are always honoured so users from other groups to which this user does not have access will be omitted.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetUsersRequest`]
+    /// * `request` - Parameters built via [`GetUsers`]
     ///
     /// ## Returns
     ///
@@ -79,16 +82,16 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::GetUsersRequest};
+    /// # use resourcespace_client::{Client, api::user::request::GetUsers};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let users = client
     ///     .user()
-    ///     .get_users(GetUsersRequest::new().find("admin"))
+    ///     .get_users(GetUsers::new().find("admin"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn get_users(&self, request: GetUsersRequest) -> Result<Vec<User>, Error> {
+    pub async fn get_users(&self, request: GetUsers) -> Result<Vec<User>, Error> {
         self.client
             .send_request("get_users", HttpMethod::Get, request)
             .await
@@ -99,7 +102,7 @@ impl<'a> UserApi<'a> {
     /// Permissions are always honoured so users from groups to which this user does not have access will be omitted.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetUsersByPermissionRequest`]
+    /// * `request` - Parameters built via [`GetUsersByPermission`]
     ///
     /// ## Returns
     ///
@@ -112,18 +115,18 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::GetUsersByPermissionRequest};
+    /// # use resourcespace_client::{Client, api::user::request::GetUsersByPermission};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let admins = client
     ///     .user()
-    ///     .get_users_by_permission(GetUsersByPermissionRequest::new(["a"]))
+    ///     .get_users_by_permission(GetUsersByPermission::new(["a"]))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_users_by_permission(
         &self,
-        request: GetUsersByPermissionRequest,
+        request: GetUsersByPermission,
     ) -> Result<Vec<User>, Error> {
         self.client
             .send_request("get_users_by_permission", HttpMethod::Get, request)
@@ -135,7 +138,7 @@ impl<'a> UserApi<'a> {
     /// Email addresses marked as invalid will be blocked before `send_mail()` tries to dispatch any emails, this will be applied to any users with this email address.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetUsersByPermissionRequest`]
+    /// * `request` - Parameters built via [`GetUsersByPermission`]
     ///
     /// ## Returns
     ///
@@ -149,19 +152,16 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::MarkEmailAsInvalidRequest};
+    /// # use resourcespace_client::{Client, api::user::request::MarkEmailAsInvalid};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .user()
-    ///     .mark_email_as_invalid(MarkEmailAsInvalidRequest::new("bounced@example.com"))
+    ///     .mark_email_as_invalid(MarkEmailAsInvalid::new("bounced@example.com"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn mark_email_as_invalid(
-        &self,
-        request: MarkEmailAsInvalidRequest,
-    ) -> Result<bool, Error> {
+    pub async fn mark_email_as_invalid(&self, request: MarkEmailAsInvalid) -> Result<bool, Error> {
         self.client
             .send_request("mark_email_as_invalid", HttpMethod::Post, request)
             .await
@@ -173,7 +173,7 @@ impl<'a> UserApi<'a> {
     /// returned ID to populate the user's details.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`SaveUserRequest`]
+    /// * `request` - Parameters built via [`SaveUser`]
     ///
     /// ## Returns
     ///
@@ -192,11 +192,11 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::{SaveUserData, SaveUserRequest}};
+    /// # use resourcespace_client::{Client, api::user::request::{SaveUserData, SaveUser}};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// client
     ///     .user()
-    ///     .save_user(SaveUserRequest::new(
+    ///     .save_user(SaveUser::new(
     ///         3,
     ///         SaveUserData::new().fullname("Ada Lovelace").email("ada@example.com"),
     ///     ))
@@ -204,7 +204,7 @@ impl<'a> UserApi<'a> {
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn save_user(&self, request: SaveUserRequest) -> Result<(), Error> {
+    pub async fn save_user(&self, request: SaveUser) -> Result<(), Error> {
         let _: AjaxEnvelope<serde_json::Value> = self
             .client
             .send_request("save_user", HttpMethod::Post, request)
@@ -217,7 +217,7 @@ impl<'a> UserApi<'a> {
     /// Create a user record. Use the returned ID to then call `save_user()` with the user details.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`NewUserRequest`]
+    /// * `request` - Parameters built via [`NewUser`]
     ///
     /// ## Returns
     ///
@@ -237,16 +237,16 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::NewUserRequest};
+    /// # use resourcespace_client::{Client, api::user::request::NewUser};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let user_id = client
     ///     .user()
-    ///     .new_user(NewUserRequest::new("alovelace"))
+    ///     .new_user(NewUser::new("alovelace"))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
-    pub async fn new_user(&self, request: NewUserRequest) -> Result<u32, Error> {
+    pub async fn new_user(&self, request: NewUser) -> Result<u32, Error> {
         let envelope: AjaxEnvelope<NewUserData> = self
             .client
             .send_request("new_user", HttpMethod::Post, request)
@@ -257,7 +257,7 @@ impl<'a> UserApi<'a> {
     /// Get the URL of a user's profile image.
     ///
     /// ## Arguments
-    /// * `request` - Parameters built via [`GetProfileImageRequest`]
+    /// * `request` - Parameters built via [`GetProfileImage`]
     ///
     /// ## Returns
     ///
@@ -271,18 +271,18 @@ impl<'a> UserApi<'a> {
     ///
     /// ## Examples
     /// ```no_run
-    /// # use resourcespace_client::{Client, api::user::GetProfileImageRequest};
+    /// # use resourcespace_client::{Client, api::user::request::GetProfileImage};
     /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
     /// let url = client
     ///     .user()
-    ///     .get_profile_image(GetProfileImageRequest::new(1))
+    ///     .get_profile_image(GetProfileImage::new(1))
     ///     .await?;
     /// # Ok(())
     /// # }
     /// ```
     pub async fn get_profile_image(
         &self,
-        request: GetProfileImageRequest,
+        request: GetProfileImage,
     ) -> Result<Option<String>, Error> {
         let url: String = self
             .client

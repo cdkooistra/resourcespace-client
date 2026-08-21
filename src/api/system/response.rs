@@ -8,7 +8,7 @@ use crate::api::shared::empty_as_none;
 
 // Referenced only from doc links below; the imports keep them resolvable.
 #[allow(unused_imports)]
-use super::{DoReportRequest, GetSystemStatusRequest, SystemApi};
+use super::{DoReport, GetSystemStatus, SystemApi};
 
 /// The outcome of [`SystemApi::get_system_status`].
 #[non_exhaustive]
@@ -18,7 +18,7 @@ pub struct SystemStatus {
     /// `"OK"` if every check passed, `"FAIL"` otherwise.
     pub status: String,
     /// One entry per healthcheck, keyed by check name. Empty in
-    /// [`GetSystemStatusRequest::basic`] mode, and when the database
+    /// [`GetSystemStatus::basic`] mode, and when the database
     /// connectivity check itself fails only `database_connection` is present.
     pub results: HashMap<String, SystemCheck>,
 }
@@ -64,7 +64,7 @@ pub struct SystemCheck {
 #[derive(Clone, Debug, Default, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct Report {
-    /// The report's ID, for [`DoReportRequest::new`].
+    /// The report's ID, for [`DoReport::new`].
     ///
     /// Arrives as a quoted string over the wire and is parsed here.
     #[serde(rename = "ref")]

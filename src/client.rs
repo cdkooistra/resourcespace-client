@@ -54,16 +54,6 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> String {
         .expect("Query param serialization failed — this is a bug, please open an issue")
 }
 
-/// some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
-/// for now just try to parse and hope for the best. Montala stated they are working on an `OpenAPI` spec
-/// for the api which should allow for much better handling in the future.
-/// So, for now, responses can be:
-/// - JSON arrays
-/// - JSON objects
-/// - Plain true/false strings
-/// - Raw integers (resource IDs)
-/// - "FAILED: ..." strings for certain errors, even with 200 status code
-/// - "Invalid signature" strings, even with 200 status code
 #[derive(Clone, Debug)]
 #[allow(clippy::struct_field_names)]
 pub struct Client {
@@ -218,17 +208,19 @@ impl Client {
         &self,
         function: &str,
         params: P,
-        source: crate::api::resource::UploadSource,
+        source: crate::api::resource::request::UploadSource,
     ) -> Result<(), Error>
     where
         P: Serialize,
     {
         let request = self.prepare_request(function, params);
         let file_part = match source {
-            crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
-                .await
-                .map_err(|e| Error::Io(e.into()))?,
-            crate::api::resource::UploadSource::Stream { body, filename } => {
+            crate::api::resource::request::UploadSource::File(file) => {
+                reqwest::multipart::Part::file(&file)
+                    .await
+                    .map_err(|e| Error::Io(e.into()))?
+            }
+            crate::api::resource::request::UploadSource::Stream { body, filename } => {
                 reqwest::multipart::Part::stream(body).file_name(filename)
             }
         };
