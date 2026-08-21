@@ -54,17 +54,8 @@ pub(crate) fn build_query<P: Serialize>(params: &P) -> String {
         .expect("Query param serialization failed — this is a bug, please open an issue")
 }
 
-/// some endpoints return JSON with status codes, some plain text, some error with 200 status code, etc.
-/// for now just try to parse and hope for the best. Montala stated they are working on an OpenAPI spec
-/// for the api which should allow for much better handling in the future.
-/// So, for now, responses can be:
-/// - JSON arrays
-/// - JSON objects
-/// - Plain true/false strings
-/// - Raw integers (resource IDs)
-/// - "FAILED: ..." strings for certain errors, even with 200 status code
-/// - "Invalid signature" strings, even with 200 status code
 #[derive(Clone, Debug)]
+#[allow(clippy::struct_field_names)]
 pub struct Client {
     api_url: Url,
     auth: Auth,
@@ -83,7 +74,7 @@ impl Client {
         }
     }
 
-    fn prepare_request<P>(&self, function: &str, params: P) -> Result<PreparedRequest, Error>
+    fn prepare_request<P>(&self, function: &str, params: P) -> PreparedRequest
     where
         P: Serialize,
     {
@@ -100,17 +91,17 @@ impl Client {
         let query = build_query(&req);
         let signature = sign(key, &query);
 
-        Ok(PreparedRequest {
+        PreparedRequest {
             user: user.clone(),
             query,
             signature,
             authmode: authmode.to_string(),
-        })
+        }
     }
 
     /// Send a request and deserialize the response into `T`.
     ///
-    /// ResourceSpace does not reliably use HTTP status codes to signal success/failure,
+    /// `ResourceSpace` does not reliably use HTTP status codes to signal success/failure,
     /// and the shape of a successful response body varies per-endpoint (a bare integer,
     /// a bare boolean-like string, a JSON array, a JSON object, ...). Callers pick the
     /// `T` that matches the documented/observed shape for the endpoint they're calling
@@ -143,7 +134,7 @@ impl Client {
     where
         P: Serialize + Clone,
     {
-        let request = self.prepare_request(function, params.clone())?;
+        let request = self.prepare_request(function, params.clone());
         let response = match method {
             HttpMethod::Get => {
                 let mut url = self.api_url.clone();
@@ -160,7 +151,7 @@ impl Client {
                         ("user", request.user.clone()),
                         ("query", request.query),
                         ("sign", request.signature),
-                        ("authmode", request.authmode.to_string()),
+                        ("authmode", request.authmode.clone()),
                     ])
                     .send()
                     .await
@@ -217,17 +208,19 @@ impl Client {
         &self,
         function: &str,
         params: P,
-        source: crate::api::resource::UploadSource,
+        source: crate::api::resource::request::UploadSource,
     ) -> Result<(), Error>
     where
         P: Serialize,
     {
-        let request = self.prepare_request(function, params)?;
+        let request = self.prepare_request(function, params);
         let file_part = match source {
-            crate::api::resource::UploadSource::File(file) => reqwest::multipart::Part::file(&file)
-                .await
-                .map_err(|e| Error::Io(e.into()))?,
-            crate::api::resource::UploadSource::Stream { body, filename } => {
+            crate::api::resource::request::UploadSource::File(file) => {
+                reqwest::multipart::Part::file(&file)
+                    .await
+                    .map_err(|e| Error::Io(e.into()))?
+            }
+            crate::api::resource::request::UploadSource::Stream { body, filename } => {
                 reqwest::multipart::Part::stream(body).file_name(filename)
             }
         };
@@ -240,7 +233,7 @@ impl Client {
                     .text("user", request.user.clone())
                     .text("query", request.query)
                     .text("sign", request.signature)
-                    .text("authmode", request.authmode.to_string())
+                    .text("authmode", request.authmode.clone())
                     .part("file", file_part),
             )
             .send()
@@ -258,27 +251,35 @@ impl Client {
     }
 
     // Sub-APIs
+    #[must_use]
     pub fn search(&self) -> crate::api::search::SearchApi<'_> {
         crate::api::search::SearchApi::new(self)
     }
+    #[must_use]
     pub fn system(&self) -> crate::api::system::SystemApi<'_> {
         crate::api::system::SystemApi::new(self)
     }
+    #[must_use]
     pub fn message(&self) -> crate::api::message::MessageApi<'_> {
         crate::api::message::MessageApi::new(self)
     }
+    #[must_use]
     pub fn metadata(&self) -> crate::api::metadata::MetadataApi<'_> {
         crate::api::metadata::MetadataApi::new(self)
     }
+    #[must_use]
     pub fn user(&self) -> crate::api::user::UserApi<'_> {
         crate::api::user::UserApi::new(self)
     }
+    #[must_use]
     pub fn collection(&self) -> crate::api::collection::CollectionApi<'_> {
         crate::api::collection::CollectionApi::new(self)
     }
+    #[must_use]
     pub fn resource(&self) -> crate::api::resource::ResourceApi<'_> {
         crate::api::resource::ResourceApi::new(self)
     }
+    #[must_use]
     pub fn plugin(&self) -> crate::api::plugin::PluginApi<'_> {
         crate::api::plugin::PluginApi::new(self)
     }
@@ -293,18 +294,21 @@ pub struct ClientBuilder<U = state::NoUrl, A = state::NoAuth> {
 }
 
 impl<U, A> ClientBuilder<U, A> {
+    #[must_use]
     pub fn timeout(self, timeout: Duration) -> Self {
         Self {
             timeout: Some(timeout),
             ..self
         }
     }
+    #[must_use]
     pub fn connect_timeout(self, connect_timeout: Duration) -> Self {
         Self {
             connect_timeout: Some(connect_timeout),
             ..self
         }
     }
+    #[must_use]
     pub fn user_agent(self, user_agent: impl Into<String>) -> Self {
         Self {
             user_agent: Some(user_agent.into()),
@@ -323,7 +327,7 @@ impl<U, A> ClientBuilder<U, A> {
         if let Some(ref ua) = self.user_agent {
             builder = builder.user_agent(ua.as_str());
         } else {
-            builder = builder.user_agent(APP_USER_AGENT)
+            builder = builder.user_agent(APP_USER_AGENT);
         }
         builder.build().map_err(|e| Error::Client(e.into()))
     }
@@ -387,6 +391,13 @@ impl<A> ClientBuilder<state::WithUrl, A> {
 }
 
 impl ClientBuilder<state::WithUrl, state::WithSessionKey> {
+    /// ## Errors
+    ///
+    /// [`Error::Url`] if `base_url` doesn't parse. [`Error::Client`] if the
+    /// underlying `reqwest` client fails to build (e.g. an invalid
+    /// `user_agent`). [`Error::Transport`] on a network or connectivity
+    /// failure while logging in. [`Error::InvalidCredentials`] if
+    /// `ResourceSpace` rejects the username/password.
     pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;
@@ -411,6 +422,14 @@ impl ClientBuilder<state::WithUrl, state::WithSessionKey> {
 }
 
 impl ClientBuilder<state::WithUrl, state::WithUserKey> {
+    /// ## Errors
+    ///
+    /// [`Error::Url`] if `base_url` doesn't parse. [`Error::Client`] if the
+    /// underlying `reqwest` client fails to build (e.g. an invalid
+    /// `user_agent`).
+    // allow unused_async here to have consistent interface
+    // with state::WithSessionKey
+    #[allow(clippy::unused_async, clippy::unused_async_trait_impl)]
     pub async fn build(self) -> Result<Client, Error> {
         let api_url = self.parse_url()?;
         let client = self.build_http_client()?;

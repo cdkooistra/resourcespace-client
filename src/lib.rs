@@ -1,4 +1,6 @@
 #![doc = include_str!("../README.md")]
+#![warn(clippy::pedantic)]
+
 pub mod api;
 mod auth;
 pub mod client;

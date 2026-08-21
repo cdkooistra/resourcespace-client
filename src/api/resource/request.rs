@@ -1,0 +1,1024 @@
+use std::collections::HashMap;
+
+use serde::Serialize;
+use serde_with::json::JsonString;
+use serde_with::{Same, serde_as, skip_serializing_none};
+
+use super::shared::FieldValueAsString;
+use crate::api::shared::{FieldValue, List, SortOrder, bool_as_u8, opt_bool_as_u8};
+
+// Referenced only from doc links below; the import keeps it resolvable.
+#[allow(unused_imports)]
+use super::ResourceApi;
+
+/// Parameters for [`ResourceApi::add_alternative_file`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct AddAlternativeFile {
+    /// The ID of the resource to attach the alternative file to.
+    pub resource: u32,
+    /// Display name for the alternative file.
+    pub name: String,
+    /// Optional description of the alternative file.
+    pub description: Option<String>,
+    /// Original file name of the alternative file.
+    pub file_name: Option<String>,
+    /// File extension of the alternative file (e.g. `"pdf"`).
+    pub file_extension: Option<String>,
+    /// Size of the file in bytes.
+    pub file_size: Option<u64>,
+    /// Alternative file type identifier used to categorise the file.
+    pub alt_type: Option<String>,
+    /// Local server path or publicly accessible URL of the file to attach.
+    pub file: Option<String>,
+}
+
+impl AddAlternativeFile {
+    pub fn new(resource: u32, name: impl Into<String>) -> Self {
+        Self {
+            resource,
+            name: name.into(),
+            description: None,
+            file_name: None,
+            file_extension: None,
+            file_size: None,
+            alt_type: None,
+            file: None,
+        }
+    }
+
+    #[must_use]
+    pub fn description(mut self, description: impl Into<String>) -> Self {
+        self.description = Some(description.into());
+        self
+    }
+
+    #[must_use]
+    pub fn file_name(mut self, file_name: impl Into<String>) -> Self {
+        self.file_name = Some(file_name.into());
+        self
+    }
+
+    #[must_use]
+    pub fn file_extension(mut self, file_extension: impl Into<String>) -> Self {
+        self.file_extension = Some(file_extension.into());
+        self
+    }
+
+    #[must_use]
+    pub fn file_size(mut self, file_size: u64) -> Self {
+        self.file_size = Some(file_size);
+        self
+    }
+
+    #[must_use]
+    pub fn alt_type(mut self, alt_type: impl Into<String>) -> Self {
+        self.alt_type = Some(alt_type.into());
+        self
+    }
+
+    #[must_use]
+    pub fn file(mut self, file: impl Into<String>) -> Self {
+        self.file = Some(file.into());
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::copy_resource`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct CopyResource {
+    /// The ID of the resource to copy.
+    #[serde(rename = "from")]
+    pub resource_id: u32,
+    /// Resource type ID to assign to the copy; defaults to the source resource type if omitted.
+    pub resource_type: Option<u32>,
+}
+
+impl CopyResource {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self {
+            resource_id,
+            resource_type: None,
+        }
+    }
+
+    #[must_use]
+    pub fn resource_type(mut self, resource_type: u32) -> Self {
+        self.resource_type = Some(resource_type);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::create_resource`].
+#[non_exhaustive]
+#[serde_as]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct CreateResource {
+    /// The resource type ID for the new resource.
+    pub resource_type: u32,
+    /// Initial archive state: 0 = live, 1 = archived, 2 = deleted.
+    pub archive: Option<i16>,
+    /// URL of a remote file to attach to the resource at creation time.
+    pub url: Option<String>,
+    /// If true, skips reading EXIF data from the attached file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, reverts to the original file rather than the processed one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+    /// JSON-encoded metadata fields to set on the resource at creation time.
+    #[serde_as(as = "Option<JsonString<HashMap<Same, FieldValueAsString>>>")]
+    pub metadata: Option<HashMap<u32, FieldValue>>,
+}
+impl CreateResource {
+    #[must_use]
+    pub fn new(resource_type: u32) -> Self {
+        Self {
+            resource_type,
+            archive: None,
+            url: None,
+            no_exif: None,
+            revert: None,
+            autorotate: None,
+            metadata: None,
+        }
+    }
+
+    #[must_use]
+    pub fn archive(mut self, archive: i16) -> Self {
+        self.archive = Some(archive);
+        self
+    }
+
+    #[must_use]
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = Some(url.into());
+        self
+    }
+
+    #[must_use]
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif);
+        self
+    }
+
+    #[must_use]
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert);
+        self
+    }
+
+    #[must_use]
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
+        self
+    }
+
+    #[must_use]
+    pub fn metadata(mut self, metadata: HashMap<u32, FieldValue>) -> Self {
+        self.metadata = Some(metadata);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::delete_alternative_file`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct DeleteAlternativeFile {
+    /// The ID of the resource the alternative file belongs to.
+    pub resource: u32,
+    /// The ID of the alternative file to delete.
+    #[serde(rename = "ref")]
+    pub alternative_file_id: u32,
+}
+
+impl DeleteAlternativeFile {
+    #[must_use]
+    pub fn new(resource: u32, alternative_file_id: u32) -> Self {
+        Self {
+            resource,
+            alternative_file_id,
+        }
+    }
+}
+
+/// Parameters for [`ResourceApi::delete_resource`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct DeleteResource {
+    /// The ID of the resource to delete.
+    pub resource: u32,
+}
+
+impl DeleteResource {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_alternative_files`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetAlternativeFiles {
+    /// The ID of the resource whose alternative files should be returned.
+    pub resource: u32,
+    /// Field name to order the alternative files by.
+    #[serde(rename = "order_by")]
+    pub orderby: Option<String>,
+    /// Sort direction for the results.
+    pub sort: Option<SortOrder>,
+    /// Filter results to only alternative files of this type.
+    pub r#type: Option<String>,
+}
+
+impl GetAlternativeFiles {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self {
+            resource,
+            orderby: None,
+            sort: None,
+            r#type: None,
+        }
+    }
+
+    #[must_use]
+    pub fn orderby(mut self, orderby: impl Into<String>) -> Self {
+        self.orderby = Some(orderby.into());
+        self
+    }
+
+    #[must_use]
+    pub fn sort(mut self, sort: SortOrder) -> Self {
+        self.sort = Some(sort);
+        self
+    }
+
+    #[must_use]
+    pub fn r#type(mut self, r#type: impl Into<String>) -> Self {
+        self.r#type = Some(r#type.into());
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::get_edit_access`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetEditAccess {
+    /// The ID of the resource to check edit access for.
+    pub resource: u32,
+}
+
+impl GetEditAccess {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_related_resources`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetRelatedResources {
+    /// The ID of the resource whose related resources should be returned.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+}
+
+impl GetRelatedResources {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_access`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceAccess {
+    /// The ID of the resource to retrieve the access level for.
+    pub resource: u32,
+}
+
+impl GetResourceAccess {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_all_image_sizes`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceAllImageSizes {
+    /// The ID of the resource to retrieve available preview sizes for.
+    pub resource: u32,
+}
+
+impl GetResourceAllImageSizes {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::delete_comment`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct DeleteComment {
+    /// The ID of the comment to delete.
+    pub comment_ref: u32,
+}
+
+impl DeleteComment {
+    #[must_use]
+    pub fn new(comment_ref: u32) -> Self {
+        Self { comment_ref }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_comments`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceComments {
+    /// The ID of the resource to retrieve comments for.
+    #[serde(rename = "resource_ref")]
+    pub resource_id: u32,
+    /// If true, returns comments as a flat list rather than a threaded tree.
+    pub flat_view: Option<bool>,
+}
+
+impl GetResourceComments {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self {
+            resource_id,
+            flat_view: None,
+        }
+    }
+
+    #[must_use]
+    pub fn flat_view(mut self, flat_view: bool) -> Self {
+        self.flat_view = Some(flat_view);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_data`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceData {
+    /// The ID of the resource to retrieve top-level property data for.
+    pub resource: u32,
+}
+
+impl GetResourceData {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_field_data`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceFieldData {
+    /// The ID of the resource to retrieve full metadata field data for.
+    pub resource: u32,
+}
+
+impl GetResourceFieldData {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self { resource }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_log`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceLog {
+    /// The ID of the resource whose log entries should be returned.
+    pub resource: u32,
+    /// Maximum number of log rows to return.
+    pub fetchrows: Option<u32>,
+}
+
+impl GetResourceLog {
+    #[must_use]
+    pub fn new(resource: u32) -> Self {
+        Self {
+            resource,
+            fetchrows: None,
+        }
+    }
+
+    #[must_use]
+    pub fn fetchrows(mut self, fetchrows: u32) -> Self {
+        self.fetchrows = Some(fetchrows);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_path`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourcePath {
+    /// The ID of the resource to generate a download URL for.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// Preview size to retrieve (e.g. `"thm"`, `"scr"`, `"pre"`). Omit for the original file.
+    pub size: Option<String>,
+    /// If true, generates the preview if it does not yet exist.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub generate: Option<bool>,
+    /// Override the file extension of the returned URL.
+    pub extension: Option<String>,
+    /// Page number for multi-page resources (e.g. PDF).
+    pub page: Option<u32>,
+    /// If true, returns a URL to the watermarked version of the file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub watermarked: Option<bool>,
+    /// ID of the alternative file to return a URL for, or -1 for the original.
+    pub alternative: Option<i32>,
+    /// If set, writes embedded metadata into the file before returning the URL.
+    pub write_metadata: Option<bool>,
+}
+
+impl GetResourcePath {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self {
+            resource_id,
+            size: None,
+            generate: None,
+            extension: None,
+            page: None,
+            watermarked: None,
+            alternative: None,
+            write_metadata: None,
+        }
+    }
+
+    #[must_use]
+    pub fn size(mut self, size: impl Into<String>) -> Self {
+        self.size = Some(size.into());
+        self
+    }
+
+    #[must_use]
+    pub fn generate(mut self, generate: bool) -> Self {
+        self.generate = Some(generate);
+        self
+    }
+
+    #[must_use]
+    pub fn extension(mut self, extension: impl Into<String>) -> Self {
+        self.extension = Some(extension.into());
+        self
+    }
+
+    #[must_use]
+    pub fn page(mut self, page: u32) -> Self {
+        self.page = Some(page);
+        self
+    }
+
+    #[must_use]
+    pub fn watermarked(mut self, watermarked: bool) -> Self {
+        self.watermarked = Some(watermarked);
+        self
+    }
+
+    #[must_use]
+    pub fn alternative(mut self, alternative: i32) -> Self {
+        self.alternative = Some(alternative);
+        self
+    }
+
+    #[must_use]
+    pub fn write_metadata(mut self, write_metadata: bool) -> Self {
+        self.write_metadata = Some(write_metadata);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::put_resource_data`].
+#[non_exhaustive]
+#[serde_as]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct PutResourceData {
+    /// The ID of the resource to update.
+    pub resource: u32,
+    /// JSON-encoded object mapping column names to new values. For valid columns/values view API docs.
+    #[serde_as(as = "JsonString")]
+    pub data: HashMap<String, String>,
+}
+
+impl PutResourceData {
+    #[must_use]
+    pub fn new(resource: u32, data: HashMap<String, String>) -> Self {
+        Self { resource, data }
+    }
+}
+
+/// Parameters for [`ResourceApi::relate_all_resources`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct RelateAllResources {
+    /// Comma-separated list of resource IDs to relate with each other.
+    pub related: List<u32>,
+}
+
+impl RelateAllResources {
+    pub fn new(related: impl Into<List<u32>>) -> Self {
+        Self {
+            related: related.into(),
+        }
+    }
+}
+
+/// Parameters for [`ResourceApi::replace_resource_file`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ReplaceResourceFile {
+    /// The ID of the resource whose file should be replaced.
+    #[serde(rename = "ref")]
+    pub resource: u32,
+    /// Local server path or publicly accessible URL of the replacement file.
+    pub file_location: String,
+    /// If true, skips reading EXIF data from the replacement file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+    /// If true, retains the previous file as an alternative file rather than deleting it.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub keep_original: Option<bool>,
+}
+
+impl ReplaceResourceFile {
+    pub fn new(resource: u32, file_location: impl Into<String>) -> Self {
+        Self {
+            resource,
+            file_location: file_location.into(),
+            no_exif: None,
+            autorotate: None,
+            keep_original: None,
+        }
+    }
+
+    #[must_use]
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif);
+        self
+    }
+
+    #[must_use]
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
+        self
+    }
+
+    #[must_use]
+    pub fn keep_original(mut self, keep_original: bool) -> Self {
+        self.keep_original = Some(keep_original);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::resource_file_readonly`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ResourceFileReadonly {
+    /// The ID of the resource to check for read-only file status.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+}
+
+impl ResourceFileReadonly {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
+    }
+}
+
+/// Parameters for [`ResourceApi::resource_log_last_rows`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, Default, PartialEq, Serialize)]
+pub struct ResourceLogLastRows {
+    /// Only return log entries with a ref greater than this value.
+    pub minref: Option<u32>,
+    /// Only return log entries from the last N days.
+    pub days: Option<u32>,
+    /// Maximum number of log entries to return.
+    pub maxrecords: Option<u32>,
+    /// Comma-separated list of field IDs to limit results to.
+    #[serde(rename = "field")]
+    pub field_ids: Option<List<u32>>,
+    /// Comma-separated list of log codes to limit results to (e.g. `"FD"` for field data changes).
+    pub log_code: Option<List<String>>,
+}
+
+impl ResourceLogLastRows {
+    #[must_use]
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    #[must_use]
+    pub fn minref(mut self, minref: u32) -> Self {
+        self.minref = Some(minref);
+        self
+    }
+
+    #[must_use]
+    pub fn days(mut self, days: u32) -> Self {
+        self.days = Some(days);
+        self
+    }
+
+    #[must_use]
+    pub fn maxrecords(mut self, maxrecords: u32) -> Self {
+        self.maxrecords = Some(maxrecords);
+        self
+    }
+
+    #[must_use]
+    pub fn field_ids(mut self, field_ids: impl Into<List<u32>>) -> Self {
+        self.field_ids = Some(field_ids.into());
+        self
+    }
+
+    #[must_use]
+    pub fn log_code(mut self, log_code: impl Into<List<String>>) -> Self {
+        self.log_code = Some(log_code.into());
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::upload_file`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UploadFile {
+    /// The ID of the resource to upload the file to.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the uploaded file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+    /// Local server path of the file to upload (must be within `$valid_upload_paths`).
+    pub file_path: Option<String>,
+}
+
+impl UploadFile {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self {
+            resource_id,
+            no_exif: None,
+            revert: None,
+            autorotate: None,
+            file_path: None,
+        }
+    }
+
+    #[must_use]
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif);
+        self
+    }
+
+    #[must_use]
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert);
+        self
+    }
+
+    #[must_use]
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
+        self
+    }
+
+    #[must_use]
+    pub fn file_path(mut self, file_path: impl Into<String>) -> Self {
+        self.file_path = Some(file_path.into());
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::upload_file_by_url`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UploadFileByUrl {
+    /// The ID of the resource to upload the file to.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the downloaded file.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub no_exif: Option<bool>,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub revert: Option<bool>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+    /// Publicly accessible URL for the RS server to fetch and attach (hostname must be in `$api_upload_urls`).
+    pub url: Option<String>,
+}
+
+impl UploadFileByUrl {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self {
+            resource_id,
+            no_exif: None,
+            revert: None,
+            autorotate: None,
+            url: None,
+        }
+    }
+
+    #[must_use]
+    pub fn no_exif(mut self, no_exif: bool) -> Self {
+        self.no_exif = Some(no_exif);
+        self
+    }
+
+    #[must_use]
+    pub fn revert(mut self, revert: bool) -> Self {
+        self.revert = Some(revert);
+        self
+    }
+
+    #[must_use]
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
+        self
+    }
+
+    #[must_use]
+    pub fn url(mut self, url: impl Into<String>) -> Self {
+        self.url = Some(url.into());
+        self
+    }
+}
+
+/// Data source for a multipart upload.
+///
+/// Used by [`ResourceApi::upload_multipart`].
+#[non_exhaustive]
+pub enum UploadSource {
+    File(std::path::PathBuf),
+    Stream {
+        body: reqwest::Body,
+        filename: String,
+    },
+}
+
+impl UploadSource {
+    /// Creates a file-based upload source.
+    pub fn from_file(path: impl Into<std::path::PathBuf>) -> Self {
+        UploadSource::File(path.into())
+    }
+
+    /// Creates a stream-based upload source.
+    ///
+    /// `body` accepts anything that converts into a [`reqwest::Body`]:
+    /// `Bytes`, `Vec<u8>`, or a `Stream<Item = Result<Bytes, E>>` via
+    /// `reqwest::Body::wrap_stream(ReaderStream::new(reader))`.
+    pub fn from_stream(body: impl Into<reqwest::Body>, filename: impl Into<String>) -> Self {
+        UploadSource::Stream {
+            body: body.into(),
+            filename: filename.into(),
+        }
+    }
+}
+
+impl From<std::path::PathBuf> for UploadSource {
+    fn from(path: std::path::PathBuf) -> Self {
+        UploadSource::File(path)
+    }
+}
+
+impl From<&std::path::Path> for UploadSource {
+    fn from(path: &std::path::Path) -> Self {
+        UploadSource::File(path.to_path_buf())
+    }
+}
+
+impl From<&str> for UploadSource {
+    fn from(s: &str) -> Self {
+        UploadSource::File(std::path::PathBuf::from(s))
+    }
+}
+
+/// Parameters for [`ResourceApi::upload_multipart`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UploadMultipart {
+    /// The ID of the resource to upload the file to.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// If true, skips reading EXIF data from the uploaded file.
+    #[serde(serialize_with = "bool_as_u8")]
+    pub no_exif: bool,
+    /// If true, reverts to the original file instead of uploading a new one.
+    #[serde(serialize_with = "bool_as_u8")]
+    pub revert: bool,
+    /// If set, only generates a preview without replacing the stored file.
+    pub previewonly: Option<bool>,
+    /// ID of an alternative file slot to upload into instead of the primary file.
+    pub alternative: Option<u32>,
+    /// If true, automatically rotates the image based on EXIF orientation.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub autorotate: Option<bool>,
+}
+
+impl UploadMultipart {
+    #[must_use]
+    pub fn new(resource_id: u32, no_exif: bool, revert: bool) -> Self {
+        Self {
+            resource_id,
+            no_exif,
+            revert,
+            previewonly: None,
+            alternative: None,
+            autorotate: None,
+        }
+    }
+    #[must_use]
+    pub fn previewonly(mut self, previewonly: bool) -> Self {
+        self.previewonly = Some(previewonly);
+        self
+    }
+
+    #[must_use]
+    pub fn alternative(mut self, alternative: u32) -> Self {
+        self.alternative = Some(alternative);
+        self
+    }
+
+    #[must_use]
+    pub fn autorotate(mut self, autorotate: bool) -> Self {
+        self.autorotate = Some(autorotate);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::update_related_resource`].
+#[non_exhaustive]
+#[skip_serializing_none]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UpdateRelatedResource {
+    /// The ID of the resource to update relationships for.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+    /// Comma-separated list of resource IDs to add or remove as related resources.
+    pub related: List<u32>,
+    /// If true, adds the related resources; if false, removes them.
+    #[serde(
+        serialize_with = "opt_bool_as_u8",
+        skip_serializing_if = "Option::is_none"
+    )]
+    pub add: Option<bool>,
+}
+
+impl UpdateRelatedResource {
+    pub fn new(resource_id: u32, related: impl Into<List<u32>>) -> Self {
+        Self {
+            resource_id,
+            related: related.into(),
+            add: None,
+        }
+    }
+
+    #[allow(clippy::should_implement_trait)]
+    #[must_use]
+    pub fn add(mut self, add: bool) -> Self {
+        self.add = Some(add);
+        self
+    }
+}
+
+/// Parameters for [`ResourceApi::update_resource_type`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct UpdateResourceType {
+    /// The ID of the resource to update.
+    pub resource: u32,
+    /// The new resource type ID to assign to the resource.
+    #[serde(rename = "type")]
+    pub resourcetype: u32,
+}
+
+impl UpdateResourceType {
+    #[must_use]
+    pub fn new(resource: u32, resourcetype: u32) -> Self {
+        Self {
+            resource,
+            resourcetype,
+        }
+    }
+}
+
+/// Parameters for [`ResourceApi::get_resource_collections`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetResourceCollections {
+    /// The ID of the resource to retrieve associated collections for.
+    #[serde(rename = "ref")]
+    pub resource_id: u32,
+}
+
+impl GetResourceCollections {
+    #[must_use]
+    pub fn new(resource_id: u32) -> Self {
+        Self { resource_id }
+    }
+}
+
+/// Parameters for [`ResourceApi::validate_upload_url`].
+#[non_exhaustive]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct ValidateUploadUrl {
+    /// The URL to validate against the server's allowed `$api_upload_urls` list.
+    pub url: String,
+}
+
+impl ValidateUploadUrl {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self { url: url.into() }
+    }
+}

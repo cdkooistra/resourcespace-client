@@ -1,7 +1,7 @@
 use resourcespace_client::api::SortOrder;
-use resourcespace_client::api::message::GetUserMessageRequest;
-use resourcespace_client::api::search::DoSearchRequest;
-use resourcespace_client::api::system::GetDailyStatSummaryRequest;
+use resourcespace_client::api::message::request::GetUserMessage;
+use resourcespace_client::api::search::request::DoSearch;
+use resourcespace_client::api::system::request::GetDailyStatSummary;
 use resourcespace_client::client::Client;
 
 #[tokio::main]
@@ -23,7 +23,7 @@ async fn main() {
 
     let search_result = client
         .search()
-        .do_search(DoSearchRequest::new("909").sort(SortOrder::Asc))
+        .do_search(DoSearch::new("909").sort(SortOrder::Asc))
         .await;
 
     match search_result {
@@ -33,7 +33,7 @@ async fn main() {
 
     let system_result = client
         .system()
-        .get_daily_stat_summary(GetDailyStatSummaryRequest::new().days(31))
+        .get_daily_stat_summary(GetDailyStatSummary::new().days(31))
         .await;
 
     match system_result {
@@ -43,7 +43,7 @@ async fn main() {
 
     let message_result = client
         .message()
-        .get_user_message(GetUserMessageRequest::new(12))
+        .get_user_message(GetUserMessage::new(12))
         .await;
 
     match message_result {

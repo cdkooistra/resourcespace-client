@@ -1,6 +1,6 @@
-use resourcespace_client::api::resource::UploadFileByUrlRequest;
-use resourcespace_client::api::resource::UploadMultipartRequest;
-use resourcespace_client::api::resource::UploadSource;
+use resourcespace_client::api::resource::request::UploadFileByUrl;
+use resourcespace_client::api::resource::request::UploadMultipart;
+use resourcespace_client::api::resource::request::UploadSource;
 use resourcespace_client::client::Client;
 
 #[tokio::main]
@@ -25,7 +25,7 @@ async fn main() {
     let result = client
         .resource()
         .upload_multipart(
-            UploadMultipartRequest::new(91287, false, false),
+            UploadMultipart::new(91287, false, false),
             "pexels.jpg", // automatically becomes PathBuf
         )
         .await;
@@ -49,7 +49,7 @@ async fn main() {
 
     let result = client
         .resource()
-        .upload_multipart(UploadMultipartRequest::new(1228, false, false), source)
+        .upload_multipart(UploadMultipart::new(1228, false, false), source)
         .await;
 
     match result {
@@ -62,7 +62,7 @@ async fn main() {
     let result = client
         .resource()
         .upload_file_by_url(
-            UploadFileByUrlRequest::new(1228)
+            UploadFileByUrl::new(1228)
                 .url("https://images.pexels.com/photos/20063016/pexels-photo-20063016.jpeg"),
         )
         .await;

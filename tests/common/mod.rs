@@ -5,13 +5,12 @@ use std::sync::OnceLock;
 
 use resourcespace_client::Client;
 use resourcespace_client::api::FieldValue;
-use resourcespace_client::api::collection::{
-    AddResourceToCollectionRequest, CreateCollectionRequest, SaveCollectionColdata,
-    SaveCollectionRequest,
+use resourcespace_client::api::collection::request::{
+    AddResourceToCollection, CreateCollection, SaveCollection, SaveCollectionColdata,
 };
-use resourcespace_client::api::metadata::UpdateFieldRequest;
-use resourcespace_client::api::resource::{
-    CreateResourceRequest, UpdateRelatedResourceRequest, UploadMultipartRequest, UploadSource,
+use resourcespace_client::api::metadata::request::UpdateField;
+use resourcespace_client::api::resource::request::{
+    CreateResource, UpdateRelatedResource, UploadMultipart, UploadSource,
 };
 
 /// Resource type used for seeded fixtures.
@@ -103,18 +102,18 @@ async fn fixture_asset() -> reqwest::Body {
 pub async fn seed(client: &Client) -> Seed {
     let resource = client
         .resource()
-        .create_resource(CreateResourceRequest::new(FIXTURE_RESOURCE_TYPE))
+        .create_resource(CreateResource::new(FIXTURE_RESOURCE_TYPE))
         .await
         .expect("create resource");
     let related = client
         .resource()
-        .create_resource(CreateResourceRequest::new(FIXTURE_RESOURCE_TYPE))
+        .create_resource(CreateResource::new(FIXTURE_RESOURCE_TYPE))
         .await
         .expect("create related resource");
 
     client
         .metadata()
-        .update_field(UpdateFieldRequest::new(
+        .update_field(UpdateField::new(
             resource,
             "title",
             FieldValue::from("rs-client seed resource"),
@@ -125,7 +124,7 @@ pub async fn seed(client: &Client) -> Seed {
     client
         .resource()
         .upload_multipart(
-            UploadMultipartRequest::new(resource, false, false),
+            UploadMultipart::new(resource, false, false),
             UploadSource::from_stream(fixture_asset().await, FIXTURE_ASSET_FILENAME),
         )
         .await
@@ -133,19 +132,19 @@ pub async fn seed(client: &Client) -> Seed {
 
     client
         .resource()
-        .update_related_resource(UpdateRelatedResourceRequest::new(resource, [related]).add(true))
+        .update_related_resource(UpdateRelatedResource::new(resource, [related]).add(true))
         .await
         .expect("relate resources");
 
     let collection = client
         .collection()
-        .create_collection(CreateCollectionRequest::new("rs-client seed collection"))
+        .create_collection(CreateCollection::new("rs-client seed collection"))
         .await
         .expect("create collection");
 
     client
         .collection()
-        .add_resource_to_collection(AddResourceToCollectionRequest::new(resource, collection))
+        .add_resource_to_collection(AddResourceToCollection::new(resource, collection))
         .await
         .expect("add resource to collection");
 
@@ -153,12 +152,12 @@ pub async fn seed(client: &Client) -> Seed {
     // to be set as well.
     let public_collection = client
         .collection()
-        .create_collection(CreateCollectionRequest::new("rs-client seed public"))
+        .create_collection(CreateCollection::new("rs-client seed public"))
         .await
         .expect("create public collection");
     client
         .collection()
-        .save_collection(SaveCollectionRequest::new(
+        .save_collection(SaveCollection::new(
             public_collection,
             // `save_collection` replaces rather than patches: any field left
             // unset is cleared, so the name has to be repeated here.
@@ -172,12 +171,12 @@ pub async fn seed(client: &Client) -> Seed {
 
     let featured_collection = client
         .collection()
-        .create_collection(CreateCollectionRequest::new("rs-client seed featured"))
+        .create_collection(CreateCollection::new("rs-client seed featured"))
         .await
         .expect("create featured collection");
     client
         .collection()
-        .save_collection(SaveCollectionRequest::new(
+        .save_collection(SaveCollection::new(
             featured_collection,
             SaveCollectionColdata::new()
                 .name("rs-client seed featured")

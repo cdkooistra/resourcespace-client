@@ -6,7 +6,7 @@ use url::Url;
 use crate::client::{ApiRequest, build_query};
 use crate::error::{self, Error};
 
-/// For a ResourceSpace external client we can only communicate with a
+/// For a `ResourceSpace` external client we can only communicate with a
 /// userkey or a sessionkey. `native` authmode is only available for
 /// client side API calls -> browser initiated activity.
 #[derive(Clone, Debug)]
@@ -21,7 +21,7 @@ struct LoginParams<'a> {
     password: &'a str,
 }
 
-/// Logs in a user using the ResourceSpace API and returns a session key.
+/// Logs in a user using the `ResourceSpace` API and returns a session key.
 pub(crate) async fn login(
     http: &Client,
     api_url: &Url,

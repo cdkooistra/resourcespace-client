@@ -4,7 +4,7 @@ A Rust client library for the [ResourceSpace](https://www.resourcespace.com/) Di
 
 [![GitHub](https://img.shields.io/badge/github-resourcespace--client-blue?logo=github&label=cdkooistra)](https://github.com/cdkooistra/resourcespace-client) [![crates.io](https://img.shields.io/badge/crates.io-resourcespace--client-orange?logo=rust)](https://crates.io/crates/resourcespace-client) [![docs.rs](https://img.shields.io/badge/docs.rs-resourcespace--client-red?logo=rust)](https://docs.rs/resourcespace-client)
 
-`resourcespace-client` provides an ergonomic async Rust interface to the ResourceSpace API. ResourceSpace is an open-source Digital Asset Management system developed by [Montala](https://www.resourcespace.com/about).
+`resourcespace-client` provides an ergonomic async Rust interface to the `ResourceSpace` API. `ResourceSpace` is an open-source Digital Asset Management system developed by [Montala](https://www.resourcespace.com/about).
 
 - Support userkey and sessionkey authentication
 - Support all (non-native usermode) API endpoints
@@ -17,8 +17,8 @@ This example initializes a simple client to search for resources and then update
 
 ```rust,no_run
 use resourcespace_client::Client;
-use resourcespace_client::api::search::DoSearchRequest;
-use resourcespace_client::api::metadata::UpdateFieldRequest;
+use resourcespace_client::api::search::request::DoSearch;
+use resourcespace_client::api::metadata::request::UpdateField;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,13 +31,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Search for resources
     let results = client
         .search()
-        .do_search(DoSearchRequest::new("landscape"))
+        .do_search(DoSearch::new("landscape"))
         .await?;
 
     // Update a metadata field
     client
         .metadata()
-        .update_field(UpdateFieldRequest::new(42, "title", "My Asset"))
+        .update_field(UpdateField::new(42, "title", "My Asset"))
         .await?;
 
     Ok(())

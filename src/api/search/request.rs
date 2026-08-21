@@ -1,144 +1,22 @@
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Serialize, Serializer};
 use serde_with::skip_serializing_none;
 
-use crate::client::{Client, HttpMethod};
-use crate::error::Error;
+use crate::api::shared::{List, SortOrder};
 
-use super::{List, SortOrder};
-
-/// The result of [`SearchApi::do_search`] or [`SearchApi::search_get_previews`].
-///
-/// ResourceSpace returns one of two shapes depending on which
-/// [`FetchRows`] mode the request used: [`FetchRows::page`] gets a
-/// structured [`Self::Paged`] response with a total count, anything else
-/// gets a bare array of results.
-///
-/// Individual rows are left as [`serde_json::Value`] rather than a resource
-/// struct — full resource typing is a separate, larger pass and would only
-/// need doing twice.
-#[non_exhaustive]
-#[derive(Clone, Debug, PartialEq, Deserialize)]
-#[serde(untagged)]
-pub enum SearchResults {
-    Paged {
-        total: u32,
-        data: Vec<serde_json::Value>,
-    },
-    Flat(Vec<serde_json::Value>),
-}
-
-/// Sub-API for search endpoints.
-#[derive(Debug)]
-pub struct SearchApi<'a> {
-    client: &'a Client,
-}
-
-impl<'a> SearchApi<'a> {
-    pub(crate) fn new(client: &'a Client) -> Self {
-        Self { client }
-    }
-
-    /// Performs a search and returns matching resources.
-    ///
-    /// ## Arguments
-    /// * `request` - Parameters built via [`DoSearchRequest`]
-    ///
-    /// ## Returns
-    ///
-    /// [`SearchResults::Paged`] when [`DoSearchRequest::fetchrows`] is
-    /// [`FetchRows::page`], otherwise [`SearchResults::Flat`].
-    ///
-    /// ## Errors
-    ///
-    /// Does not error on "no results" or missing permissions — the user
-    /// lacking the `s` permission and a search matching nothing both return
-    /// an empty result rather than [`Error::OperationFailed`].
-    ///
-    /// ## Examples
-    /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{DoSearchRequest, FetchRows}};
-    /// # use resourcespace_client::api::SortOrder;
-    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// let results = client.search()
-    ///     .do_search(DoSearchRequest::new("cat").sort(SortOrder::Desc))
-    ///     .await?;
-    ///
-    /// let specific_results = client.search()
-    ///     .do_search(
-    ///         DoSearchRequest::new("cat")
-    ///             .fetchrows(FetchRows::limit(100))
-    ///             .offset(50)
-    ///             .archive(0)
-    ///     )
-    ///     .await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn do_search(&self, request: DoSearchRequest) -> Result<SearchResults, Error> {
-        self.client
-            .send_request("do_search", HttpMethod::Get, request)
-            .await
-    }
-
-    /// Performs a search and returns matching resources including URLs for requested preview sizes.
-    ///
-    /// ## Arguments
-    /// * `request` - Parameters built via [`SearchGetPreviewsRequest`]
-    ///
-    /// ## Returns
-    ///
-    /// [`SearchResults::Paged`] when [`SearchGetPreviewsRequest::fetchrows`]
-    /// is [`FetchRows::page`], otherwise [`SearchResults::Flat`]. Each row
-    /// has a `url_<size>` key per requested size in
-    /// [`SearchGetPreviewsRequest::getsizes`].
-    ///
-    /// ## Errors
-    ///
-    /// Does not error on "no results" or missing permissions — the user
-    /// lacking the `s` permission and a search matching nothing both return
-    /// an empty result rather than [`Error::OperationFailed`].
-    ///
-    /// ## Examples
-    /// ```no_run
-    /// # use resourcespace_client::{Client, api::search::{SearchGetPreviewsRequest, FetchRows}};
-    /// # use resourcespace_client::api::SortOrder;
-    /// # async fn example(client: Client) -> Result<(), Box<dyn std::error::Error>> {
-    /// let results = client.search()
-    ///     .search_get_previews(SearchGetPreviewsRequest::new("cat").getsizes("thm,scr"))
-    ///     .await?;
-    ///
-    /// let specific_results = client.search()
-    ///     .search_get_previews(
-    ///         SearchGetPreviewsRequest::new("cat")
-    ///             .getsizes("thm,scr,pre")
-    ///             .previewext("jpg")
-    ///             .sort(SortOrder::Desc)
-    ///             .fetchrows(FetchRows::page(0, 50))
-    ///     )
-    ///     .await?;
-    /// # Ok(())
-    /// # }
-    /// ```
-    pub async fn search_get_previews(
-        &self,
-        request: SearchGetPreviewsRequest,
-    ) -> Result<SearchResults, Error> {
-        self.client
-            .send_request("search_get_previews", HttpMethod::Get, request)
-            .await
-    }
-}
+// Referenced only from doc links below; the import keeps them resolvable.
+#[allow(unused_imports)]
+use super::SearchApi;
 
 /// The row fetch mode for a search request.
 ///
 /// Use [`FetchRows::limit`] to cap the number of results, or
 /// [`FetchRows::page`] to fetch a specific window with offset and limit.
 /// Note that these two modes return different response shapes from
-/// ResourceSpace — `page` returns a structured response with a `total`
+/// `ResourceSpace` — `page` returns a structured response with a `total`
 /// count alongside the results.
 ///
 /// ```no_run
-/// # use resourcespace_client::api::search::FetchRows;
+/// # use resourcespace_client::api::search::request::FetchRows;
 /// let _ = FetchRows::limit(100);         // return up to 100 results
 /// let _ = FetchRows::page(0, 50);        // return results 0–50
 /// ```
@@ -151,11 +29,13 @@ pub enum FetchRows {
 
 impl FetchRows {
     /// Return up to N rows
+    #[must_use]
     pub fn limit(n: u32) -> Self {
         Self::Limit(n)
     }
 
     /// Return rows with explicit offset and limit, enables paginated response
+    #[must_use]
     pub fn page(offset: u32, limit: u32) -> Self {
         Self::Page { offset, limit }
     }
@@ -165,15 +45,16 @@ impl Serialize for FetchRows {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         match self {
             Self::Limit(n) => n.serialize(serializer),
-            Self::Page { offset, limit } => format!("{},{}", offset, limit).serialize(serializer),
+            Self::Page { offset, limit } => format!("{offset},{limit}").serialize(serializer),
         }
     }
 }
 
+/// Parameters for [`SearchApi::do_search`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct DoSearchRequest {
+pub struct DoSearch {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
@@ -190,7 +71,7 @@ pub struct DoSearchRequest {
     pub offset: Option<u32>,
 }
 
-impl DoSearchRequest {
+impl DoSearch {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),
@@ -203,41 +84,48 @@ impl DoSearchRequest {
         }
     }
 
+    #[must_use]
     pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: impl Into<String>) -> Self {
         self.order_by = Some(order_by.into());
         self
     }
 
+    #[must_use]
     pub fn archive(mut self, archive: i8) -> Self {
         self.archive = Some(archive);
         self
     }
 
+    #[must_use]
     pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
         self.fetchrows = Some(fetchrows);
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn offset(mut self, offset: u32) -> Self {
         self.offset = Some(offset);
         self
     }
 }
 
+/// Parameters for [`SearchApi::search_get_previews`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
-pub struct SearchGetPreviewsRequest {
+pub struct SearchGetPreviews {
     /// The search string to match resources against.
     pub search: String,
     /// Comma-separated list of resource type IDs to restrict results to.
@@ -258,7 +146,7 @@ pub struct SearchGetPreviewsRequest {
     pub previewext: Option<String>,
 }
 
-impl SearchGetPreviewsRequest {
+impl SearchGetPreviews {
     pub fn new(search: impl Into<String>) -> Self {
         Self {
             search: search.into(),
@@ -273,41 +161,49 @@ impl SearchGetPreviewsRequest {
         }
     }
 
+    #[must_use]
     pub fn restypes(mut self, restypes: impl Into<List<u32>>) -> Self {
         self.restypes = Some(restypes.into());
         self
     }
 
+    #[must_use]
     pub fn order_by(mut self, order_by: impl Into<String>) -> Self {
         self.order_by = Some(order_by.into());
         self
     }
 
+    #[must_use]
     pub fn archive(mut self, archive: i8) -> Self {
         self.archive = Some(archive);
         self
     }
 
+    #[must_use]
     pub fn fetchrows(mut self, fetchrows: FetchRows) -> Self {
         self.fetchrows = Some(fetchrows);
         self
     }
 
+    #[must_use]
     pub fn sort(mut self, sort: SortOrder) -> Self {
         self.sort = Some(sort);
         self
     }
 
+    #[must_use]
     pub fn recent_search_daylimit(mut self, recent_search_daylimit: impl Into<String>) -> Self {
         self.recent_search_daylimit = Some(recent_search_daylimit.into());
         self
     }
 
+    #[must_use]
     pub fn getsizes(mut self, getsizes: impl Into<List<String>>) -> Self {
         self.getsizes = Some(getsizes.into());
         self
     }
 
+    #[must_use]
     pub fn previewext(mut self, previewext: impl Into<String>) -> Self {
         self.previewext = Some(previewext.into());
         self

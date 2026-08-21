@@ -10,7 +10,7 @@ async fn test_update_field_text_with_comma() -> Result<(), Box<dyn std::error::E
     let result = client
         .metadata()
         .update_field(
-            resourcespace_client::api::metadata::UpdateFieldRequest::new(
+            resourcespace_client::api::metadata::request::UpdateField::new(
                 resource_id,
                 field,
                 resourcespace_client::api::FieldValue::from("Testing, comma in text field"),
@@ -33,7 +33,7 @@ async fn test_update_field_keyword_with_comma() -> Result<(), Box<dyn std::error
     let fields = client
         .metadata()
         .get_resource_type_fields(
-            resourcespace_client::api::metadata::GetResourceTypeFieldsRequest::new()
+            resourcespace_client::api::metadata::request::GetResourceTypeFields::new()
                 .field_type_ids([9]),
         )
         .await?;
@@ -42,7 +42,7 @@ async fn test_update_field_keyword_with_comma() -> Result<(), Box<dyn std::error
     let result = client
         .metadata()
         .update_field(
-            resourcespace_client::api::metadata::UpdateFieldRequest::new(
+            resourcespace_client::api::metadata::request::UpdateField::new(
                 resource_id,
                 field,
                 resourcespace_client::api::FieldValue::from(["Doe, John", "Smith, Jane"]),
@@ -65,7 +65,7 @@ async fn test_create_resource_with_keyword_metadata() -> Result<(), Box<dyn std:
     let result = client
         .resource()
         .create_resource(
-            resourcespace_client::api::resource::CreateResourceRequest::new(resource_type)
+            resourcespace_client::api::resource::request::CreateResource::new(resource_type)
                 .metadata(std::collections::HashMap::from([
                     (
                         text_field_id,
