@@ -846,13 +846,6 @@ pub struct UploadMultipartRequest {
 }
 
 impl UploadMultipartRequest {
-    /// Creates a new `UploadMultipartRequest` with the given parameters.
-    ///
-    /// # Arguments
-    ///
-    /// * `resource_id` - The ID of the resource to upload the file to.
-    /// * `no_exif` - If true, skips reading EXIF data from the uploaded file.
-    /// * `revert` - If true, reverts to the original file instead of uploading a new one.
     pub fn new(resource_id: u32, no_exif: bool, revert: bool) -> Self {
         Self {
             resource_id,
