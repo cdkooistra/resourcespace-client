@@ -9,6 +9,7 @@ use crate::api::shared::{List, SortOrder, bool_as_u8, opt_bool_as_u8};
 #[allow(unused_imports)]
 use super::CollectionApi;
 
+/// Parameters for [`CollectionApi::add_resource_to_collection`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -37,6 +38,7 @@ impl AddResourceToCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::remove_resource_from_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RemoveResourceFromCollectionRequest {
@@ -55,6 +57,7 @@ impl RemoveResourceFromCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::create_collection`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -83,6 +86,7 @@ impl CreateCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::delete_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCollectionRequest {
@@ -101,6 +105,7 @@ impl DeleteCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::search_public_collections`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -158,6 +163,7 @@ impl SearchPublicCollectionsRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::get_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionRequest {
@@ -172,6 +178,7 @@ impl GetCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::save_collection`].
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -287,6 +294,7 @@ impl SaveCollectionColdata {
     }
 }
 
+/// Parameters for [`CollectionApi::show_hide_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ShowHideCollectionRequest {
@@ -309,6 +317,7 @@ impl ShowHideCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::send_collection_to_admin`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct SendCollectionToAdminRequest {
@@ -322,6 +331,7 @@ impl SendCollectionToAdminRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::get_featured_collections`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetFeaturedCollectionsRequest {
@@ -335,6 +345,7 @@ impl GetFeaturedCollectionsRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::delete_resources_in_collection`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourcesInCollectionRequest {
@@ -348,6 +359,7 @@ impl DeleteResourcesInCollectionRequest {
     }
 }
 
+/// Parameters for [`CollectionApi::get_collections_resource_count`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetCollectionsResourceCountRequest {

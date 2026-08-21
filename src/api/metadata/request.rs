@@ -52,6 +52,7 @@ impl Serialize for FieldIdentifier {
     }
 }
 
+/// Parameters for [`MetadataApi::get_field_options`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -77,6 +78,7 @@ impl GetFieldOptionsRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::get_node_id`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetNodeIdRequest {
@@ -95,6 +97,7 @@ impl GetNodeIdRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::get_nodes`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -168,6 +171,7 @@ impl GetNodesRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::add_resource_nodes`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesRequest {
@@ -186,6 +190,7 @@ impl AddResourceNodesRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::add_resource_nodes_multi`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct AddResourceNodesMultiRequest {
@@ -210,6 +215,7 @@ impl AddResourceNodesMultiRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::set_node`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -265,6 +271,7 @@ impl SetNodeRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::get_resource_type_fields`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -300,6 +307,7 @@ impl GetResourceTypeFieldsRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::create_resource_type_field`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CreateResourceTypeFieldRequest {
@@ -326,6 +334,7 @@ impl CreateResourceTypeFieldRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::toggle_active_state_for_nodes`].
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -344,6 +353,7 @@ impl ToggleActiveStatesForNodesRequest {
     }
 }
 
+/// Parameters for [`MetadataApi::update_field`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq)]
 pub struct UpdateFieldRequest {

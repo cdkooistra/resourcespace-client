@@ -11,6 +11,7 @@ use crate::api::shared::{FieldValue, List, SortOrder, bool_as_u8, opt_bool_as_u8
 #[allow(unused_imports)]
 use super::ResourceApi;
 
+/// Parameters for [`ResourceApi::add_alternative_file`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -78,6 +79,7 @@ impl AddAlternativeFileRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::copy_resource`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -103,6 +105,7 @@ impl CopyResourceRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::create_resource`].
 #[non_exhaustive]
 #[serde_as]
 #[skip_serializing_none]
@@ -180,6 +183,7 @@ impl CreateResourceRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::delete_alternative_file`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteAlternativeFile {
@@ -199,6 +203,7 @@ impl DeleteAlternativeFile {
     }
 }
 
+/// Parameters for [`ResourceApi::delete_resource`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteResourceRequest {
@@ -212,6 +217,7 @@ impl DeleteResourceRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_alternative_files`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -253,6 +259,7 @@ impl GetAlternativeFilesRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_edit_access`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetEditAccessRequest {
@@ -266,6 +273,7 @@ impl GetEditAccessRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_related_resources`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetRelatedResourcesRequest {
@@ -280,6 +288,7 @@ impl GetRelatedResourcesRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_access`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAccessRequest {
@@ -293,6 +302,7 @@ impl GetResourceAccessRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_all_image_sizes`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceAllImageSizesRequest {
@@ -306,6 +316,7 @@ impl GetResourceAllImageSizesRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::delete_comment`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct DeleteCommentRequest {
@@ -319,6 +330,7 @@ impl DeleteCommentRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_comments`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -344,6 +356,7 @@ impl GetResourceCommentsRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_data`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceDataRequest {
@@ -357,6 +370,7 @@ impl GetResourceDataRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_field_data`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceFieldDataRequest {
@@ -370,6 +384,7 @@ impl GetResourceFieldDataRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_log`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -394,6 +409,7 @@ impl GetResourceLogRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_path`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -475,6 +491,7 @@ impl GetResourcePathRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::put_resource_data`].
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -492,6 +509,7 @@ impl PutResourceDataRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::relate_all_resources`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct RelateAllResourcesRequest {
@@ -507,6 +525,7 @@ impl RelateAllResourcesRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::replace_resource_file`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -563,6 +582,7 @@ impl ReplaceResourceFileRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::resource_file_readonly`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ResourceFileReadonlyRequest {
@@ -577,6 +597,7 @@ impl ResourceFileReadonlyRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::resource_log_last_rows`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -625,6 +646,7 @@ impl ResourceLogLastRowsRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::upload_file`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -686,6 +708,7 @@ impl UploadFileRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::upload_file_by_url`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -747,7 +770,9 @@ impl UploadFileByUrlRequest {
     }
 }
 
-/// Data source for a multipart upload
+/// Data source for a multipart upload.
+///
+/// Used by [`ResourceApi::upload_multipart`].
 #[non_exhaustive]
 pub enum UploadSource {
     File(std::path::PathBuf),
@@ -794,6 +819,7 @@ impl From<&str> for UploadSource {
     }
 }
 
+/// Parameters for [`ResourceApi::upload_multipart`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -853,6 +879,7 @@ impl UploadMultipartRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::update_related_resource`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -886,6 +913,7 @@ impl UpdateRelatedResourceRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::update_resource_type`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct UpdateResourceTypeRequest {
@@ -905,6 +933,7 @@ impl UpdateResourceTypeRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::get_resource_collections`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetResourceCollectionsRequest {
@@ -919,6 +948,7 @@ impl GetResourceCollectionsRequest {
     }
 }
 
+/// Parameters for [`ResourceApi::validate_upload_url`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct ValidateUploadUrlRequest {

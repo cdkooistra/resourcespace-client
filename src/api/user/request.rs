@@ -4,6 +4,11 @@ use serde_with::{serde_as, skip_serializing_none};
 
 use crate::api::shared::{List, opt_bool_as_u8};
 
+// Referenced only from doc links below; the import keeps them resolvable.
+#[allow(unused_imports)]
+use super::UserApi;
+
+/// Parameters for [`UserApi::checkperm`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct CheckpermRequest {
@@ -17,6 +22,7 @@ impl CheckpermRequest {
     }
 }
 
+/// Parameters for [`UserApi::get_profile_image`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetProfileImageRequest {
@@ -38,6 +44,7 @@ impl GetProfileImageRequest {
     }
 }
 
+/// Parameters for [`UserApi::get_users`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -64,6 +71,7 @@ impl GetUsersRequest {
     }
 }
 
+/// Parameters for [`UserApi::get_users_by_permission`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct GetUsersByPermissionRequest {
@@ -79,6 +87,7 @@ impl GetUsersByPermissionRequest {
     }
 }
 
+/// Parameters for [`UserApi::mark_email_as_invalid`].
 #[non_exhaustive]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct MarkEmailAsInvalidRequest {
@@ -94,6 +103,7 @@ impl MarkEmailAsInvalidRequest {
     }
 }
 
+/// Parameters for [`UserApi::new_user`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -118,6 +128,7 @@ impl NewUserRequest {
     }
 }
 
+/// Parameters for [`UserApi::save_user`].
 #[non_exhaustive]
 #[serde_as]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -136,6 +147,7 @@ impl SaveUserRequest {
     }
 }
 
+/// Parameters for [`SaveUserRequest::new`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]

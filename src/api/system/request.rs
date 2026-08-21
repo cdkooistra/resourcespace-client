@@ -8,6 +8,7 @@ use crate::api::shared::opt_bool_as_u8;
 #[allow(unused_imports)]
 use super::{SystemApi, SystemStatus};
 
+/// Parameters for [`SystemApi::get_system_status`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize)]
@@ -32,6 +33,7 @@ impl GetSystemStatusRequest {
     }
 }
 
+/// Parameters for [`SystemApi::do_report`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -66,6 +68,7 @@ impl DoReportRequest {
     }
 }
 
+/// Parameters for [`SystemApi::get_daily_stat_summary`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Validate)]

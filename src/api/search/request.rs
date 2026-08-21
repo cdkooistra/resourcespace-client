@@ -3,6 +3,10 @@ use serde_with::skip_serializing_none;
 
 use crate::api::shared::{List, SortOrder};
 
+// Referenced only from doc links below; the import keeps them resolvable.
+#[allow(unused_imports)]
+use super::SearchApi;
+
 /// The row fetch mode for a search request.
 ///
 /// Use [`FetchRows::limit`] to cap the number of results, or
@@ -44,6 +48,7 @@ impl Serialize for FetchRows {
     }
 }
 
+/// Parameters for [`SearchApi::do_search`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -108,6 +113,7 @@ impl DoSearchRequest {
     }
 }
 
+/// Parameters for [`SearchApi::search_get_previews`].
 #[non_exhaustive]
 #[skip_serializing_none]
 #[derive(Clone, Debug, PartialEq, Serialize)]
