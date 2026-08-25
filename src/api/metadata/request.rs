@@ -412,3 +412,22 @@ impl UpdateField {
         }
     }
 }
+
+/// Parameters for [`MetadataApi::get_data_by_field`]
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct GetDataByField {
+    #[serde(rename = "ref")]
+    /// The ID of the resource to retrieve.
+    pub resource: u32,
+    /// The ID or shortname of the metadata field's value to retrieve.
+    pub field: FieldIdentifier,
+}
+
+impl GetDataByField {
+    pub fn new(resource: u32, field: impl Into<FieldIdentifier>) -> Self {
+        Self {
+            resource,
+            field: field.into(),
+        }
+    }
+}

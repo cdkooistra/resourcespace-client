@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::api::metadata::request::GetDataByField;
 use crate::client::{Client, HttpMethod};
 use crate::error::Error;
 
@@ -393,6 +394,48 @@ impl<'a> MetadataApi<'a> {
     pub async fn update_field(&self, request: UpdateField) -> Result<bool, Error> {
         self.client
             .send_request("update_field", HttpMethod::Post, request)
+            .await
+    }
+
+    /// Retrieves the value of a field for a given resource.
+    ///
+    /// ## Arguments
+    /// * `request` - Parameters built via [`GetDataByField`]
+    ///
+    /// ## Returns
+    ///
+    /// The value of the field as a [`String`]. In case the value consists
+    /// of multiple values, they are joined with a comma separator.
+    ///
+    /// ## Errors
+    ///
+    /// Returns [`Error::OperationFailed`] if the resource does not exist.
+    ///
+    /// ## Examples
+    ///
+    /// ```no_run
+    /// # use resourcespace_client::Client;
+    /// # use resourcespace_client::api::metadata::request::GetDataByField;
+    /// # use resourcespace_client::api::FieldIdentifier;
+    /// # #[tokio::main] async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    /// # let client = Client::builder().base_url("https://example.com").user_key("user", "key").build().await?;
+    /// # let rs_id = 11u32;
+    ///
+    /// // get data by field id
+    /// client.metadata().get_data_by_field(
+    ///     GetDataByField::new(rs_id, FieldIdentifier::from(1))
+    /// ).await?;
+    ///
+    /// // get data by field shortname
+    /// client.metadata().get_data_by_field(
+    ///     GetDataByField::new(rs_id, FieldIdentifier::from("person"))
+    /// ).await?;
+    ///
+    /// # Ok(()) }
+    /// ```
+    pub async fn get_data_by_field(&self, request: GetDataByField) -> Result<String, Error> {
+        self.client
+            .send_request("get_data_by_field", HttpMethod::Get, request)
             .await
     }
 }
